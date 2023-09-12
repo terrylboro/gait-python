@@ -3,6 +3,7 @@
 /workspace.xml
 *.png
 *.txt
+!requirements.txt
 /Data/*
 /Frequency Testing
 /GroundTruths/*
