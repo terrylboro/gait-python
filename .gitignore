@@ -1,0 +1,14 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+*.png
+*.txt
+/Data/*
+/Frequency Testing
+/GroundTruths/*
+!/GroundTruths/Functions
+/TSPs/*
+/Visualisation/*
+!/Visualisation/Functions/
+/Processing/McCamley Wavelet/*
+!/Processing/McCamley Wavelet/cwt.py
