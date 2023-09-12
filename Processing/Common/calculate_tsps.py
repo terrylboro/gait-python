@@ -66,7 +66,7 @@ def swing_time(HC, TO):
     realigned_HC = HC[offset:]
     print("HC outputted from stance_time: ", HC)
     print("TO: ", TO)
-    return np.subtract(realigned_HC, TO[:len(realigned_HC)])
+    return np.subtract(realigned_HC[:len(TO)], TO[:len(realigned_HC)])
 
 
 def stance_time(HC, TO):
@@ -82,7 +82,7 @@ def stance_time(HC, TO):
     realigned_TO = TO[offset:]
     print("TO outputted from stance_time: ", realigned_TO)
     print("HC: ", HC)
-    return np.subtract(realigned_TO, HC[:len(realigned_TO)])
+    return np.subtract(realigned_TO[:len(HC)], HC[:len(realigned_TO)])
 
 
 def calculate_SSR(swing, stance):

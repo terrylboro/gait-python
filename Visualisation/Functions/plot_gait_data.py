@@ -15,15 +15,17 @@ def plot_gait_data(data, title, save_dir=None, plot_legend=True):
     left_cols = ['AccXlear', 'AccYlear', 'AccZlear']
     right_cols = ['AccXrear', 'AccYrear', 'AccZrear']
     cols = [left_cols, right_cols]
+    fig_num = 1
 
     for col in cols:
-        fig = plt.figure()
+        fig = plt.figure(fig_num)
+        fig_num += 1
         plt.plot(data[col[0]].values, 'c-')
         plt.plot(data[col[1]].values, 'm-')
         plt.plot(data[col[2]].values, 'y-')
         plt.ylabel(r'Acceleration / $ms^{-2}$')
         plt.xlabel('Samples')
-        plt.title(title+"left" if col == left_cols else title+"left")
+        plt.title(title+" left" if col == left_cols else title+" right")
         # Setup legend below the plots
         ax = plt.gca()
         box = ax.get_position()

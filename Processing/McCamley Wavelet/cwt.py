@@ -6,6 +6,7 @@ import pywt
 import matplotlib.pyplot as plt
 from GroundTruths.Functions.compare_with_ground_truth import compare_with_ground_truth
 from Processing.Common.calculate_tsps import calculate_TSPs
+import os
 
 
 def cwt_algo(data, angV, side, view_plots=False):
@@ -116,22 +117,40 @@ def test_cwt():
 
 def main():
     # test_cwt()
-    subject = "Jamie"
-    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/"
-    for i in range(2, 8):
-        filename = subject.lower()+"-"+str(i)+".txt"
-        # Do the left side
-        data_L = np.loadtxt(filepath + filename, delimiter=',', usecols=3)
-        data_L_angV = np.loadtxt(filepath + filename, delimiter=',', usecols=5)
-        LHC, RHC, LTO, RTO = cwt_algo(data_L, data_L_angV, side="left", view_plots=True)
-        compare_with_ground_truth(subject, i, "left", LHC, RHC, LTO, RTO, save=False)
-        calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, "left")
-        # Repeat for the right side
-        data_R = np.loadtxt(filepath + filename, delimiter=',', usecols=12)
-        data_R_angV = np.loadtxt(filepath + filename, delimiter=',', usecols=14)
-        LHC, RHC, LTO, RTO = cwt_algo(data_R, data_R_angV, side="right")
-        compare_with_ground_truth(subject, i, "right", LHC, RHC, LTO, RTO, save=False)
-        calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, "right")
+    subject = "Amy"
+    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/"+"Walk/"
+    # loop through all files in the directory
+    # num_trials = len([entry for entry in os.listdir(filepath) if os.path.isfile(os.path.join(filepath, entry))])
+    for file in os.listdir(filepath):
+        if file != "tom-2_cropped.txt":
+            data_L = np.loadtxt(filepath+file, delimiter=',', usecols=3)
+            data_L_angV = np.loadtxt(filepath+file, delimiter=',', usecols=5)
+            LHC, RHC, LTO, RTO = cwt_algo(data_L, data_L_angV, side="left", view_plots=False)
+            trial_num = file.split(sep='.')[0][-1]
+            if int(trial_num) == 0:
+                trial_num = file.split(sep='.')[0][-2:]
+            print(trial_num)
+            compare_with_ground_truth(subject, trial_num, LHC, RHC, LTO, RTO, save=True)
+            calculate_TSPs(RHC, LHC, RTO, LTO, subject, trial_num, "left")
+            # Repeat for the right side
+            data_R = np.loadtxt(filepath+file, delimiter=',', usecols=12)
+            data_R_angV = np.loadtxt(filepath+file, delimiter=',', usecols=14)
+            LHC, RHC, LTO, RTO = cwt_algo(data_R, data_R_angV, side="right")
+            # compare_with_ground_truth(subject, trial_num, "right", LHC, RHC, LTO, RTO, save=False)
+            calculate_TSPs(RHC, LHC, RTO, LTO, subject, trial_num, "right")
+            # filename = subject.lower()+"-"+str(i)+".txt"
+            # Do the left side
+            # data_L = np.loadtxt(filepath + filename, delimiter=',', usecols=3)
+            # data_L_angV = np.loadtxt(filepath + filename, delimiter=',', usecols=5)
+            # LHC, RHC, LTO, RTO = cwt_algo(data_L, data_L_angV, side="left", view_plots=True)
+            # compare_with_ground_truth(subject, i, "left", LHC, RHC, LTO, RTO, save=False)
+            # calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, "left")
+            # # Repeat for the right side
+            # data_R = np.loadtxt(filepath + filename, delimiter=',', usecols=12)
+            # data_R_angV = np.loadtxt(filepath + filename, delimiter=',', usecols=14)
+            # LHC, RHC, LTO, RTO = cwt_algo(data_R, data_R_angV, side="right")
+            # compare_with_ground_truth(subject, i, "right", LHC, RHC, LTO, RTO, save=False)
+            # calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, "right")
 
 
 if __name__ == "__main__":
