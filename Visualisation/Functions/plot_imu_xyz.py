@@ -40,24 +40,27 @@ def plot_imu_xyz(accel, gyro, mag, time, title):
 
 
 def main():
-    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/Tom/tom-2.txt")
+    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/Amy/CroppedWalk/amy-13.txt")
     print(data.head())
-    accel = data.iloc[:, [2, 3, 4]].values
-    gyro = data.iloc[:, [5, 6, 7]].values
-    mag = data.iloc[:, [8, 9, 10]].values
+    # accel = data.iloc[:, [2, 3, 4]].values
+    # gyro = data.iloc[:, [5, 6, 7]].values
+    # mag = data.iloc[:, [8, 9, 10]].values
+    accel = data.loc[:,['AccXchest', 'AccYchest', 'AccZchest']].values
+    gyro = data.loc[:,['GyroXchest', 'GyroYchest', 'GyroZchest']].values
+    mag = data.loc[:,['MagXchest', 'MagYchest', 'MagZchest']].values
     N = np.size(accel, 0)
     # Rearrange the data to fit the correct format
     accelReadings = np.reshape(accel[:, :], (N, 3))
     gyroReadings = np.reshape(gyro[:, :], (N, 3))
     magReadings = np.reshape(mag[:, :], (N, 3))
-
-    temp_accelReadings2 = accelReadings[:, 2]
-    accelReadings[:, [1, 2]] = accelReadings[:, [2, 1]]
-    accelReadings[:, 2] = - accelReadings[:, 2]
-    gyroReadings[:, [1, 2]] = gyroReadings[:, [2, 1]]
-    gyroReadings[:, 2] = - gyroReadings[:, 2]
-    magReadings[:, [1, 2]] = magReadings[:, [2, 1]]
-    magReadings[:, 2] = - magReadings[:, 2]
+    #
+    # temp_accelReadings2 = accelReadings[:, 2]
+    # accelReadings[:, [1, 2]] = accelReadings[:, [2, 1]]
+    # accelReadings[:, 2] = - accelReadings[:, 2]
+    # gyroReadings[:, [1, 2]] = gyroReadings[:, [2, 1]]
+    # gyroReadings[:, 2] = - gyroReadings[:, 2]
+    # magReadings[:, [1, 2]] = magReadings[:, [2, 1]]
+    # magReadings[:, 2] = - magReadings[:, 2]
 
     time = range(0, len(data))
 

@@ -7,7 +7,7 @@ from scipy.ndimage import shift  # use this to shift the arrays
 import os
 
 
-def calculate_TSPs(RHC, LHC, RTO, LTO, subject, trial_num, side):
+def calculate_TSPs(RHC, LHC, RTO, LTO, save_dir):
     """
     Calculate all the TSPs from the initial contact and foot off locations
     """
@@ -41,12 +41,12 @@ def calculate_TSPs(RHC, LHC, RTO, LTO, subject, trial_num, side):
     df["Left Swing/Stance Ratio"] = pd.Series(ssr_left)
     df["Right Swing/Stance Ratio"] = pd.Series(ssr_right)
     df["Step Asymmetry"] = pd.Series(step_asymmetry)
-    print(df)
-    try:
-        os.mkdir("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject)
-    except OSError as error:
-        print(error)
-    df.to_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/" + subject + "/trial-" + str(trial_num).zfill(2) + "-" + side + "-TSPs.csv")
+    # try:
+    #     os.mkdir("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject)
+    # except OSError as error:
+    #     print(error)
+    # df.to_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/" + subject + "/trial-" + str(trial_num).zfill(2) + "-" + side + "-TSPs.csv")
+    df.to_csv(save_dir, index_label="Index")
 
 
 def stride_time(HC):
@@ -55,33 +55,21 @@ def stride_time(HC):
 
 def swing_time(HC, TO):
     # Lineup HC and TO by iteratively shifting to left
-    print("HC inputted to swing_time: ", HC)
-    # while HC[0] < TO[0]:
-    #     print(HC)
-    #     HC = shift(HC, -1, cval=0)
     for i in range(0, len(TO)):
         if HC[i] > TO[0]:
             offset = i
             break
     realigned_HC = HC[offset:]
-    print("HC outputted from stance_time: ", HC)
-    print("TO: ", TO)
     return np.subtract(realigned_HC[:len(TO)], TO[:len(realigned_HC)])
 
 
 def stance_time(HC, TO):
     # Lineup HC and TO by iteratively shifting to left
-    print("TO inputted to stance_time: ", TO)
-    # while TO[0] < HC[0]:
-    #     HC = shift(HC, 1, cval=0)
-    #     # HC = np.insert(HC, 0, 0)
     for i in range(0, len(TO)):
         if TO[i] > HC[0]:
             offset = i
             break
     realigned_TO = TO[offset:]
-    print("TO outputted from stance_time: ", realigned_TO)
-    print("HC: ", HC)
     return np.subtract(realigned_TO[:len(HC)], HC[:len(realigned_TO)])
 
 

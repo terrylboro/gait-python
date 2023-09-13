@@ -1,6 +1,7 @@
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6720436/
 
 import numpy as np
+import pandas as pd
 from scipy import signal, integrate
 import pywt
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ from Processing.Common.calculate_tsps import calculate_TSPs
 import os
 
 
-def cwt_algo(data, angV, side, view_plots=False):
+def cwt_algo(data, angV, side, offset=0, view_plots=False):
     """
     Apply the CWT algorithm as described here:\n
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6720436/
@@ -28,13 +29,6 @@ def cwt_algo(data, angV, side, view_plots=False):
     diff_sig = coef[1]
     # The minima of the differentiated signal (i.e. coeffs[0]) are the HC
     HC, _ = signal.find_peaks(-coef[1], prominence=1.5)
-    if view_plots:
-        plt.figure()
-        plt.imshow(coef, extent=[1, len(data), 1, 16], cmap='PRGn', aspect='auto',
-            vmax=abs(coef).max(), vmin=-abs(coef).max())  # doctest: +SKIP
-        plt.figure()
-        plt.plot(coef[1])
-        plt.plot(HC, diff_sig[HC],  'o')
     # # Find the TO/FC locations by differentiating again and finding maxima
     jerk_coef, _ = pywt.cwt(diff_sig, scale, 'gaus1')
     jerk_sig = jerk_coef[1]
@@ -42,15 +36,22 @@ def cwt_algo(data, angV, side, view_plots=False):
     TO = np.squeeze(TO).tolist()
     if view_plots:
         plt.figure()
+        plt.plot(data)
+        plt.figure()
+        plt.imshow(coef, extent=[1, len(data), 1, 16], cmap='PRGn', aspect='auto',
+                   vmax=abs(coef).max(), vmin=-abs(coef).max())  # doctest: +SKIP
+        plt.figure()
+        plt.plot(coef[1])
+        plt.plot(HC, diff_sig[HC], 'o')
+        plt.figure()
         plt.plot(jerk_sig)
         plt.plot(TO, jerk_sig[TO], 'o')
         plt.show()  # doctest: +SKIP
-
     # Determine left or right contact side
-    return determine_sides(HC, TO, side, angV)
+    return determine_sides(HC, TO, side, offset, angV)
 
 
-def determine_sides(HC, TO, side, gyroData):
+def determine_sides(HC, TO, side, offset, gyroData):
     LHC = []
     RHC = []
     LTO = []
@@ -79,6 +80,11 @@ def determine_sides(HC, TO, side, gyroData):
         else:
             LTO.extend(TO[0::2])
             RTO.extend(TO[1::2])
+    # correct for cropping
+    LHC += offset
+    RHC += offset
+    LTO += offset
+    RTO += offset
     print("LHC: ", LHC)
     print("RHC: ", RHC)
     print("LTO: ", LTO)
@@ -96,8 +102,8 @@ def preprocess(data):
     :param data:
     :return: Preprocessed data
     """
-    # plt.figure()
-    # plt.plot(data)
+    plt.figure()
+    plt.plot(data)
     data = signal.detrend(data)
     sos = signal.butter(2, 10, 'lp', fs=100, output='sos')
     filtered_data = signal.sosfilt(sos, data)
@@ -118,39 +124,29 @@ def test_cwt():
 def main():
     # test_cwt()
     subject = "Amy"
-    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/"+"Walk/"
+    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/CroppedWalk/"
+    og_data_filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/Walk/"
+    savedir_TSP = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject+"/McCamley/"
+    try:
+        os.mkdir(savedir_TSP)
+    except OSError:
+        print("Directory already exists!")
     # loop through all files in the directory
-    # num_trials = len([entry for entry in os.listdir(filepath) if os.path.isfile(os.path.join(filepath, entry))])
     for file in os.listdir(filepath):
-        if file != "tom-2_cropped.txt":
-            data_L = np.loadtxt(filepath+file, delimiter=',', usecols=3)
-            data_L_angV = np.loadtxt(filepath+file, delimiter=',', usecols=5)
-            LHC, RHC, LTO, RTO = cwt_algo(data_L, data_L_angV, side="left", view_plots=False)
-            trial_num = file.split(sep='.')[0][-1]
-            if int(trial_num) == 0:
-                trial_num = file.split(sep='.')[0][-2:]
-            print(trial_num)
-            compare_with_ground_truth(subject, trial_num, LHC, RHC, LTO, RTO, save=True)
-            calculate_TSPs(RHC, LHC, RTO, LTO, subject, trial_num, "left")
-            # Repeat for the right side
-            data_R = np.loadtxt(filepath+file, delimiter=',', usecols=12)
-            data_R_angV = np.loadtxt(filepath+file, delimiter=',', usecols=14)
-            LHC, RHC, LTO, RTO = cwt_algo(data_R, data_R_angV, side="right")
-            # compare_with_ground_truth(subject, trial_num, "right", LHC, RHC, LTO, RTO, save=False)
-            calculate_TSPs(RHC, LHC, RTO, LTO, subject, trial_num, "right")
-            # filename = subject.lower()+"-"+str(i)+".txt"
-            # Do the left side
-            # data_L = np.loadtxt(filepath + filename, delimiter=',', usecols=3)
-            # data_L_angV = np.loadtxt(filepath + filename, delimiter=',', usecols=5)
-            # LHC, RHC, LTO, RTO = cwt_algo(data_L, data_L_angV, side="left", view_plots=True)
-            # compare_with_ground_truth(subject, i, "left", LHC, RHC, LTO, RTO, save=False)
-            # calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, "left")
-            # # Repeat for the right side
-            # data_R = np.loadtxt(filepath + filename, delimiter=',', usecols=12)
-            # data_R_angV = np.loadtxt(filepath + filename, delimiter=',', usecols=14)
-            # LHC, RHC, LTO, RTO = cwt_algo(data_R, data_R_angV, side="right")
-            # compare_with_ground_truth(subject, i, "right", LHC, RHC, LTO, RTO, save=False)
-            # calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, "right")
+        df = pd.read_csv(filepath+file, delimiter=',')
+        LHC, RHC, LTO, RTO = cwt_algo(df['AccYlear'].values, df['GyroXlear'].values, side="left", offset=df.at[0, 'Index'], view_plots=False)
+        # compare_with_ground_truth(og_data_filepath+file, LHC, RHC, LTO, RTO, save=False)
+        calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP + file.split(sep='.')[0] + "-left-TSPs.csv")
+        # Repeat for the right side
+        LHC, RHC, LTO, RTO = cwt_algo(df['AccYrear'].values, df['GyroXrear'].values, side="right", offset=df.at[0, 'Index'], view_plots=False)
+        calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP + file.split(sep='.')[0] + "-right-TSPs.csv")
+        # Repeat for chest
+        LHC, RHC, LTO, RTO = cwt_algo(df['AccYchest'].values, df['GyroZchest'].values, side="left",
+                                      offset=df.at[0, 'Index'], view_plots=False)
+        calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP + file.split(sep='.')[0] + "-chest-TSPs.csv")
+        compare_with_ground_truth(og_data_filepath + file, LHC, RHC, LTO, RTO, save=False, chest=True)
+        break
+
 
 
 if __name__ == "__main__":

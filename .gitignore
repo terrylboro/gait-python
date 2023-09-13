@@ -5,6 +5,7 @@
 *.txt
 !requirements.txt
 /Data/*
+!/Data/Functions
 /Frequency Testing
 /GroundTruths/*
 !/GroundTruths/Functions

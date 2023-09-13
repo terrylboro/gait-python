@@ -10,61 +10,81 @@ import matplotlib.pyplot as plt
 import os
 
 
-def compare_with_ground_truth(subject, trial_num, LHC, RHC, LTO=None, RTO=None, save=False):
-    data_filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/Walk/"
-    # cols = [2, 3, 4] if side == "right" else [11, 12, 13]
-    cols = [2, 3, 4, 11, 12, 13]
-    colNames = ['AccXlear', 'AccYlear', 'AccZlear', 'AccXrear', 'AccYrear', 'AccZrear']
+def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=False, chest=False):
+    # Parse for subject and trial_num
+    trial_num = data_filepath.split(sep='.')[0][-1]
+    if int(trial_num) == 0:
+        trial_num = data_filepath.split(sep='.')[0][-2:]
+    subject = data_filepath.split(sep='/')[-3]
+    #
+    if not chest:
+        colNames = ['AccXlear', 'AccYlear', 'AccZlear', 'AccXrear', 'AccYrear', 'AccZrear']
+        cols = [2, 3, 4, 11, 12, 13]
+    else:
+        colNames = ['AccXlear', 'AccYlear', 'AccZlear', 'AccXrear', 'AccYrear', 'AccZrear', 'AccXchest', 'AccYchest', 'AccZchest']
+        cols = [2, 3, 4, 11, 12, 13, 20, 21, 22]
+    ground_truth_available = True
+    # Load and plot the underlying gait signal for context
+    data = pd.read_csv(data_filepath, delimiter=',', usecols=cols, names=colNames)
+    plot_gait_data(data, "Gait Event Comparison " + subject + '-' + str(int(trial_num)), plot_legend=False, chest=chest)
     # Load the ground truth arrays
     try:
         LHC_gt, RHC_gt, LTO_gt, RTO_gt = load_ground_truth(subject, trial_num)
-    except FileNotFoundError as error:
+    except FileNotFoundError:
         print("No ground truth data for trial: ", trial_num)
-        return
-
-    # Load and plot the underlying gait signal for context
-    # data = np.loadtxt(data_filepath + subject.lower() + '-' + str(int(trial_num)) + ".txt", delimiter=',', usecols=cols)
-    data = pd.read_csv(data_filepath + subject.lower() + '-' + str(int(trial_num)) + ".txt", delimiter=',', usecols=cols, names=colNames)
-    # plot_gait_data(data, "Gait Event Comparison " + subject + '-' + str(int(trial_num)) + '-' + side, plot_legend=False)
-    plot_gait_data(data, "Gait Event Comparison " + subject + '-' + str(int(trial_num)), plot_legend=False)
+        ground_truth_available = False
     # Plot ground truths in bold
-    for fig_num in [1, 2]:
+    for fig_num in [1, 2, 3]:
         plt.figure(fig_num)
-        plt.vlines(LHC_gt, data.to_numpy().min(), data.to_numpy().max(), color='r')
-        plt.vlines(RHC_gt, data.to_numpy().min(), data.to_numpy().max(), color='g')
+        if ground_truth_available:
+            plt.vlines(LHC_gt, data.to_numpy().min(), data.to_numpy().max(), color='r')
+            plt.vlines(RHC_gt, data.to_numpy().min(), data.to_numpy().max(), color='g')
         # Plot calculated events transparently
         plt.vlines(LHC, data.to_numpy().min(), data.to_numpy().max(), color='r', alpha=0.5)#, linestyles='-.')
         plt.vlines(RHC, data.to_numpy().min(), data.to_numpy().max(), color='g', alpha=0.5)#, linestyles='-.')
         # Do the same with Toe-Offs if info provided
         if LTO is not None and RTO is not None:
-            plt.vlines(LTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles='--')
-            plt.vlines(RTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles='--')
+            if ground_truth_available:
+                plt.vlines(LTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles='--')
+                plt.vlines(RTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles='--')
             plt.vlines(LTO, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles=':', alpha=0.5)
             plt.vlines(RTO, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles=':', alpha=0.5)
 
         ax = plt.gca()
-        if LTO is not None and RTO is not None:
-            ax.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral',
-                       'LHC_gt', 'RHC_gt', 'LHC', 'RHC',
-                       'LTO_gt', 'RTO_gt', 'LTO', 'RTO'],
-                      loc='upper center', bbox_to_anchor=(0.5, -0.15),
-                      fancybox=True, shadow=True, ncol=4, fontsize=8)
+        if ground_truth_available:
+            if LTO is not None and RTO is not None:
+                ax.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral',
+                           'LHC_gt', 'RHC_gt', 'LHC_est', 'RHC_est',
+                           'LTO_gt', 'RTO_gt', 'LTO_est', 'RTO_est'],
+                          loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                          fancybox=True, shadow=True, ncol=4, fontsize=8)
+            else:
+                ax.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral',
+                           'LHC_gt', 'RHC_gt', 'LHC_est', 'RHC_est'],
+                          loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                          fancybox=True, shadow=True, ncol=4)
         else:
-            ax.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral',
-                       'LHC_gt', 'RHC_gt', 'LHC_est', 'RHC_est'],
-                      loc='upper center', bbox_to_anchor=(0.5, -0.15),
-                      fancybox=True, shadow=True, ncol=4)
+            if LTO is not None and RTO is not None:
+                ax.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral',
+                           'LHC_est', 'RHC_est', 'LTO_est', 'RTO_est'],
+                          loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                          fancybox=True, shadow=True, ncol=4, fontsize=8)
+            else:
+                ax.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral', 'LHC_est', 'RHC_est'],
+                          loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                          fancybox=True, shadow=True, ncol=4)
     if save:
         save_filepath = os.getcwd()+"/"+subject+"/"
         try:
             os.mkdir(save_filepath)
-        except OSError as error:
-            print(error)
+        except OSError:
             print("Filepath already exists! Will overwrite file.")
         plt.figure(1)
         plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-left-result" + ".png", format="png")
         plt.figure(2)
         plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-right-result" + ".png", format="png")
+        plt.figure(3)
+        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-chest-result" + ".png", format="png")
         plt.show()
         plt.close()
 
