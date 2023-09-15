@@ -12,11 +12,9 @@ import os
 
 def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=False, chest=False):
     # Parse for subject and trial_num
-    trial_num = data_filepath.split(sep='.')[0][-1]
-    if int(trial_num) == 0:
-        trial_num = data_filepath.split(sep='.')[0][-2:]
+    trial_num = data_filepath.split(sep='.')[0][-2:] if data_filepath.split(sep='.')[0][-2:].isdigit() else data_filepath.split(sep='.')[0][-1]
     subject = data_filepath.split(sep='/')[-3]
-    #
+    # select columns to compare, depending on which sensors we use
     if not chest:
         colNames = ['AccXlear', 'AccYlear', 'AccZlear', 'AccXrear', 'AccYrear', 'AccZrear']
         cols = [2, 3, 4, 11, 12, 13]

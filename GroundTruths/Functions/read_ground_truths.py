@@ -58,13 +58,13 @@ def read_ground_truth_data(file, save_dir=None):
     event_array_df.columns = ['Trial', 'LHC', 'RHC', 'LTO', 'RTO']
     print(event_array_df)
     if save_dir is not None:
-        event_array_df.to_csv(save_dir+"events-"+trial_num+".csv")
+        event_array_df.to_csv(save_dir+"events-"+trial_num+".csv", index_label='Index')
     return event_array_df
 
 
 def main():
     combined_df = pd.DataFrame()
-    subject = "Jamie"
+    subject = "Tom"
     load_dir = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/"+subject+"/Raw/"
     save_dir = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/"+subject+"/Parsed/"
     try:
