@@ -233,11 +233,15 @@ def main():
     og_data_filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/Walk/"
     savedir_TSP = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject+"/McCamley/"
     try:
+        os.mkdir("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject)
+    except OSError:
+        print("Directory already exists!")
+    try:
         os.mkdir(savedir_TSP)
     except OSError:
         print("Directory already exists!")
     try:
-        os.mkdir(os.getcwd()+subject+"/")
+        os.mkdir(os.getcwd()+"/"+subject+"/")
     except OSError:
         print("Directory already exists!")
     # loop through all files in the directory
@@ -259,11 +263,11 @@ def main():
         # Repeat for chest
         # LHC, RHC, LTO, RTO = cwt_algo(df['AccYchest'].values, df['GyroZchest'].values, side="left",
                                       # offset=df.at[0, 'Index'], view_plots=False)
-        LHC_chest, RHC_chest, LTO_chest, RTO_chest = cwt_algo(df['AccYchest'].values, side="left",
+        LHC_chest, RHC_chest, LTO_chest, RTO_chest = cwt_algo(df['AccYchest'].values, side="right",
                                       offset=df.at[0, 'Index'], ML_data=df['AccXchest'], view_plots=False)
         save_gait_events(LHC_chest, RHC_chest, LTO_chest, RTO_chest, subject, trial_num, "chest")
         calculate_TSPs(RHC_chest, LHC_chest, RTO_chest, LTO_chest, savedir_TSP + file.split(sep='.')[0] + "-chest-TSPs.csv")
-        compare_with_ground_truth(og_data_filepath + file, LHC_rear, RHC_rear, LTO_rear, RTO_rear, save=False, chest=True)
+        compare_with_ground_truth(og_data_filepath + file, LHC_rear, RHC_rear, LTO_rear, RTO_rear, save=True, chest=True)
 
 
 

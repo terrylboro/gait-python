@@ -42,3 +42,12 @@ def plot_all_new_data(filepath, title):
 
     plt.tight_layout()
     plt.show()
+
+def main():
+    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/Iwan/Walk/iwan-7.txt"
+    title = "data visualised"
+    plot_all_new_data(filepath, title)
+
+if __name__ == "__main__":
+    main()
+

@@ -55,6 +55,7 @@ def stride_time(HC):
 
 def swing_time(HC, TO):
     # Lineup HC and TO by iteratively shifting to left
+    offset = 0
     for i in range(0, len(TO)):
         if HC[i] > TO[0]:
             offset = i
@@ -65,6 +66,7 @@ def swing_time(HC, TO):
 
 def stance_time(HC, TO):
     # Lineup HC and TO by iteratively shifting to left
+    offset = 0
     for i in range(0, len(TO)):
         if TO[i] > HC[0]:
             offset = i

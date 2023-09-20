@@ -11,7 +11,7 @@ from Visualisation.Functions.plot_imu_xyz import plot_imu_xyz
 
 def crop_data(load_path, save_path):
     # make the column headers for the dataframe
-    colNames = np.loadtxt("/Utils/columnHeaders", delimiter=',',
+    colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/columnHeaders", delimiter=',',
                           dtype=str)
     # colNames = ['Frame', 'Time']
     # imu_locations = ['lear', 'rear', 'chest', 'pocket']
@@ -53,7 +53,7 @@ def crop_data(load_path, save_path):
 
 
 def main():
-    subject = "Jamie"
+    subject = "terryTest"
     filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/Walk/"
     # Make the directory for saving the cropped data
     savepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/CroppedWalk/"

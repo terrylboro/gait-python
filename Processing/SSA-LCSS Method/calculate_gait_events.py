@@ -7,9 +7,13 @@ from ssa import SSA
 from lcss_tslearn import perform_lcss
 from Processing.Common.calculate_tsps import calculate_TSPs
 from Processing.Common.tilt_correct import *
+import os
+import pandas as pd
+from Processing.Common.save_gait_events import save_gait_events
+from GroundTruths.Functions.compare_with_ground_truth import compare_with_ground_truth
 
 
-def calculate_gait_events(data, filename):
+def calculate_gait_events(data, offset):
     """ Calculate the gait events from inputted accelerometer data\n
     Inputs: AP, SI and ML data from ear-worn IMU\n
     Outputs: Locations of heel contacts and toe-offs """
@@ -36,7 +40,7 @@ def calculate_gait_events(data, filename):
         h[n] = q.idxmin()
     # Determine left/right heel contacts using ML axis
     # if s1_tilda[h[3] : h[4]].mean() > s1_tilda[h[4] : h[5]].mean():
-    if s1_tilda[h[2]: h[3]].mean() < s1_tilda[h[3]: h[4]].mean():
+    if s1_tilda[h[1]: h[2]].mean() > s1_tilda[h[2]: h[3]].mean():
         RHC = h[np.arange(1, len(h), 2)]
         LHC = h[np.arange(2, len(h), 2)]
     else:
@@ -117,25 +121,67 @@ def calculate_gait_events(data, filename):
             cj_closest_value = sorted(matched_out, key=lambda x: abs(gc_closest_value - x[0]))[0][1]
             LTO.append(cj_closest_value + RHC[i])
     # Now calculate the TSPs
-    # plt.show()
+    plt.show()
+    # correct for cropping
+    LHC += offset
+    RHC += offset
+    LTO += offset
+    RTO += offset
     print("RHC: ", RHC)
     print("LHC: ", LHC)
     print("RTO: ", RTO)
     print("LTO: ", LTO)
-    calculate_TSPs(RHC, LHC, RTO, LTO, filename)
-    plt.show()
+    return LHC, RHC, LTO, RTO
+    # plt.show()
+
 
 def main():
-    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/Iwan/"
-    static_filename = "iwan-static.txt"
+    subject = "Jamie"
+    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/CroppedWalk/"
+    static_filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/Static/" + subject + "-static.txt"
+    og_data_filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/Walk/"
+    savedir_TSP = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/" + subject + "/SSALCSS/"
+    try:
+        os.mkdir(savedir_TSP)
+    except OSError:
+        print("Directory already exists!")
+    try:
+        os.mkdir(os.getcwd() + "/" + subject + "/")
+    except OSError:
+        print("Directory already exists!")
+
+
     # Firstly, calculate the calibration rotation matrix
-    calib_data = np.loadtxt(filepath+static_filename, delimiter=',', usecols=[2, 3, 4])
-    rot_mat = calculate_rotation_matrix(calib_data)
-    for i in range(4, 10):
-        filename = "iwan-"+str(i)+".txt"
-        data = np.loadtxt(filepath+filename, delimiter=',', usecols=[2, 3, 4])
-        data = apply_calibration(rot_mat, data)
-        calculate_gait_events(data, filename)
+    # calib_data = np.loadtxt(static_filepath, delimiter=',', usecols=[2, 3, 4])
+    rot_mat_lear = calculate_rotation_matrix(np.loadtxt(static_filepath, delimiter=',', usecols=[2, 3, 4]))
+    rot_mat_rear = calculate_rotation_matrix(np.loadtxt(static_filepath, delimiter=',', usecols=[11, 12, 13]))
+
+    # cycle through the (cropped) walking files and calculate gait events
+    for file in os.listdir(filepath):
+        trial_num = file.split('.')[0][-2:] if file.split('.')[0][-2:].isdigit() else file.split('.')[0][-1:]
+        df = pd.read_csv(filepath+file, delimiter=',')
+        data_l = df.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
+        data_l = apply_calibration(rot_mat_lear, data_l)
+        LHC_lear, RHC_lear, LTO_lear, RTO_lear = calculate_gait_events(data_l, offset=df.at[0, 'Index'])
+        save_gait_events(LHC_lear, RHC_lear, LTO_lear, RTO_lear, 'SSA-LCSS Method', subject, trial_num, "left")
+        calculate_TSPs(RHC_lear, LHC_lear, RTO_lear, LTO_lear, savedir_TSP + file.split(sep='.')[0] + "-left-TSPs.csv")
+        # right side
+        data_r = df.loc[:, ['AccXrear', 'AccYrear', 'AccZrear']].values
+        data_r = apply_calibration(rot_mat_lear, data_r)
+        LHC_rear, RHC_rear, LTO_rear, RTO_rear = calculate_gait_events(data_r, offset=df.at[0, 'Index'])
+        save_gait_events(LHC_rear, RHC_rear, LTO_rear, RTO_rear, 'SSA-LCSS Method', subject, trial_num, "right")
+        calculate_TSPs(RHC_rear, LHC_rear, RTO_rear, LTO_rear, savedir_TSP + file.split(sep='.')[0] + "-right-TSPs.csv")
+        compare_with_ground_truth(og_data_filepath + file, LHC_rear, RHC_rear, LTO_rear, RTO_rear, save=False, chest=False)
+
+
+
+
+
+    # for i in range(4, 10):
+    #     filename = "iwan-"+str(i)+".txt"
+    #     data = np.loadtxt(filepath+filename, delimiter=',', usecols=[2, 3, 4])
+    #     data = apply_calibration(rot_mat, data)
+    #     calculate_gait_events(data, filename)
 
 
 if __name__ == '__main__':

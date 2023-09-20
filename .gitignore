@@ -14,3 +14,8 @@
 !/Visualisation/Functions/
 /Processing/McCamley Wavelet/*
 !/Processing/McCamley Wavelet/cwt.py
+/Processing/SSA-LCSS Method/*
+!/Processing/SSA-LCSS Method/calculate_gait_events.py
+!/Processing/SSA-LCSS Method/lcss.py
+!/Processing/SSA-LCSS Method/lcss_tslearn.py.py
+!/Processing/SSA-LCSS Method/ssa.py
