@@ -40,7 +40,8 @@ def plot_imu_xyz(accel, gyro, mag, time, title):
 
 
 def main():
-    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/Amy/CroppedWalk/amy-13.txt")
+    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
+                       "CroppedWalk/20231020-tom-05.txt")
     print(data.head())
     # accel = data.iloc[:, [2, 3, 4]].values
     # gyro = data.iloc[:, [5, 6, 7]].values

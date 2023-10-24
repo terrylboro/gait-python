@@ -16,16 +16,16 @@ from tslearn import metrics
 def perform_lcss(a, b, delta, epsilon, fig_num):
     lcss_path, sim_lcss = metrics.lcss_path(a, b, eps=epsilon)
 
-    plt.figure(fig_num, figsize=(8, 8))
-
-    plt.plot(a, "b-", label='Main gait cycle (standardised)')
-    plt.plot(b, "g-", label='Gait Cycle')
-
-    for positions in lcss_path:
-        plt.plot([positions[0], positions[1]],
-                 [a[positions[0]], b[positions[1]]], color='orange')
-    plt.legend()
-    plt.title("Time series matching with LCSS")
+    # plt.figure(fig_num, figsize=(8, 8))
+    #
+    # plt.plot(a, "b-", label='Main gait cycle (standardised)')
+    # plt.plot(b, "g-", label='Gait Cycle')
+    #
+    # for positions in lcss_path:
+    #     plt.plot([positions[0], positions[1]],
+    #              [a[positions[0]], b[positions[1]]], color='orange')
+    # plt.legend()
+    # plt.title("Time series matching with LCSS")
 
     return sim_lcss, lcss_path
 

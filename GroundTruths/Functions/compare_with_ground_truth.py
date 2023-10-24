@@ -24,7 +24,8 @@ def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=
     ground_truth_available = True
     # Load and plot the underlying gait signal for context
     data = pd.read_csv(data_filepath, delimiter=',', usecols=cols, names=colNames)
-    plot_gait_data(data, "Gait Event Comparison " + subject + '-' + str(int(trial_num)), plot_legend=False, chest=chest)
+    # plot_gait_data(data, "Gait Event Comparison " + subject + '-' + str(int(trial_num)), plot_legend=False, chest=chest)
+    plot_gait_data(data, "Gait Event Comparison for Subject B", plot_legend=False, chest=chest)
     # Load the ground truth arrays
     try:
         LHC_gt, RHC_gt, LTO_gt, RTO_gt = load_ground_truth(subject, trial_num)
@@ -32,21 +33,22 @@ def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=
         print("No ground truth data for trial: ", trial_num)
         ground_truth_available = False
     # Plot ground truths in bold
-    for fig_num in [1, 2, 3]:
+    iters = [1, 2] if not chest else [1, 2, 3]
+    for fig_num in iters:
         plt.figure(fig_num)
         if ground_truth_available:
             plt.vlines(LHC_gt, data.to_numpy().min(), data.to_numpy().max(), color='r')
             plt.vlines(RHC_gt, data.to_numpy().min(), data.to_numpy().max(), color='g')
         # Plot calculated events transparently
-        plt.vlines(LHC, data.to_numpy().min(), data.to_numpy().max(), color='r', alpha=0.5)#, linestyles='-.')
-        plt.vlines(RHC, data.to_numpy().min(), data.to_numpy().max(), color='g', alpha=0.5)#, linestyles='-.')
+        plt.vlines(LHC[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='r', alpha=0.5)#, linestyles='-.')
+        plt.vlines(RHC[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='g', alpha=0.5)#, linestyles='-.')
         # Do the same with Toe-Offs if info provided
         if LTO is not None and RTO is not None:
             if ground_truth_available:
                 plt.vlines(LTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles='--')
                 plt.vlines(RTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles='--')
-            plt.vlines(LTO, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles=':', alpha=0.5)
-            plt.vlines(RTO, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles=':', alpha=0.5)
+            plt.vlines(LTO[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles=':', alpha=0.5)
+            plt.vlines(RTO[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles=':', alpha=0.5)
 
         ax = plt.gca()
         if ground_truth_available:
@@ -78,12 +80,12 @@ def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=
         except OSError:
             print("Filepath already exists! Will overwrite file.")
         plt.figure(1)
-        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-left-result" + ".png", format="png")
+        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-left-result" + ".png", format="png", dpi=600)
         plt.figure(2)
-        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-right-result" + ".png", format="png")
+        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-right-result" + ".png", format="png", dpi=600)
         plt.figure(3)
-        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-chest-result" + ".png", format="png")
-        plt.show()
+        plt.savefig(save_filepath + subject + "-" + str(int(trial_num)) + "-chest-result" + ".png", format="png", dpi=600)
+        # plt.show()
         plt.close()
 
     else:

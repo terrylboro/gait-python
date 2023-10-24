@@ -55,15 +55,22 @@ class ViconComms(QRunnable):
 
     def run(self):
         """ polls the serial port and relays the result to the main thread, 0 = stop and 1 = go """
+        prevVal = b'0'
         while True:
             # Wait until there is data waiting in the serial buffer
-            prevVal = 0x00
             if self.mSerial.in_waiting > 0:
                 # return True if byte 0x01 (i.e. int 1) received else (assumed to be 0) False
                 val_received = self.mSerial.read(1)
-                if val_received == b'1': self.signals.start_record.emit()
-                elif val_received == b'0': self.signals.stop_record.emit()
+                if val_received == b'1':
+                    self.signals.start_record.emit()
+                    print("Vicon capture started!")
+                if val_received == b'1':
+                        print("Vicon capture started!")
+                        self.signals.start_record.emit()
+                elif val_received == b'0':
+                        self.signals.stop_record.emit()
                 else: print("received un recognised character: ", val_received)
+                prevVal = val_received
                 # print(val_received)
                 # if val_received != prevVal:
                 #     if val_received == 0x01:

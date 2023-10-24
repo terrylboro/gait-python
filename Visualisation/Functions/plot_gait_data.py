@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
 def plot_gait_data(data, title, save_dir=None, plot_legend=True, chest=False):
     """
@@ -22,9 +23,14 @@ def plot_gait_data(data, title, save_dir=None, plot_legend=True, chest=False):
     for col in cols:
         plt.figure(fig_num)
         fig_num += 1
-        plt.plot(data[col[0]].values, 'c-')
-        plt.plot(data[col[1]].values, 'm-')
-        plt.plot(data[col[2]].values, 'y-')
+        if col != right_cols:
+            plt.plot(-data[col[0]].values, 'c-')
+            plt.plot(data[col[1]].values, 'm-')
+            plt.plot(data[col[2]].values, 'y-')
+        else:
+            plt.plot(data[col[0]].values, 'c-')
+            plt.plot(data[col[1]].values, 'm-')
+            plt.plot(-data[col[2]].values, 'y-')
         plt.ylabel(r'Acceleration / $ms^{-2}$')
         plt.xlabel('Samples')
         if col == left_cols:
@@ -44,7 +50,10 @@ def plot_gait_data(data, title, save_dir=None, plot_legend=True, chest=False):
                       fancybox=True, shadow=True, ncol=5)
 
         if save_dir is not None:
-            plt.savefig(save_dir+title+".png", format="png")
+            if col == left_cols:
+                plt.savefig(save_dir+title[:-4]+"-left.png", format="png")
+            else:
+                plt.savefig(save_dir + title[:-4] + "-right.png", format="png")
 
 
     # plt.close()
@@ -60,10 +69,18 @@ def main():
     # print(colNames)
 
     colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/columnHeaders", delimiter=',', dtype=str)
-
-    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/Amy/Static/amy-static.txt", names=colNames)
-    print(data)
-    # plot_gait_data(data, "example")
+    load_path = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/omar/CroppedWalk/"
+    save_dir = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Visualisation/omar/Ear Data/"
+    try:
+        os.mkdir(save_dir)
+    except OSError:
+        print("Directory already exists")
+    for file in os.listdir(load_path):
+        # if file == "20231020-tom-05.txt":
+            data = pd.read_csv(load_path + file, names=colNames, skiprows=1)
+            print(data)
+            plot_gait_data(data, file, save_dir)
+            # plt.show()
 
 
 if __name__ == "__main__":

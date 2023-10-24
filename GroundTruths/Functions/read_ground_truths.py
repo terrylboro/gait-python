@@ -64,11 +64,14 @@ def read_ground_truth_data(file, save_dir=None):
 
 def main():
     combined_df = pd.DataFrame()
-    subject = "Tom"
+    subject = "TomBrace"
     load_dir = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/"+subject+"/Raw/"
     save_dir = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/"+subject+"/Parsed/"
     try:
         os.mkdir(load_dir)
+    except OSError as error:
+        print(error)
+    try:
         os.mkdir(save_dir)
     except OSError as error:
         print(error)

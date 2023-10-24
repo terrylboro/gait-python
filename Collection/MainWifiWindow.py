@@ -35,7 +35,8 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.isRunning = False  # Initialise to not running state
         # self.mSerial = serial.Serial()
         self.DataSaveEnabled = False
-        self.UsingVicon = False  # Change this to true to incorporate Vicon
+        self.UsingVicon = True  # Change this to true to incorporate Vicon
+        self.IsMobileLab = True  # Set to true if using mobile lab (i.e. receiver rather than trigger)
         if self.UsingVicon:
             self.serial_worker = ViconComms()  # setup vicon with selected port
 
@@ -69,8 +70,9 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.wifiButton.clicked.connect(self.evt_start_wifi)
         self.openGraphButton.clicked.connect(self.show_new_window)
         # self.startRunButton.clicked.connect(self.data_collect_enable)
-        self.stopRunButton.clicked.connect(self.stop_session)
-        self.saveDataButton.clicked.connect(self.data_save_enable)
+        if not self.IsMobileLab:
+            self.stopRunButton.clicked.connect(self.stop_session)
+            self.saveDataButton.clicked.connect(self.data_save_enable)
         self.ComNoSelect.currentTextChanged.connect(self.on_vicon_dropdown_changed)
         self.viewLatestButton.clicked.connect(self.view_latest_data)
         # self.wifi_thread.IMU_Data_Slot.connect(self.graphwindow.Plot_IMUData)
@@ -175,6 +177,8 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.serial_worker.signals.start_record.connect(self.data_save_enable)
                 self.serial_worker.signals.stop_record.connect(self.stop_session)
                 self.threadpool.start(self.serial_worker)
+                # if self.IsMobileLab:
+                    # self.serial_worker.run()
                 # self.serial_port_open()
             self.wifi_thread.IMU_Data_Slot.connect(self.plot_data)
             # self.wifi_thread.UDP_Data_Slot.connect(self.udpTest)
@@ -190,7 +194,8 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.DataSaveEnabled = True
             self.saveDataButton.setEnabled(False)
             if self.UsingVicon:
-                self.serial_worker.TrigerVicon_Start()
+                if not self.IsMobileLab:
+                    self.serial_worker.TrigerVicon_Start()
         else:
             print("Check the file-related entries are valid!")
 
@@ -202,6 +207,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         activity_dir = subject_dir + str(self.activityComboBox.currentText()) + '/'
         # Check that we're not going to overwrite a file
         self.latestFilePath = activity_dir + filename
+        print("Saving to: ", self.latestFilePath)
         if os.path.isfile(self.latestFilePath):
             print("This file already exits! Check the details")
             return True
@@ -247,8 +253,9 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print("Run not started yet!")
         else:
             if self.UsingVicon:
-                print("using vicon")
-                self.serial_worker.TrigerVicon_Stop()
+                print("Vicon capture ended!")
+                if not self.IsMobileLab:
+                    self.serial_worker.TrigerVicon_Stop()
             if self.DataSaveEnabled:
                 self.imudatafile.close()
                 self.DataSaveEnabled = False

@@ -18,13 +18,18 @@ def calculate_gait_events(data, offset):
     Inputs: AP, SI and ML data from ear-worn IMU\n
     Outputs: Locations of heel contacts and toe-offs """
     # Segment gait signals from acceleration data
-    s1 = data[:, 0]  # the ML axis
-    s2 = data[:, 2]  # the AP axis
+    s1 = data[:, 2]  # the ML axis
+    s2 = data[:, 0]  # the AP axis
     s3 = data[:, 1]  # the SI axis
     # Detect RHC and LHC
     window = 70  # define the window length for SSA
-    ssa_y = SSA(s2, window)
+    plt.figure()
+    plt.plot(s3)
+    ssa_y = SSA(s3, window)
+    plt.figure()
     y = ssa_y.reconstruct([1, 2])
+    plt.plot(y)
+    plt.show()
     # find local minima and maxima, must be < 0 and > 0 respectively
     i_min, i_min_heights = find_peaks(-y, height=0)
     i_max, i_max_heights = find_peaks(y, height=0)
@@ -33,11 +38,12 @@ def calculate_gait_events(data, offset):
     s1_tilda = SSA(s1, window).trend_removal()
     s2_tilda = SSA(s2, window).trend_removal()
     s3_tilda = SSA(s3, window).trend_removal()
-    tau1 = 2
+    tau1 = 1
     h = np.zeros(len(i_min), dtype=np.uint16)
     for n in range(0, len(i_min)):
-        q = s2_tilda[i_min[n] - tau1 : i_min[n] + tau1] * s3_tilda[i_min[n] - tau1 : i_min[n] + tau1]
-        h[n] = q.idxmin()
+        if i_min[n] > 5:
+            q = s2_tilda[i_min[n] - tau1 : i_min[n] + tau1] * s3_tilda[i_min[n] - tau1 : i_min[n] + tau1]
+            h[n] = q.idxmin()
     # Determine left/right heel contacts using ML axis
     # if s1_tilda[h[3] : h[4]].mean() > s1_tilda[h[4] : h[5]].mean():
     if s1_tilda[h[1]: h[2]].mean() > s1_tilda[h[2]: h[3]].mean():
@@ -70,7 +76,7 @@ def calculate_gait_events(data, offset):
     # so if -v is chosen we can correct it
     if np.sum(np.gradient(gc[:15])) < 0:
         gc = - gc
-    plt.plot(range(0, gc.size), gc)
+    # plt.plot(range(0, gc.size), gc)
 
     # Apply LCSS to find similarity
     RTO = []
@@ -123,10 +129,10 @@ def calculate_gait_events(data, offset):
     # Now calculate the TSPs
     plt.show()
     # correct for cropping
-    LHC += offset
-    RHC += offset
-    LTO += offset
-    RTO += offset
+    # LHC += offset
+    # RHC += offset
+    # LTO += offset
+    # RTO += offset
     print("RHC: ", RHC)
     print("LHC: ", LHC)
     print("RTO: ", RTO)
@@ -153,25 +159,27 @@ def main():
 
     # Firstly, calculate the calibration rotation matrix
     # calib_data = np.loadtxt(static_filepath, delimiter=',', usecols=[2, 3, 4])
-    rot_mat_lear = calculate_rotation_matrix(np.loadtxt(static_filepath, delimiter=',', usecols=[2, 3, 4]))
-    rot_mat_rear = calculate_rotation_matrix(np.loadtxt(static_filepath, delimiter=',', usecols=[11, 12, 13]))
+    # rot_mat_lear = calculate_rotation_matrix(np.loadtxt(static_filepath, delimiter=',', usecols=[2, 3, 4]))
+    # rot_mat_rear = calculate_rotation_matrix(np.loadtxt(static_filepath, delimiter=',', usecols=[11, 12, 13]))
 
     # cycle through the (cropped) walking files and calculate gait events
     for file in os.listdir(filepath):
-        trial_num = file.split('.')[0][-2:] if file.split('.')[0][-2:].isdigit() else file.split('.')[0][-1:]
-        df = pd.read_csv(filepath+file, delimiter=',')
-        data_l = df.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
-        data_l = apply_calibration(rot_mat_lear, data_l)
-        LHC_lear, RHC_lear, LTO_lear, RTO_lear = calculate_gait_events(data_l, offset=df.at[0, 'Index'])
-        save_gait_events(LHC_lear, RHC_lear, LTO_lear, RTO_lear, 'SSA-LCSS Method', subject, trial_num, "left")
-        calculate_TSPs(RHC_lear, LHC_lear, RTO_lear, LTO_lear, savedir_TSP + file.split(sep='.')[0] + "-left-TSPs.csv")
-        # right side
-        data_r = df.loc[:, ['AccXrear', 'AccYrear', 'AccZrear']].values
-        data_r = apply_calibration(rot_mat_lear, data_r)
-        LHC_rear, RHC_rear, LTO_rear, RTO_rear = calculate_gait_events(data_r, offset=df.at[0, 'Index'])
-        save_gait_events(LHC_rear, RHC_rear, LTO_rear, RTO_rear, 'SSA-LCSS Method', subject, trial_num, "right")
-        calculate_TSPs(RHC_rear, LHC_rear, RTO_rear, LTO_rear, savedir_TSP + file.split(sep='.')[0] + "-right-TSPs.csv")
-        compare_with_ground_truth(og_data_filepath + file, LHC_rear, RHC_rear, LTO_rear, RTO_rear, save=False, chest=False)
+        print(file)
+        if "jamie-6" in file:
+            trial_num = file.split('.')[0][-2:] if file.split('.')[0][-2:].isdigit() else file.split('.')[0][-1:]
+            df = pd.read_csv(filepath+file, delimiter=',')
+            data_l = df.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
+            # data_l = apply_calibration(rot_mat_lear, data_l)
+            LHC_lear, RHC_lear, LTO_lear, RTO_lear = calculate_gait_events(data_l, offset=df.at[0, 'Index'])
+            save_gait_events(LHC_lear, RHC_lear, LTO_lear, RTO_lear, 'SSA-LCSS Method', subject, trial_num, "left")
+            calculate_TSPs(RHC_lear, LHC_lear, RTO_lear, LTO_lear, savedir_TSP + file.split(sep='.')[0] + "-left-TSPs.csv")
+            # right side
+            data_r = df.loc[:, ['AccXrear', 'AccYrear', 'AccZrear']].values
+            # data_r = apply_calibration(rot_mat_lear, data_r)
+            LHC_rear, RHC_rear, LTO_rear, RTO_rear = calculate_gait_events(data_r, offset=df.at[0, 'Index'])
+            save_gait_events(LHC_rear, RHC_rear, LTO_rear, RTO_rear, 'SSA-LCSS Method', subject, trial_num, "right")
+            calculate_TSPs(RHC_rear, LHC_rear, RTO_rear, LTO_rear, savedir_TSP + file.split(sep='.')[0] + "-right-TSPs.csv")
+            compare_with_ground_truth(og_data_filepath + file, LHC_lear, RHC_lear, LTO_lear, RTO_lear, save=False, chest=False)
 
 
 

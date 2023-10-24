@@ -18,6 +18,11 @@ def cwt_algo(data, side, offset=0, angV=None, ML_data=None, view_plots=False):
     :return: Gait events (HS, TO)
     """
     # The preprocessing steps
+    plt.figure()
+    print(max(data))
+    # plt.plot(data - np.mean(data) / max(data))
+    data1 = data / max(data)
+    # plt.plot(data1)
     data = preprocess(data)
     # smax = (fc x Fs) / f
     # where fc=central wavelet freq., Fs sampling freq., f gait freq.
@@ -25,8 +30,20 @@ def cwt_algo(data, side, offset=0, angV=None, ML_data=None, view_plots=False):
     # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5087422/
     # https://pdf.sciencedirectassets.com/271166/1-s2.0-S0966636212X00079/1-s2.0-S0966636212000707/main.pdf?X-Amz-Security-Token=IQoJb3JpZ2luX2VjEIL%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCICG1immsgoKthqH48CJmxF7yIYbfDN3%2BZfu12aKub0njAiEAvGbL0Ec8Q5ioug%2B7kNqZJuxfIrVEZHQXdY1Unbzdy%2BwqswUIWhAFGgwwNTkwMDM1NDY4NjUiDJ8A0lW9eOrv6H8S8yqQBYoIUYacDPRRbc7QnrJPUF5sPKs8dRXyZsrGBgqtN8zQ9vVB44CAcUwooQgcsEWVvMnarstJfHbxcN4It2XdrYtL64GxfsDcYfMXvCvk%2BvHe6DpaxMF7mwcLeCRohBwsLfY9TIIxXzwGBBCnxleDs9rmA9qrJdcHX%2Fe4Dd5a6%2F7cuH%2B1mnGUJ5k%2Bz9eK%2BxEdZhkCs4a1uF5Fuaa9EjXEyRAABYqkt7NorrzUmFT2mj8GvK8Q0zWWxmChv9ijBZ7FDgLbIHq64eaLDvIOdt5miDrHAIIGRnT5YaQanZ4kC5%2F76XQP%2FTSQlnOdD94OLc0%2Bb29Kder3sTeeIScR6%2BmOCKcRuC5s4WQh%2B%2FIFlF70sX7XsfgNA9JQf%2Fig398AfrEtzKqzuY6XNmUaR5YfAfRTrxOj1PjehIrkzHdVVqhzOqivTH0DNR1q80ne8EutY6hdQmhhE4sZT8oV3dGPkNu56Gu2hh369V%2BPVTLd8RX0Yaq7cgFAflT7kHE5XcvdqGbZJeVFpD2oUHgxKqw56ggBQ9k%2FSe%2BkJjYue4R5YzE87aRU3RE3301dnmEQkRJ7b6J82%2FfFyZk55HqTOgcjmZd3xoojPMmg7Cp8NFrisHC02uk7WVktCGRD6tcLHYc7Rm8FJWysQ7GOpEryJGpS2cevG5ePc6pfWY99fD0em%2FPNpJPjNu95aEua5W6qc3o1t37DIMxnJE8RjTuIxq2f%2BREcQQlFodhm2Ey0N9ll1NPJ8qH2Me6MRQbqCJKGkJ6WmmOjViZ26ySLKzngdleG5avpoxt%2B90QVo3ZRg1hO2BrB3s1IY%2Bn%2BnXrS5HFn9lMdv7eoJ4M4PvRJ8Q03UdCCYwwOzdLKwtRuXfUvz9qNvsEzGhZSMPvh26cGOrEBw%2FWPfqXnqtJdL88AD0H65dvnoqKOuuMlA4wynHos9Hiteytf9LWXXOjm9KMtRMkuqmdtQkNozbj02hHvCOptMIwV5lPg4T32Yc%2BhIynKVLjt%2FKDWPCBHXhXhNpvYr5Oej5DeB8RAgprtqXtXQwXZQ3uoj%2F1kpkmzQtK7nYCwcwgTJHQ6nDDrk5Yk2hEmk8YVXUCISQrSyW9h5pexXTPizr%2FTloC%2FwmulkaYG%2BjJ1bJg3&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230905T094420Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=ASIAQ3PHCVTYYD6U3CWK%2F20230905%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=90ad6bdd197febd2e4d263691850a54ba6436445f056c3c1ab81fad3854bc983&hash=acbe01a4cde7dd512489d74eace8fe5cc5efb2e6fa9339c0c43e177491fc12f9&host=68042c943591013ac2b2430a89b270f6af2c76d8dfd086a07176afe7c76c2c61&pii=S0966636212000707&tid=spdf-697f933b-8586-4133-863a-7bba39a80125&sid=b9c9619188ea184710092292fcfacaa2cd37gxrqa&type=client&tsoh=d3d3LnNjaWVuY2VkaXJlY3QuY29t&ua=1c0f5853550a5f56525e5b&rr=801d88799b204e10&cc=fi
     scale = [1, 16]
+    # scale = [1, 32]
     coef, _ = pywt.cwt(data, scale, 'gaus2')
+
+    # test_diff_sig, _ = pywt.cwt(data, scale, 'morl')
+    # plt.plot(test_diff_sig[1] / max(test_diff_sig[1]))
+    # coef, _ = pywt.cwt(test_diff_sig[1], scale, 'gaus1')
+    # plt.plot(coef[1] / max(coef[1]))
+    # plt.show()
+
     diff_sig = coef[1]
+    # plt.plot(diff_sig / max(diff_sig))
+    # plt.plot(data / max(data))
+    # plt.plot(coefAlt[1] / max(coefAlt[1]))
+    # plt.show()
     # The minima of the differentiated signal (i.e. coeffs[0]) are the HC
     HC, _ = signal.find_peaks(-coef[1], prominence=1.5)
     # # Find the TO/FC locations by differentiating again and finding maxima
@@ -169,6 +186,12 @@ def determine_sides_accel(HC, TO, side, offset, ML_data):
                 else:
                     # At this point we should discard the toe-off
                     print("Discarded toe-off at location: ", TO[i])
+    # apply timestamping correction
+    # # allow for sampling and timestamps
+    # LHC = index_to_time(LHC_lear, og_df)
+    # RHC = index_to_time(RHC_lear, og_df)
+    # LTO = index_to_time(LTO_lear, og_df)
+    # RTO = index_to_time(RTO_lear, og_df)
     # correct for cropping
     LHC += offset
     RHC += offset
@@ -196,8 +219,8 @@ def preprocess(data):
     :param data:
     :return: Preprocessed data
     """
-    plt.figure()
-    plt.plot(data)
+    # plt.figure()
+    # plt.plot(data)
     data = signal.detrend(data)
     sos = signal.butter(2, 10, 'lp', fs=100, output='sos')
     filtered_data = signal.sosfilt(sos, data)
@@ -226,9 +249,46 @@ def test_cwt():
     plt.show()  # doctest: +SKIP
 
 
+def group_events(lear, rear, chest=None):
+    if chest:
+        array_len = max(len(lear), len(rear), len(chest))
+        events = np.zeros((array_len, 3))
+        events[:len(lear), 0] = lear
+        events[:len(rear), 1] = rear
+        events[:len(chest), 2] = chest
+    else:
+        array_len = max(len(lear), len(rear))
+        events = np.zeros((array_len, 3))
+        events[:len(lear), 0] = lear
+        events[:len(rear), 1] = rear
+    return events
+
+
+def index_to_time(event_array, df, offset):
+    """ convert a sample number to a timestamp """
+    # print(df.iloc[0, [1]].to_numpy().astype(int).flatten())
+    # print(offset)
+    offset_micros = (offset - df.iloc[0, [1]].to_numpy().astype(int).flatten()) / (0.5 * 10**4)
+    # print(offset_micros)
+    # offset_micros = offset - df.iloc[0, [1]]
+    # print("offset_micros: ", offset_micros)
+    time_array = df.iloc[event_array, [1]]
+    print(time_array)
+    # time_array -= df.iloc[0, [1]]
+    time_array -= offset
+    # time_array += offset_micros
+    time_array /= 10**4  # 10^6micros() - 10^2Hz
+    time_array *= 2
+    time_array = round(time_array).to_numpy().astype(int).flatten().tolist()
+    print(time_array)
+    time_array += offset_micros
+    return time_array
+
+
+
 def main():
     # test_cwt()
-    subject = "Tom"
+    subject = "TomBrace"
     filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/CroppedWalk/"
     og_data_filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/"+subject+"/Walk/"
     savedir_TSP = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject+"/McCamley/"
@@ -248,9 +308,19 @@ def main():
     for file in os.listdir(filepath):
         trial_num = file.split('.')[0][-2:] if file.split('.')[0][-2:].isdigit() else file.split('.')[0][-1:]
         df = pd.read_csv(filepath+file, delimiter=',')
+        og_df = pd.read_csv(og_data_filepath+file, delimiter=',', header=None)
+        # correct for upside down-ness
+        df['AccYrear'] = - df['AccYrear']
+        df['AccZrear'] = - df['AccZrear']
         # LHC, RHC, LTO, RTO = cwt_algo(df['AccYlear'].values, side="left", offset=df.at[0, 'Index'], angV=df['GyroXlear'].values,  view_plots=False)
         LHC_lear, RHC_lear, LTO_lear, RTO_lear = cwt_algo(df['AccYlear'].values, side="left", offset=df.at[0, 'Index'],
                                       ML_data=df['AccZlear'].values, view_plots=False)
+        # allow for sampling and timestamps
+        LHC_lear = index_to_time(LHC_lear, og_df, df.at[0, 'Time'])
+        RHC_lear = index_to_time(RHC_lear, og_df, df.at[0, 'Time'])
+        LTO_lear = index_to_time(LTO_lear, og_df, df.at[0, 'Time'])
+        RTO_lear = index_to_time(RTO_lear, og_df, df.at[0, 'Time'])
+
         save_gait_events(LHC_lear, RHC_lear, LTO_lear, RTO_lear, subject, trial_num, "left")
         # compare_with_ground_truth(og_data_filepath+file, LHC, RHC, LTO, RTO, save=False)
         calculate_TSPs(RHC_lear, LHC_lear, RTO_lear, LTO_lear, savedir_TSP + file.split(sep='.')[0] + "-left-TSPs.csv")
@@ -258,16 +328,31 @@ def main():
         # LHC, RHC, LTO, RTO = cwt_algo(df['AccYrear'].values, side="right", offset=df.at[0, 'Index'], angV=df['GyroXrear'].values,  view_plots=False)
         LHC_rear, RHC_rear, LTO_rear, RTO_rear = cwt_algo(df['AccYrear'].values, side="right", offset=df.at[0, 'Index'],
                                       ML_data=df['AccZrear'].values, view_plots=False)
+        # allow for sampling and timestamps
+        # print("offset val: ", df.at[0, 'Time'])
+        LHC_rear = index_to_time(LHC_rear, og_df, df.at[0, 'Time'])
+        RHC_rear = index_to_time(RHC_rear, og_df, df.at[0, 'Time'])
+        LTO_rear = index_to_time(LTO_rear, og_df, df.at[0, 'Time'])
+        RTO_rear = index_to_time(RTO_rear, og_df, df.at[0, 'Time'])
+
+
         save_gait_events(LHC_rear, RHC_rear, LTO_rear, RTO_rear, subject, trial_num, "right")
         calculate_TSPs(RHC_rear, LHC_rear, RTO_rear, LTO_rear, savedir_TSP + file.split(sep='.')[0] + "-right-TSPs.csv")
         # Repeat for chest
         # LHC, RHC, LTO, RTO = cwt_algo(df['AccYchest'].values, df['GyroZchest'].values, side="left",
-                                      # offset=df.at[0, 'Index'], view_plots=False)
-        LHC_chest, RHC_chest, LTO_chest, RTO_chest = cwt_algo(df['AccYchest'].values, side="right",
-                                      offset=df.at[0, 'Index'], ML_data=df['AccXchest'], view_plots=False)
-        save_gait_events(LHC_chest, RHC_chest, LTO_chest, RTO_chest, subject, trial_num, "chest")
-        calculate_TSPs(RHC_chest, LHC_chest, RTO_chest, LTO_chest, savedir_TSP + file.split(sep='.')[0] + "-chest-TSPs.csv")
-        compare_with_ground_truth(og_data_filepath + file, LHC_rear, RHC_rear, LTO_rear, RTO_rear, save=True, chest=True)
+        #                               # offset=df.at[0, 'Index'], view_plots=False)
+        # LHC_chest, RHC_chest, LTO_chest, RTO_chest = cwt_algo(df['AccYchest'].values, side="right",
+        #                               offset=df.at[0, 'Index'], ML_data=df['AccXchest'], view_plots=False)
+        # save_gait_events(LHC_chest, RHC_chest, LTO_chest, RTO_chest, subject, trial_num, "chest")
+        # calculate_TSPs(RHC_chest, LHC_chest, RTO_chest, LTO_chest, savedir_TSP + file.split(sep='.')[0] + "-chest-TSPs.csv")
+        # group all of the events together
+        LHCs = group_events(LHC_lear, LHC_rear)#, LHC_chest)
+        RHCs = group_events(RHC_lear, RHC_rear)#, RHC_chest)
+        LTOs = group_events(LTO_rear, LTO_rear)#, LTO_chest)
+        RTOs = group_events(RTO_rear, RTO_rear)#, RTO_chest)
+        # print(index_to_time(LHCs, df))
+        # print(LTOs)
+        compare_with_ground_truth(og_data_filepath + file, LHCs, RHCs, LTOs, RTOs, save=False, chest=False)
 
 
 

@@ -141,7 +141,8 @@ def main():
     # Try this in a loop
     subject = "Jamie"
     filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/" + subject + "/Parsed/"
-    for i in range(2, 8):
+    savedir_TSP = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/" + subject + "/"
+    for i in [2, 3, 4, 5, 6, 7]:
         try:
             df = pd.read_csv(filepath + "events-" + str(i).zfill(2) + ".csv")
         except FileNotFoundError as error:
@@ -151,7 +152,7 @@ def main():
         RHC = df['RHC'].values
         LTO = df['LTO'].values
         RTO = df['RTO'].values
-        calculate_TSPs(RHC, LHC, RTO, LTO, subject, i, 'truth')
+        calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP+str(i)+'truth')
 
 
 if __name__ == "__main__":
