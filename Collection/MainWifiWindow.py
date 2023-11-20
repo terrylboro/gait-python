@@ -35,10 +35,10 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.isRunning = False  # Initialise to not running state
         # self.mSerial = serial.Serial()
         self.DataSaveEnabled = False
-        self.UsingVicon = True  # Change this to true to incorporate Vicon
-        self.IsMobileLab = True  # Set to true if using mobile lab (i.e. receiver rather than trigger)
+        self.UsingVicon = True # Change this to true to incorporate Vicon
+        self.IsMobileLab = False  # Set to true if using mobile lab (i.e. receiver rather than trigger)
         if self.UsingVicon:
-            self.serial_worker = ViconComms()  # setup vicon with selected port
+            self.serial_worker = ViconComms(port="COM6", baudrate=1000000)  # setup vicon with selected port
 
         # variables for saving data
         self.filename = "Filename"  # set default value
@@ -46,6 +46,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.filedir = str(sys.path[1] + "\\Data")  # default path is current directory
         self.imudatafile = None  # this will be the variable storing the .txt file
         self.firstFrameFlag = True  # this is set to false once we start saving
+        self.colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/timestampedColumnHeaders", "r").read()
 
         # variables to process the incoming data frames
         self.prevFrameNum = None  # this will be populated  in DataSave
@@ -140,7 +141,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def fill_activity_entry(self):
         """ pre-fill the list of activities dropbox """
-        activities = ["Static", "Walk", "Sit2Stand", "Stand2Sit", "TUG"]
+        activities = ["Static", "Walk", "WalkShake", "WalkNod", "Sit2Stand", "Stand2Sit", "TUG", "Reach"]
         self.activityComboBox.addItems(activities)
         self.activityComboBox.setCurrentText("Static")
 
@@ -195,6 +196,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.saveDataButton.setEnabled(False)
             if self.UsingVicon:
                 if not self.IsMobileLab:
+                    print("Triggering vicon")
                     self.serial_worker.TrigerVicon_Start()
         else:
             print("Check the file-related entries are valid!")
@@ -208,22 +210,23 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Check that we're not going to overwrite a file
         self.latestFilePath = activity_dir + filename
         print("Saving to: ", self.latestFilePath)
-        if os.path.isfile(self.latestFilePath):
-            print("This file already exits! Check the details")
-            return True
-        else:
-            # first create a new dir if it didn't already exist
-            if not os.path.isdir(subject_dir):
-                try:
-                    os.mkdir(subject_dir)
-                except OSError as error:
-                    print(error)
-            if not os.path.isdir(activity_dir):
-                try:
-                    os.mkdir(activity_dir)
-                except OSError:
-                    print("Adding to existing folder")
-            return False
+        # if os.path.isfile(self.latestFilePath):
+        #     # print("This file already exits! Check the details")
+        #     print("Overwriting file!")
+        #     return True
+        # else:
+        # first create a new dir if it didn't already exist
+        if not os.path.isdir(subject_dir):
+            try:
+                os.mkdir(subject_dir)
+            except OSError as error:
+                print(error)
+        if not os.path.isdir(activity_dir):
+            try:
+                os.mkdir(activity_dir)
+            except OSError:
+                print("Adding to existing folder")
+        return False
 
     # saving the data
     def data_save(self, IMU_Data):
@@ -238,6 +241,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.prevFrameNum = frametosave[0]
             frametosave[0] = 1
             self.firstFrameFlag = False
+            self.imudatafile.writelines([self.colNames, '', '\n'])
         # otherwise we can just find the difference between frame numbers
         else:
             incomingPrevFrameNum = frametosave[0]

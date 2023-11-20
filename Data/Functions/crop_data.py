@@ -88,7 +88,7 @@ def crop_ear_data(load_path, save_path):
             data.to_csv(save_path+file, index_label="Index")
 
 def main():
-    subject = "20231020-tom"
+    subject = "TF_00"
     filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/Walk/"
     # Make the directory for saving the cropped data
     savepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/CroppedWalk/"

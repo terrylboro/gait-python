@@ -69,7 +69,7 @@ def main():
     # print(colNames)
 
     colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/columnHeaders", delimiter=',', dtype=str)
-    load_path = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/omar/CroppedWalk/"
+    load_path = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/TF_00/Static/"
     save_dir = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Visualisation/omar/Ear Data/"
     try:
         os.mkdir(save_dir)
@@ -79,8 +79,9 @@ def main():
         # if file == "20231020-tom-05.txt":
             data = pd.read_csv(load_path + file, names=colNames, skiprows=1)
             print(data)
-            plot_gait_data(data, file, save_dir)
-            # plt.show()
+            # plot_gait_data(data, file, save_dir)
+            plot_gait_data(data, file)#, save_dir)
+            plt.show()
 
 
 if __name__ == "__main__":

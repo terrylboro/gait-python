@@ -99,26 +99,27 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
     def Plot_IMUdata(self, IMU_Data):
-        # print("about to plot data...")
+        # Firstly, populate the empty graph until the end is reached
         if self.PlotInit_Counter < self.historyLength:
-            # print(len(IMU_Data))
-            self.data_A[self.PlotInit_Counter] = IMU_Data[2:11]
-            self.data_B[self.PlotInit_Counter] = IMU_Data[11:20]
-            self.data_C[self.PlotInit_Counter] = IMU_Data[20:29]
-            self.data_D[self.PlotInit_Counter] = IMU_Data[29:38]
+            self.data_A[self.PlotInit_Counter] = IMU_Data[9:18]
+            self.data_B[self.PlotInit_Counter] = IMU_Data[18:27]
+            self.data_C[self.PlotInit_Counter] = IMU_Data[27:36]
+            self.data_D[self.PlotInit_Counter] = IMU_Data[36:45]
             self.PlotInit_Counter = self.PlotInit_Counter + 1
         else:
+            # Now cycle the data so the latest value is plotted at the very right
             self.data_A[:-1] = self.data_A[1:]
-            self.data_A[-1:] = IMU_Data[2:11]
+            self.data_A[-1:] = IMU_Data[9:18]
 
             self.data_B[:-1] = self.data_B[1:]
-            self.data_B[-1:] = IMU_Data[11:20]
+            self.data_B[-1:] = IMU_Data[18:27]
 
             self.data_C[:-1] = self.data_C[1:]
-            self.data_C[-1:] = IMU_Data[20:29]
+            self.data_C[-1:] = IMU_Data[27:36]
 
             self.data_D[:-1] = self.data_D[1:]
-            self.data_D[-1:] = IMU_Data[29:38]
+            # self.data_D[-1:] = IMU_Data[29:38]
+            self.data_D[-1:] = IMU_Data[36:45]
 
         self.PlotFrame_Counter = self.PlotFrame_Counter + 1
         # self.data[:-1] = self.data[1:]

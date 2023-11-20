@@ -22,7 +22,9 @@ class Thread_Serial(QThread):
         self.Last = bytes()
         self.HeadFound = False
         # self.FrameLength = 116
-        self.FrameLength = 156
+        # self.FrameLength = 156
+        # self.FrameLength = 168
+        self.FrameLength = 184
         self.DataSave_Init = True
         self.isStopped = False
         # 指定协议
@@ -53,84 +55,81 @@ class Thread_Serial(QThread):
     # 处理要做的业务逻辑
     # Handle the business logic to be done
     def run(self):
-        # print("entered run")
-        # while not self.isStopped:
         while True:
-            # print("awaiting client data")
             self.Serial_RxData = self.clientsocket.recv(self.FrameLength)
-            # print("received client data")
-            # print(self.Serial_RxData)
-            # 索引帧头
-            # 如果找到，从帧头开始，将数据截成2段，帧头之前放LastPart，帧头+帧头之后放Current
-            # 如果未找到，全部数据放LastPart
-            # index frame header
-            # If found, start from the frame header, cut the data into 2 segments, put LastPart before the frame header,
-            # and put Current after the frame header + frame header
-            # If not found, put all data in LastPart
-            for self.index, self.checker in enumerate(self.Serial_RxData):
-                # print("self.checker is: ", self.checker)
-                # print("self.index is: ", self.index)
-                if self.checker == 0xAA and self.index < (len(self.Serial_RxData)-1):
-                    # print("self.Serial_RxData[self.index+1] is: ", self.Serial_RxData[self.index+1])
-                    if self.Serial_RxData[self.index+1] == 0xBB:
-                        self.LastPart = self.Serial_RxData[0:self.index]
-                        self.Current = self.Serial_RxData[self.index:len(self.Serial_RxData)]
-                        self.HeadFound = True
-                        break
-                        # print("about to receive client data")
-            # 如果未找到帧头，数据全部放LastPart
-            # If no frame header is found, all data will be placed in LastPart
-            if not self.HeadFound:
-                # print("no head found")
-                self.LastPart = self.Serial_RxData
-                self.Current = bytes()
-
-            # 将本次读取的LastPart和之前的Last部分拼接，检查长度够不够1帧，如果超过1帧长度，则提取帧
-            # 如果提取到帧，帧后面还有数据，则判断本次接收数据是否包含帧头
-            # 若未接收到帧头，说明帧提取后剩余的数据和当前接收的数据可能是同一帧数据，二者均需要保留，以供拼接
-            # 若本次接收到帧头，提取帧后还剩余的数据为无效数据，丢弃
-            # Splice the LastPart read this time with the previous Last part, check if the length is enough for 1 frame, if it exceeds 1 frame length, extract the frame
-            # If the frame is extracted and there is data behind the frame, then judge whether the received data contains the frame header
-            # If the frame header is not received, it means that the remaining data after frame extraction and the currently received data may be the same frame data, and both need to be reserved for splicing
-            # If the frame header is received this time, the remaining data after extracting the frame is invalid and discarded
-            self.Last = self.Last + self.LastPart
-            # print("self.Last is: ", str(self.Last))
-            # print("self.FrameLength is: ", str(self.FrameLength))
-            if len(self.Last) >= self.FrameLength:
-                for self.index_last, self.checker_last in enumerate(self.Last):
-                    # print("self.checker_last is: ", self.checker_last)
-                    # print("self.index_last is: ", self.index_last)
-                    # print("self.Last[self.index_last + 1] is: ", self.Last[self.index_last + 1])
-                    if self.checker_last == 0xAA and self.index_last < (len(self.Last) - 1):
-                        if self.Last[self.index_last + 1] == 0xBB and (len(self.Last) - self.index_last) >= self.FrameLength:
-                            self.Last_next = self.Last[self.index_last + self.FrameLength:len(self.Last)]
-                            self.Last = self.Last[self.index_last: self.index_last+self.FrameLength]
-                            # print("extracting data...")
-                            self.Data_Extract(self.Last)
-                            self.Last = self.Last_next
+            # print(len(self.Serial_RxData))
+            if len(self.Serial_RxData) == self.FrameLength:
+                # 索引帧头
+                # 如果找到，从帧头开始，将数据截成2段，帧头之前放LastPart，帧头+帧头之后放Current
+                # 如果未找到，全部数据放LastPart
+                # index frame header
+                # If found, start from the frame header, cut the data into 2 segments, put LastPart before the frame header,
+                # and put Current after the frame header + frame header
+                # If not found, put all data in LastPart
+                for self.index, self.checker in enumerate(self.Serial_RxData):
+                    # print("self.checker is: ", self.checker)
+                    # print("self.index is: ", self.index)
+                    if self.checker == 0xAA and self.index < (len(self.Serial_RxData)-1):
+                        # print("self.Serial_RxData[self.index+1] is: ", self.Serial_RxData[self.index+1])
+                        if self.Serial_RxData[self.index+1] == 0xBB:
+                            self.LastPart = self.Serial_RxData[0:self.index]
+                            self.Current = self.Serial_RxData[self.index:len(self.Serial_RxData)]
+                            self.HeadFound = True
                             break
-            if self.HeadFound:
-                self.Last = bytes()
-            # 如果接收到帧头，在处理完帧头之前的数据以后，检查帧头后面的数据有无完整帧，并确定有几帧
-            # If the frame header is received, after processing the data before the frame header,
-            # check whether the data after the frame header has a complete frame, and determine how many frames there are
-            self.Len_Current = len(self.Current)
-            self.N_Frame = self.Len_Current // self.FrameLength
-            # self.Len_NextPart = self.Len_Current % self.FrameLength
-            for self.i in range(self.N_Frame):
-                self.Frame = self.Current[self.FrameLength*self.i:self.FrameLength*(self.i+1)]
-                # print("extracting data...")
-                self.Data_Extract(self.Frame)
-            self.NextPart = self.Current[self.N_Frame*self.FrameLength:self.Len_Current]
-            # 将本次帧提取之后，后面剩余的数据保留，以供下次接收数据后拼接
-            # 注意，程序运行到这里，如果有提取到帧，则帧之前的无效数据已全部丢弃，如果没有提取到帧，则所有数据都会保留，供下次拼接
-            # After this frame is extracted, the rest of the data will be kept for splicing after receiving data next time
-            # Note that when the program runs here, if a frame is extracted, all invalid data before the frame has been discarded,
-            # and if no frame is extracted, all data will be retained for the next splicing
-            self.Last = self.Last + self.NextPart
-            self.HeadFound = False
-            # else:
-            #     time.sleep(0.001)
+                # 如果未找到帧头，数据全部放LastPart
+                # If no frame header is found, all data will be placed in LastPart
+                if not self.HeadFound:
+                    # print("no head found")
+                    self.LastPart = self.Serial_RxData
+                    self.Current = bytes()
+
+                # 将本次读取的LastPart和之前的Last部分拼接，检查长度够不够1帧，如果超过1帧长度，则提取帧
+                # 如果提取到帧，帧后面还有数据，则判断本次接收数据是否包含帧头
+                # 若未接收到帧头，说明帧提取后剩余的数据和当前接收的数据可能是同一帧数据，二者均需要保留，以供拼接
+                # 若本次接收到帧头，提取帧后还剩余的数据为无效数据，丢弃
+                # Splice the LastPart read this time with the previous Last part, check if the length is enough for 1 frame, if it exceeds 1 frame length, extract the frame
+                # If the frame is extracted and there is data behind the frame, then judge whether the received data contains the frame header
+                # If the frame header is not received, it means that the remaining data after frame extraction and the currently received data may be the same frame data, and both need to be reserved for splicing
+                # If the frame header is received this time, the remaining data after extracting the frame is invalid and discarded
+                self.Last = self.Last + self.LastPart
+                # print("self.Last is: ", str(self.Last))
+                # print("self.FrameLength is: ", str(self.FrameLength))
+                if len(self.Last) >= self.FrameLength:
+                    for self.index_last, self.checker_last in enumerate(self.Last):
+                        # print("self.checker_last is: ", self.checker_last)
+                        # print("self.index_last is: ", self.index_last)
+                        # print("self.Last[self.index_last + 1] is: ", self.Last[self.index_last + 1])
+                        if self.checker_last == 0xAA and self.index_last < (len(self.Last) - 1):
+                            if self.Last[self.index_last + 1] == 0xBB and (len(self.Last) - self.index_last) >= self.FrameLength:
+                                self.Last_next = self.Last[self.index_last + self.FrameLength:len(self.Last)]
+                                self.Last = self.Last[self.index_last: self.index_last+self.FrameLength]
+                                # print("extracting data...")
+                                self.Data_Extract(self.Last)
+                                self.Last = self.Last_next
+                                break
+                if self.HeadFound:
+                    self.Last = bytes()
+                # 如果接收到帧头，在处理完帧头之前的数据以后，检查帧头后面的数据有无完整帧，并确定有几帧
+                # If the frame header is received, after processing the data before the frame header,
+                # check whether the data after the frame header has a complete frame, and determine how many frames there are
+                self.Len_Current = len(self.Current)
+                # print(self.Len_Current)
+                self.N_Frame = self.Len_Current // self.FrameLength
+                # self.Len_NextPart = self.Len_Current % self.FrameLength
+                for i in range(self.N_Frame):
+                    self.Frame = self.Current[self.FrameLength*i:self.FrameLength*(i+1)]
+                    # print("extracting data...")
+                    self.Data_Extract(self.Frame)
+                self.NextPart = self.Current[self.N_Frame*self.FrameLength:self.Len_Current]
+                # 将本次帧提取之后，后面剩余的数据保留，以供下次接收数据后拼接
+                # 注意，程序运行到这里，如果有提取到帧，则帧之前的无效数据已全部丢弃，如果没有提取到帧，则所有数据都会保留，供下次拼接
+                # After this frame is extracted, the rest of the data will be kept for splicing after receiving data next time
+                # Note that when the program runs here, if a frame is extracted, all invalid data before the frame has been discarded,
+                # and if no frame is extracted, all data will be retained for the next splicing
+                self.Last = self.Last + self.NextPart
+                self.HeadFound = False
+                # else:
+                #     time.sleep(0.001)
 
     def Data_Extract(self, Frame_Data):
         # print(Frame_Data)
@@ -138,49 +137,76 @@ class Thread_Serial(QThread):
         self.FrameNumber = self.FrameNumber[0] << 24 | self.FrameNumber[1] << 16 | self.FrameNumber[2] << 8 | \
                            self.FrameNumber[3]
 
-        self.TimeStamp = Frame_Data[6:10]
-        self.TimeStamp = self.TimeStamp[0] << 24 | self.TimeStamp[1] << 16 | self.TimeStamp[2] << 8 | \
-                           self.TimeStamp[3]
+        # self.TimeStamp = Frame_Data[6:10]
+        # self.TimeStamp = self.TimeStamp[0] << 24 | self.TimeStamp[1] << 16 | self.TimeStamp[2] << 8 | \
+        #                    self.TimeStamp[3]
 
-        self.AccAX = Frame_Data[10:14]
-        self.AccAY = Frame_Data[14:18]
-        self.AccAZ = Frame_Data[18:22]
-        self.GyroAX = Frame_Data[22:26]
-        self.GyroAY = Frame_Data[26:30]
-        self.GyroAZ = Frame_Data[30:34]
-        self.MagAX = Frame_Data[34:38]
-        self.MagAY = Frame_Data[38:42]
-        self.MagAZ = Frame_Data[42:46]
+        self.AccelTimeStampA = Frame_Data[6:10]
+        self.AccelTimeStampA = self.AccelTimeStampA[0] << 24 | self.AccelTimeStampA[1] << 16 | self.AccelTimeStampA[2] << 8 | \
+                         self.AccelTimeStampA[3]
+        self.AccelTimeStampB = Frame_Data[10:14]
+        self.AccelTimeStampB = self.AccelTimeStampB[0] << 24 | self.AccelTimeStampB[1] << 16 | self.AccelTimeStampB[2] << 8 | \
+                          self.AccelTimeStampB[3]
+        self.MagTimeStampA = Frame_Data[14:18]
+        self.MagTimeStampA = self.MagTimeStampA[0] << 24 | self.MagTimeStampA[1] << 16 | self.MagTimeStampA[2] << 8 | \
+                          self.MagTimeStampA[3]
+        self.MagTimeStampB = Frame_Data[18:22]
+        self.MagTimeStampB = self.MagTimeStampB[0] << 24 | self.MagTimeStampB[1] << 16 | self.MagTimeStampB[2] << 8 | \
+                          self.MagTimeStampB[3]
+        # bottom timestamps
+        self.AccelTimeStampC = Frame_Data[22:26]
+        self.AccelTimeStampC = self.AccelTimeStampC[0] << 24 | self.AccelTimeStampC[1] << 16 | self.AccelTimeStampC[2] << 8 | \
+                               self.AccelTimeStampC[3]
+        self.AccelTimeStampD = Frame_Data[26:30]
+        self.AccelTimeStampD = self.AccelTimeStampD[0] << 24 | self.AccelTimeStampD[1] << 16 | self.AccelTimeStampD[2] << 8 | \
+                               self.AccelTimeStampD[3]
+        self.MagTimeStampC = Frame_Data[30:34]
+        self.MagTimeStampC = self.MagTimeStampC[0] << 24 | self.MagTimeStampC[1] << 16 | self.MagTimeStampC[2] << 8 | \
+                             self.MagTimeStampC[3]
+        self.MagTimeStampD = Frame_Data[34:38]
+        self.MagTimeStampD = self.MagTimeStampD[0] << 24 | self.MagTimeStampD[1] << 16 | self.MagTimeStampD[2] << 8 | \
+                             self.MagTimeStampD[3]
 
-        self.AccBX = Frame_Data[46:50]
-        self.AccBY = Frame_Data[50:54]
-        self.AccBZ = Frame_Data[54:58]
-        self.GyroBX = Frame_Data[58:62]
-        self.GyroBY = Frame_Data[62:66]
-        self.GyroBZ = Frame_Data[66:70]
-        self.MagBX = Frame_Data[70:74]
-        self.MagBY = Frame_Data[74:78]
-        self.MagBZ = Frame_Data[78:82]
+        # IMU data
+        self.AccAX = Frame_Data[self.FrameLength - 146 : self.FrameLength - 142]
+        self.AccAY = Frame_Data[self.FrameLength - 142 : self.FrameLength - 138]
+        self.AccAZ = Frame_Data[self.FrameLength - 138 : self.FrameLength - 134]
+        self.GyroAX = Frame_Data[self.FrameLength - 134 : self.FrameLength - 130]
+        self.GyroAY = Frame_Data[self.FrameLength - 130 : self.FrameLength - 126]
+        self.GyroAZ = Frame_Data[self.FrameLength - 126 : self.FrameLength - 122]
+        self.MagAX = Frame_Data[self.FrameLength - 122 : self.FrameLength - 118]
+        self.MagAY = Frame_Data[self.FrameLength - 118 : self.FrameLength - 114]
+        self.MagAZ = Frame_Data[self.FrameLength - 114 : self.FrameLength - 110]
 
-        self.AccCX = Frame_Data[82:86]
-        self.AccCY = Frame_Data[86:90]
-        self.AccCZ = Frame_Data[90:94]
-        self.GyroCX = Frame_Data[94:98]
-        self.GyroCY = Frame_Data[98:102]
-        self.GyroCZ = Frame_Data[102:106]
-        self.MagCX = Frame_Data[106:110]
-        self.MagCY = Frame_Data[110:114]
-        self.MagCZ = Frame_Data[114:118]
+        self.AccBX = Frame_Data[self.FrameLength - 110 : self.FrameLength - 106]
+        self.AccBY = Frame_Data[self.FrameLength - 106 : self.FrameLength - 102]
+        self.AccBZ = Frame_Data[self.FrameLength - 102 : self.FrameLength - 98]
+        self.GyroBX = Frame_Data[self.FrameLength - 98 : self.FrameLength - 94]
+        self.GyroBY = Frame_Data[self.FrameLength - 94 : self.FrameLength - 90]
+        self.GyroBZ = Frame_Data[self.FrameLength - 90 : self.FrameLength - 86]
+        self.MagBX = Frame_Data[self.FrameLength - 86 : self.FrameLength - 82]
+        self.MagBY = Frame_Data[self.FrameLength - 82 : self.FrameLength - 78]
+        self.MagBZ = Frame_Data[self.FrameLength - 78 : self.FrameLength - 74]
 
-        self.AccDX = Frame_Data[118:122]
-        self.AccDY = Frame_Data[122:126]
-        self.AccDZ = Frame_Data[126:130]
-        self.GyroDX = Frame_Data[130:134]
-        self.GyroDY = Frame_Data[134:138]
-        self.GyroDZ = Frame_Data[138:142]
-        self.MagDX = Frame_Data[142:146]
-        self.MagDY = Frame_Data[146:150]
-        self.MagDZ = Frame_Data[150:154]
+        self.AccCX = Frame_Data[self.FrameLength - 74 : self.FrameLength - 70]
+        self.AccCY = Frame_Data[self.FrameLength - 70 : self.FrameLength - 66]
+        self.AccCZ = Frame_Data[self.FrameLength - 66 : self.FrameLength - 62]
+        self.GyroCX = Frame_Data[self.FrameLength - 62 : self.FrameLength - 58]
+        self.GyroCY = Frame_Data[self.FrameLength - 58 : self.FrameLength - 54]
+        self.GyroCZ = Frame_Data[self.FrameLength - 54 : self.FrameLength - 50]
+        self.MagCX = Frame_Data[self.FrameLength - 50 : self.FrameLength - 46]
+        self.MagCY = Frame_Data[self.FrameLength - 46 : self.FrameLength - 42]
+        self.MagCZ = Frame_Data[self.FrameLength - 42 : self.FrameLength - 38]
+
+        self.AccDX = Frame_Data[self.FrameLength - 38 : self.FrameLength - 34]
+        self.AccDY = Frame_Data[self.FrameLength - 34 : self.FrameLength - 30]
+        self.AccDZ = Frame_Data[self.FrameLength - 30 : self.FrameLength - 26]
+        self.GyroDX = Frame_Data[self.FrameLength - 26 : self.FrameLength - 22]
+        self.GyroDY = Frame_Data[self.FrameLength - 22 : self.FrameLength - 18]
+        self.GyroDZ = Frame_Data[self.FrameLength - 18 : self.FrameLength - 14]
+        self.MagDX = Frame_Data[self.FrameLength - 14 : self.FrameLength - 10]
+        self.MagDY = Frame_Data[self.FrameLength - 10 : self.FrameLength - 6]
+        self.MagDZ = Frame_Data[self.FrameLength - 6 : self.FrameLength - 2]
 
 
         self.AccAX = struct.unpack('>f', bytearray(self.AccAX))[0]
@@ -224,7 +250,10 @@ class Thread_Serial(QThread):
         self.MagDZ = struct.unpack('>f', bytearray(self.MagDZ))[0]
 
 
-        self.IMU_Stamp = [self.FrameNumber, self.TimeStamp]
+        # self.IMU_Stamp = [self.FrameNumber, self.TimeStamp]
+        self.IMU_Stamp = [self.FrameNumber, self.AccelTimeStampA, self.AccelTimeStampB, self.MagTimeStampA,
+                          self.MagTimeStampB, self.AccelTimeStampC, self.AccelTimeStampD, self.MagTimeStampC,
+                          self.MagTimeStampD]
 
         self.IMU_Data_A = [self.AccAX, self.AccAY, self.AccAZ, self.GyroAX, self.GyroAY, self.GyroAZ,
                          self.MagAX, self.MagAY, self.MagAZ]
