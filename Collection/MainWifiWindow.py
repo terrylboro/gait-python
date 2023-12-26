@@ -13,7 +13,7 @@ from Collection.ControlWindow import Ui_MainWindow
 # Visualisation
 from Visualisation.Functions.plot_gait_data import plot_gait_data
 from Visualisation.Functions.plot_imu_xyz import plot_imu_xyz
-from Visualisation.Functions.plot_all_new_data import plot_all_new_data
+from Visualisation.Functions.plot_all_new_data import plot_all_new_data_timestamped
 import pandas as pd
 import numpy as np
 
@@ -35,7 +35,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.isRunning = False  # Initialise to not running state
         # self.mSerial = serial.Serial()
         self.DataSaveEnabled = False
-        self.UsingVicon = True # Change this to true to incorporate Vicon
+        self.UsingVicon = True  # Change this to true to incorporate Vicon
         self.IsMobileLab = False  # Set to true if using mobile lab (i.e. receiver rather than trigger)
         if self.UsingVicon:
             self.serial_worker = ViconComms(port="COM6", baudrate=1000000)  # setup vicon with selected port
@@ -141,7 +141,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def fill_activity_entry(self):
         """ pre-fill the list of activities dropbox """
-        activities = ["Static", "Walk", "WalkShake", "WalkNod", "Sit2Stand", "Stand2Sit", "TUG", "Reach"]
+        activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow", "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
         self.activityComboBox.addItems(activities)
         self.activityComboBox.setCurrentText("Static")
 
@@ -290,4 +290,4 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.serial_worker.set_port(value)
 
     def view_latest_data(self):
-        plot_all_new_data(self.latestFilePath, self.subjectLineEdit.text())
+        plot_all_new_data_timestamped(self.latestFilePath, self.subjectLineEdit.text())

@@ -25,7 +25,8 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def Plot_Init(self):
         self.GraphAcc.showGrid(x=True, y=True)  # 把X和Y的表格打开
-        self.GraphAcc.setRange(xRange=[0, self.historyLength], padding=0)
+        # self.GraphAcc.setRange(xRange=[0, self.historyLength], padding=0)
+        self.GraphAcc.setRange(xRange=[0, self.historyLength], yRange=[-20, 20], padding=0)
         self.GraphAcc.setLabel(axis='left', text='Acc (g)')  # 靠左
         self.GraphAcc.setLabel(axis='bottom', text='Samples (#)')
         self.GraphAcc.setTitle('Accelerometer - Ears - Left (RGB) Right (MYC)')  # 表格的名字
@@ -37,7 +38,8 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
         self.curve103 = self.GraphAcc.plot(pen="c", name="y3")  # 绘制一个图形
 
         self.GraphGyro.showGrid(x=True, y=True)  # 把X和Y的表格打开
-        self.GraphGyro.setRange(xRange=[0, self.historyLength], padding=0)
+        # self.GraphGyro.setRange(xRange=[0, self.historyLength], padding=0)
+        self.GraphGyro.setRange(xRange=[0, self.historyLength], yRange=[-7, 7], padding=0)
         self.GraphGyro.setLabel(axis='left', text='Gyro (d/s)')  # 靠左
         self.GraphGyro.setLabel(axis='bottom', text='Samples (#)')
         self.GraphGyro.setTitle('Gyroscope - Ears - Left (RGB) Right (MYC)')  # 表格的名字
@@ -49,7 +51,8 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
         self.curve106 = self.GraphGyro.plot(pen="c", name="y3")  # 绘制一个图形
 
         self.GraphMag.showGrid(x=True, y=True)  # 把X和Y的表格打开
-        self.GraphMag.setRange(xRange=[0, self.historyLength], padding=0)
+        # self.GraphMag.setRange(xRange=[0, self.historyLength], padding=0)
+        self.GraphMag.setRange(xRange=[0, self.historyLength], yRange=[-150, 150], padding = 0)
         self.GraphMag.setLabel(axis='left', text='Mag (uT)')  # 靠左
         self.GraphMag.setLabel(axis='bottom', text='Samples (#)')
         self.GraphMag.setTitle('Magnetometer - Ears - Left (RGB) Right (MYC)')  # 表格的名字
@@ -62,7 +65,8 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
         self.GraphAccLow.showGrid(x=True, y=True)  # 把X和Y的表格打开
-        self.GraphAccLow.setRange(xRange=[0, self.historyLength], padding=0)
+        # self.GraphAccLow.setRange(xRange=[0, self.historyLength], padding=0)
+        self.GraphAccLow.setRange(xRange=[0, self.historyLength], yRange=[-20, 20], padding=0)
         self.GraphAccLow.setLabel(axis='left', text='Acc (g)')  # 靠左
         self.GraphAccLow.setLabel(axis='bottom', text='Samples (#)')
         self.GraphAccLow.setTitle('Accelerometer - Chest (RGB) and Pocket (MYC)')  # 表格的名字
@@ -74,7 +78,8 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
         self.curve303 = self.GraphAccLow.plot(pen="c", name="y3")  # 绘制一个图形
 
         self.GraphGyroLow.showGrid(x=True, y=True)  # 把X和Y的表格打开
-        self.GraphGyroLow.setRange(xRange=[0, self.historyLength], padding=0)
+        # self.GraphGyroLow.setRange(xRange=[0, self.historyLength], padding=0)
+        self.GraphGyroLow.setRange(xRange=[0, self.historyLength], yRange=[-7, 7], padding=0)
         self.GraphGyroLow.setLabel(axis='left', text='Gyro (d/s)')  # 靠左
         self.GraphGyroLow.setLabel(axis='bottom', text='Samples (#)')
         self.GraphGyroLow.setTitle('Gyroscope - Chest (RGB) and Pocket (MYC)')  # 表格的名字
@@ -86,7 +91,8 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
         self.curve306 = self.GraphGyroLow.plot(pen="c", name="y3")
 
         self.GraphMagLow.showGrid(x=True, y=True)  # 把X和Y的表格打开
-        self.GraphMagLow.setRange(xRange=[0, self.historyLength], padding=0)
+        # self.GraphMagLow.setRange(xRange=[0, self.historyLength], padding=0)
+        self.GraphMagLow.setRange(xRange=[0, self.historyLength], yRange=[-150, 150], padding=0)
         self.GraphMagLow.setLabel(axis='left', text='Mag (uT)')  # 靠左
         self.GraphMagLow.setLabel(axis='bottom', text='Samples (#)')
         self.GraphMagLow.setTitle('Magnetometer - Chest (RGB) and Pocket (MYC)')  # 表格的名字
@@ -143,7 +149,7 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
             self.AccY_Min4 = min(self.AccData_D.reshape(-1, 1))[0]
             self.AccY_Max = max(self.AccY_Max1, self.AccY_Max2, self.AccY_Max3, self.AccY_Max4)
             self.AccY_Min = min(self.AccY_Min1, self.AccY_Min2, self.AccY_Min3, self.AccY_Min4)
-            self.GraphAcc.setRange(yRange=[self.AccY_Min, self.AccY_Max])
+            # self.GraphAcc.setRange(yRange=[self.AccY_Min, self.AccY_Max])
 
             self.GyroData_A = self.data_A[:, 3:6]
             self.GyroData_B = self.data_B[:, 3:6]
@@ -160,7 +166,7 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
             self.GyroY_Min4 = min(self.GyroData_D.reshape(-1, 1))[0]
             self.GyroY_Max = max(self.GyroY_Max1, self.GyroY_Max2, self.GyroY_Max3, self.GyroY_Max4)
             self.GyroY_Min = min(self.GyroY_Min1, self.GyroY_Min2, self.GyroY_Min3, self.GyroY_Min4)
-            self.GraphGyro.setRange(yRange=[self.GyroY_Min, self.GyroY_Max])
+            # self.GraphGyro.setRange(yRange=[self.GyroY_Min, self.GyroY_Max])
 
             self.MagData_A = self.data_A[:, 6:9]
             self.MagData_B = self.data_B[:, 6:9]
@@ -176,7 +182,7 @@ class Plot_Graphs(QtWidgets.QMainWindow, Ui_MainWindow):
             self.MagY_Min4 = min(self.MagData_D.reshape(-1, 1))[0]
             self.MagY_Max = max(self.MagY_Max1, self.MagY_Max2, self.MagY_Max3, self.MagY_Max4)
             self.MagY_Min = min(self.MagY_Min1, self.MagY_Min2, self.MagY_Min3, self.MagY_Min4)
-            self.GraphMag.setRange(yRange=[self.MagY_Min, self.MagY_Max])
+            # self.GraphMag.setRange(yRange=[self.MagY_Min, self.MagY_Max])
 
             self.curve1.setData(self.AccData_A[:, 0])
             self.curve2.setData(self.AccData_A[:, 1])

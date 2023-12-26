@@ -136,6 +136,8 @@ class Thread_Serial(QThread):
         self.FrameNumber = Frame_Data[2:6]
         self.FrameNumber = self.FrameNumber[0] << 24 | self.FrameNumber[1] << 16 | self.FrameNumber[2] << 8 | \
                            self.FrameNumber[3]
+        if self.FrameNumber > 1882400000 or self.FrameNumber < 0:
+            print(self.FrameNumber)
 
         # self.TimeStamp = Frame_Data[6:10]
         # self.TimeStamp = self.TimeStamp[0] << 24 | self.TimeStamp[1] << 16 | self.TimeStamp[2] << 8 | \

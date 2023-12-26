@@ -34,9 +34,10 @@ def plot_imu_xyz(accel, gyro, mag, time, title):
     fig.legend(['Anterior/Posterior', 'Superior/Inferior', 'MedioLateral'], loc='outside upper right')
     fig.suptitle(title, fontsize=18)
 
-    plt.tight_layout()
+    # plt.tight_layout()
+    fig.set_tight_layout(True)
 
-    plt.show()
+    # plt.show()
 
 
 def main():

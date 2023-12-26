@@ -11,7 +11,9 @@ from Visualisation.Functions.plot_imu_xyz import plot_imu_xyz
 
 def crop_data(load_path, save_path):
     # make the column headers for the dataframe
-    colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/columnHeaders", delimiter=',',
+    # colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/columnHeaders", delimiter=',',
+    #                       dtype=str)
+    colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/timestampedColumnHeaders", delimiter=',',
                           dtype=str)
     # colNames = ['Frame', 'Time']
     # imu_locations = ['lear', 'rear', 'chest', 'pocket']
@@ -21,10 +23,14 @@ def crop_data(load_path, save_path):
     #     colNames.extend(elements)
     # loop through all files in the directory
     for file in os.listdir(load_path):
-        data = pd.read_csv(load_path+file, names=colNames)
-        accel = data.iloc[:, [2, 3, 4]].values
-        gyro = data.iloc[:, [5, 6, 7]].values
-        mag = data.iloc[:, [8, 9, 10]].values
+        data = pd.read_csv(load_path+file, names=colNames, header=None, skiprows=1)
+        print(data[['AccXlear', 'AccYlear']])
+        accel = data[['AccXlear', 'AccYlear', 'AccZlear']].values
+        gyro = data[['GyroXlear', 'GyroYlear', 'GyroZlear']].values
+        mag = data[['MagXlear', 'MagYlear', 'MagZlear']].values
+        # accel = data.iloc[:, [2, 3, 4]].values
+        # gyro = data.iloc[:, [5, 6, 7]].values
+        # mag = data.iloc[:, [8, 9, 10]].values
         N = np.size(accel, 0)
         # Rearrange the data to fit the correct format
         accelReadings = np.reshape(accel[:, :], (N, 3))
@@ -38,9 +44,12 @@ def crop_data(load_path, save_path):
         startPoint = int(input("Input x value to crop from: "))
         data = data.truncate(before=startPoint)
         # Prepare data for plotting
-        accel = data.iloc[:, [2, 3, 4]].values
-        gyro = data.iloc[:, [5, 6, 7]].values
-        mag = data.iloc[:, [8, 9, 10]].values
+        # accel = data.iloc[:, [2, 3, 4]].values
+        # gyro = data.iloc[:, [5, 6, 7]].values
+        # mag = data.iloc[:, [8, 9, 10]].values
+        accel = data[['AccXlear', 'AccYlear', 'AccZlear']].values
+        gyro = data[['GyroXlear', 'GyroYlear', 'GyroZlear']].values
+        mag = data[['MagXlear', 'MagYlear', 'MagZlear']].values
         N = np.size(accel, 0)
         # Rearrange the data to fit the correct format
         accelReadings = np.reshape(accel[:, :], (N, 3))
@@ -88,7 +97,7 @@ def crop_ear_data(load_path, save_path):
             data.to_csv(save_path+file, index_label="Index")
 
 def main():
-    subject = "TF_00"
+    subject = "subjectName"
     filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/Walk/"
     # Make the directory for saving the cropped data
     savepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/" + subject + "/CroppedWalk/"
