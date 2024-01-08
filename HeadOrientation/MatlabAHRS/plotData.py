@@ -54,13 +54,58 @@ def plot_accel(time, accel, title, figNum=None, c=None, legend=None):
     plt.plot(time, accel[:, 2], plot_colours[2])
     plt.title(title, fontsize=36, wrap=True)
     plt.xlabel("Time / s", fontsize=24)
-    plt.ylabel("Euler Angle / deg", fontsize=24)
+    plt.ylabel("Acceleration / ms^2", fontsize=24)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
     if not legend:
         plt.legend(['X (forward)', 'Y (side-to-side)', 'Z (vertical)'])
     else:
         plt.legend(legend, fontsize=20)
+
+
+def plot_3axis_data(time, dataX, dataY, dataZ, title, ylabel=r"Acceleration / $ms^{-2}$", figNum=None, c=None, legend=None):
+    """ Plot XYZ data from either accelerometer, magnetometer or gyroscope in separate subplots """
+    if figNum:
+        plt.figure(figNum)
+        plt.clf()
+    if c:
+        plot_colours = c
+    else:
+        plot_colours = ['b-', 'r-', 'y-']
+
+    plt.rc('axes', labelsize=14)  # fontsize of the x and y labels
+
+    fig, axs = plt.subplots(3, sharex=True, layout='constrained')
+
+    # plt.subplot(3, 1, 1)
+    l1, = axs[0].plot(time, dataX, plot_colours[0])
+    axs[0].set(ylabel="X " + ylabel)
+
+    # plt.subplot(3, 1, 2)
+    l2, = axs[1].plot(time, dataY, plot_colours[1])
+    axs[1].set(ylabel="Y " + ylabel)
+
+    # plt.subplot(3, 1, 3)
+    l3, = axs[2].plot(time, dataZ, plot_colours[2])
+    axs[2].set(xlabel='Time / samples', ylabel="Z " + ylabel)
+
+    # Hide x labels and tick labels for all but bottom plot.
+    for ax in axs:
+        ax.label_outer()
+
+    axs[2].legend(handles=[l1, l2, l3], labels=['Forwards (X)', 'Side-to-Side (Y)', 'Up-and-Down (Z)'],
+                  loc='upper center', bbox_to_anchor=(0.5, -0.2), fancybox=False, shadow=False, ncol=3, fontsize=22)
+    fig.suptitle(title, fontsize=30)
+    fig.set_size_inches(16, 9)
+    # manager = plt.get_current_fig_manager()
+    # manager.window.showMaximized()
+
+    # plt.show()
+
+    # if not legend:
+    #     plt.legend(['X (forward)', 'Y (side-to-side)', 'Z (vertical)'])
+    # else:
+    #     plt.legend(legend, fontsize=20)
 
 
 def plot_euler_angles(time, euler_angle_array, title, figNum=None, c=None, legend=None):

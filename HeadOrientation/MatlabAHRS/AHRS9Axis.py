@@ -3,7 +3,7 @@
 # Written by Terry Fawden 16/8/23
 
 # import functions from the submodules
-import Model, Correct, MagCorrect, ErrorModel, KalmanEquations, DefaultProperties, ComputeAngularVelocity, UpdateMagneticVector, ECompass, KalmanEquationsExplicit
+import Model, Correct, MagCorrect, ErrorModel, ComputeAngularVelocity, UpdateMagneticVector, ECompass, KalmanEquationsExplicit
 import numpy as np
 import pandas as pd
 from plotData import plot_imu_xyz, plot_euler_angles
@@ -135,29 +135,59 @@ class AHRS:
                           "Euler Angles (Python)", 2)
         plt.show()
 
+def calculate_head_orientation_multiple(subjectStart, subjectEnd):
+    for subject_num in range(subjectStart, subjectEnd):
+        subject = "TF_" + str(subject_num).zfill(2)
+        for side in ["Left", "Right"]:
+            loaddir = "../Data/" + subject + "/Walk/Readings/" + side + "/"
+            savedir = "../Data/" + subject + "/Walk/Angles/" + side + "/"
+            if not os.path.exists("../Data/" + subject + "/Walk/Angles/"):
+                os.mkdir("../Data/" + subject + "/Walk/Angles/")
+            if not os.path.exists(savedir): os.mkdir(savedir)
+            # trialname = "TF_00-02_NED_left.csv"
+            for file in os.listdir(loaddir):
+                # if file == trialname:
+                data = pd.read_csv(loaddir + file)
+                # print(data)
+                accel = data[['AccX', 'AccY', 'AccZ']].values
+                gyro = data[['GyroX', 'GyroY', 'GyroZ']].values
+                mag = data[['MagX', 'MagY', 'MagZ']].values
+                N = np.size(accel, 0)
+                # Rearrange the data to fit the correct format
+                accelReadings = np.reshape(accel[:, :], (N, 3))
+                gyroReadings = np.reshape(gyro[:, :], (N, 3))
+                magReadings = np.reshape(mag[:, :], (N, 3))
 
+                ahrs = AHRS(accelReadings, gyroReadings, magReadings)
+                # ahrs.run_6axis(savedir, file.split(".")[0])
+                ahrs.run(savedir, file.split(".")[0] + "-" + side)
 def main():
-    subject = "TF_00"
-    side = "Left"
-    loaddir = "../Data/" + subject + "/Walk/Readings/" + side + "/"
-    savedir = "../Data/" + subject + "/Walk/Angles/" + side + "/"
-    # trialname = "TF_00-02_NED_left.csv"
-    for file in os.listdir(loaddir):
-        # if file == trialname:
-        data = pd.read_csv(loaddir + file)
-        print(data)
-        accel = data[['AccX', 'AccY', 'AccZ']].values
-        gyro = data[['GyroX', 'GyroY', 'GyroZ']].values
-        mag = data[['MagX', 'MagY', 'MagZ']].values
-        N = np.size(accel, 0)
-        # Rearrange the data to fit the correct format
-        accelReadings = np.reshape(accel[:, :], (N, 3))
-        gyroReadings = np.reshape(gyro[:, :], (N, 3))
-        magReadings = np.reshape(mag[:, :], (N, 3))
-
-        ahrs = AHRS(accelReadings, gyroReadings, magReadings)
-        # ahrs.run_6axis(savedir, file.split(".")[0])
-        ahrs.run(savedir, file.split(".")[0] + "-" + side)
+    calculate_head_orientation_multiple(0, 15)
+    # for subject_num in range(0, 15):
+    #     subject = "TF_" + str(subject_num).zfill(2)
+    #     side = "Left"
+    #     loaddir = "../Data/" + subject + "/Walk/Readings/" + side + "/"
+    #     savedir = "../Data/" + subject + "/Walk/Angles/" + side + "/"
+    #     if not os.path.exists("../Data/" + subject + "/Walk/Angles/"):
+    #         os.mkdir("../Data/" + subject + "/Walk/Angles/")
+    #     if not os.path.exists(savedir): os.mkdir(savedir)
+    #     # trialname = "TF_00-02_NED_left.csv"
+    #     for file in os.listdir(loaddir):
+    #         # if file == trialname:
+    #         data = pd.read_csv(loaddir + file)
+    #         print(data)
+    #         accel = data[['AccX', 'AccY', 'AccZ']].values
+    #         gyro = data[['GyroX', 'GyroY', 'GyroZ']].values
+    #         mag = data[['MagX', 'MagY', 'MagZ']].values
+    #         N = np.size(accel, 0)
+    #         # Rearrange the data to fit the correct format
+    #         accelReadings = np.reshape(accel[:, :], (N, 3))
+    #         gyroReadings = np.reshape(gyro[:, :], (N, 3))
+    #         magReadings = np.reshape(mag[:, :], (N, 3))
+    #
+    #         ahrs = AHRS(accelReadings, gyroReadings, magReadings)
+    #         # ahrs.run_6axis(savedir, file.split(".")[0])
+    #         ahrs.run(savedir, file.split(".")[0] + "-" + side)
 
 
 if __name__ == "__main__":
