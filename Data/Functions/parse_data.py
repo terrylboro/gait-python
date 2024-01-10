@@ -81,7 +81,8 @@ def parse_multiple_subjects(subjectStart, subjectEnd, activityTypes=["Walk"]):
     for data_folder in list_subfolders_with_paths[subjectStart:subjectEnd]:
         for activity in activityTypes:
             savedir = "../../NEDData/" + data_folder.split("/")[-1] + "/" + activity + "/"
-            if not os.path.exists("../../NEDData/" + data_folder.split("/")[-1]): os.mkdir("../../NEDData/" + data_folder.split("/")[-1])
+            if not os.path.exists("../../NEDData/" + data_folder.split("/")[-1]):
+                os.mkdir("../../NEDData/" + data_folder.split("/")[-1])
             if not os.path.exists("../../NEDData/" + data_folder.split("/")[-1] + "/" + activity):
                 os.mkdir("../../NEDData/" + data_folder.split("/")[-1] + "/" + activity)
             if not os.path.exists(savedir): os.mkdir(savedir)
@@ -90,15 +91,16 @@ def parse_multiple_subjects(subjectStart, subjectEnd, activityTypes=["Walk"]):
             if not os.path.exists(savedir + "/Chest/"): os.mkdir(savedir + "/Chest/")
             if not os.path.exists(savedir + "/Pocket/"): os.mkdir(savedir + "/Pocket/")
             for file in os.listdir(data_folder + "/" + activity + "/"):
-                # print(file)
-                # print(data_folder)
+                print(file)
+                print(data_folder)
                 parse_data(data_folder+"/" + activity + "/"+file, savedir, file.split(".")[0])
 
 
 def main():
     # activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
-    parse_multiple_subjects(0, -1, activityTypes=["Walk", "Static"])
+    parse_multiple_subjects(13, 15, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                                                   "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
 
 
 if __name__ == "__main__":
