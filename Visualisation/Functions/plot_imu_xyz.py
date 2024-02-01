@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.signal import butter, filtfilt
 
 
 def plot_imu_xyz(accel, gyro, mag, time, title):
@@ -39,34 +40,66 @@ def plot_imu_xyz(accel, gyro, mag, time, title):
 
     # plt.show()
 
+def filter(data):
+    # means = np.mean(acc_zero_data)
+    # acc_zero_data = acc_zero_data - means
+    # sos = butter(2, 1.5, btype="low", fs=100, output='sos')
+    # filtered_data = sosfilt(sos, acc_zero_data)
+    b, a = butter(2, 16, btype="low", fs=100, output='ba')
+    filtered_data = filtfilt(b, a, data, padtype=None, axis=0)
+    return filtered_data
+    # plt.figure()
+    # plt.plot(filtered_data)
+
 
 def main():
-    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
-                       "CroppedWalk/20231020-tom-05.txt")
+    # data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
+    #                    "CroppedWalk/20231020-tom-05.txt")
+    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/TF_18/TUG/TF_18-31.txt")
     print(data.head())
+    # pocket
     # accel = data.iloc[:, [2, 3, 4]].values
     # gyro = data.iloc[:, [5, 6, 7]].values
     # mag = data.iloc[:, [8, 9, 10]].values
-    accel = data.loc[:,['AccXchest', 'AccYchest', 'AccZchest']].values
-    gyro = data.loc[:,['GyroXchest', 'GyroYchest', 'GyroZchest']].values
-    mag = data.loc[:,['MagXchest', 'MagYchest', 'MagZchest']].values
+    # chest
+    # accel = data.iloc[:, [11, 12, 13]].values
+    # gyro = data.iloc[:, [14, 15, 16]].values
+    # mag = data.iloc[:, [17, 18, 19]].values
+    # lear
+    # accel = data.iloc[:, [20, 21, 22]].values
+    # gyro = data.iloc[:, [23, 24, 25]].values
+    # mag = data.iloc[:, [26, 27, 28]].values
+    # rear
+    # accel = data.iloc[:, [29, 30, 31]].values
+    # gyro = data.iloc[:, [32, 33, 34]].values
+    # mag = data.iloc[:, [35, 36, 37]].values
+
+    # accel = data.loc[:,['AccXchest', 'AccYchest', 'AccZchest']].values
+    # gyro = data.loc[:,['GyroXchest', 'GyroYchest', 'GyroZchest']].values
+    # mag = data.loc[:,['MagXchest', 'MagYchest', 'MagZchest']].values
+    # accel = data.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
+    # gyro = data.loc[:, ['GyroXlear', 'GyroYlear', 'GyroZlear']].values
+    # mag = data.loc[:, ['MagXlear', 'MagYlear', 'MagZlear']].values
+    accel = data.loc[:, ['AccXpocket', 'AccYpocket', 'AccZpocket']].values
+    gyro = data.loc[:, ['GyroXpocket', 'GyroYpocket', 'GyroZpocket']].values
+    mag = data.loc[:, ['MagXpocket', 'MagYpocket', 'MagZpocket']].values
+
     N = np.size(accel, 0)
     # Rearrange the data to fit the correct format
     accelReadings = np.reshape(accel[:, :], (N, 3))
     gyroReadings = np.reshape(gyro[:, :], (N, 3))
     magReadings = np.reshape(mag[:, :], (N, 3))
     #
-    # temp_accelReadings2 = accelReadings[:, 2]
-    # accelReadings[:, [1, 2]] = accelReadings[:, [2, 1]]
-    # accelReadings[:, 2] = - accelReadings[:, 2]
-    # gyroReadings[:, [1, 2]] = gyroReadings[:, [2, 1]]
-    # gyroReadings[:, 2] = - gyroReadings[:, 2]
-    # magReadings[:, [1, 2]] = magReadings[:, [2, 1]]
-    # magReadings[:, 2] = - magReadings[:, 2]
+    # filtering
+    filteredAccelReadings = filter(accelReadings)
+    filteredGyroReadings = filter(gyroReadings)
+    filteredMagReadings = filter(magReadings)
 
     time = range(0, len(data))
 
-    plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, "Tom XYZ")
+    plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, "Unfiltered")
+    plot_imu_xyz(filteredAccelReadings, filteredGyroReadings, filteredMagReadings, time, "Filtered")
+    plt.show()
 
 if __name__ == "__main__":
     main()

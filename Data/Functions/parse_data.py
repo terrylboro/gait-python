@@ -6,6 +6,8 @@ import numpy as np
 def parse_data(filepath, savedir, filename):
     colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/timestampedColumnHeaders",
                          "r").read()
+    # colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/reducedColumnHeaders",
+    #                 "r").read()
     print(colNames)
     col_mapper_r = {'Time': 'Time', 'AccXrear': 'AccX', 'AccYrear': 'AccY', 'AccZrear': 'AccZ',
                     'GyroXrear': 'GyroX', 'GyroYrear': 'GyroY', 'GyroZrear': 'GyroZ',
@@ -45,15 +47,15 @@ def parse_data(filepath, savedir, filename):
     data_p.rename(columns=col_mapper_p, inplace=True)
     # convert to NED
     # left ear
-    data_l['AccX'], data_l['AccY'], data_l['AccZ'] = - data_l['AccY'], - data_l['AccZ'], - data_l['AccX']
-    data_l['GyroX'], data_l['GyroY'], data_l['GyroZ'] = - data_l['GyroY'], - data_l['GyroZ'], - data_l['GyroX']
-    data_l['MagX'], data_l['MagY'], data_l['MagZ'] = - data_l['MagY'], - data_l['MagZ'], - data_l['MagX']
+    data_l['AccX'], data_l['AccY'], data_l['AccZ'] = - data_l['AccY'], - data_l['AccZ'], data_l['AccX']
+    data_l['GyroX'], data_l['GyroY'], data_l['GyroZ'] = - data_l['GyroY'], - data_l['GyroZ'], data_l['GyroX']
+    data_l['MagX'], data_l['MagY'], data_l['MagZ'] = - data_l['MagY'], - data_l['MagZ'], data_l['MagX']
     # right ear
     if np.mean(data_r['AccX'] < 0):
         # works for TF_01 up to TF_05
-        data_r['AccX'], data_r['AccY'], data_r['AccZ'] = - data_r['AccY'], data_r['AccZ'], - data_r['AccX']
-        data_r['GyroX'], data_r['GyroY'], data_r['GyroZ'] = - data_r['GyroY'], data_r['GyroZ'], - data_r['GyroX']
-        data_r['MagX'], data_r['MagY'], data_r['MagZ'] = - data_r['MagY'], data_r['MagZ'], - data_r['MagX']
+        data_r['AccX'], data_r['AccY'], data_r['AccZ'] = data_r['AccY'], data_r['AccZ'], - data_r['AccX']
+        data_r['GyroX'], data_r['GyroY'], data_r['GyroZ'] = data_r['GyroY'], data_r['GyroZ'], - data_r['GyroX']
+        data_r['MagX'], data_r['MagY'], data_r['MagZ'] = data_r['MagY'], data_r['MagZ'], - data_r['MagX']
     else:
         # try for TF_06 onwards
         data_r['AccX'], data_r['AccY'], data_r['AccZ'] = data_r['AccY'], data_r['AccZ'], data_r['AccX']
@@ -67,6 +69,8 @@ def parse_data(filepath, savedir, filename):
     data_p['AccX'], data_p['AccY'], data_p['AccZ'] = data_p['AccZ'], data_p['AccY'], data_p['AccX']
     data_p['GyroX'], data_p['GyroY'], data_p['GyroZ'] = data_p['GyroZ'], data_p['GyroY'], data_p['GyroX']
     data_p['MagX'], data_p['MagY'], data_p['MagZ'] = data_p['MagZ'], data_p['MagY'], data_p['MagX']
+    print("saving to:\n")
+    print(savedir + "/Right/" + filename + "_NED.csv")
     data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
     data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
     data_c.to_csv(savedir + "/Chest/" + filename + "_NED.csv", index=False)
@@ -77,8 +81,8 @@ def parse_multiple_subjects(subjectStart, subjectEnd, activityTypes=["Walk"]):
     # all the subfolders in the "/FilteredData/" folder in a list
     list_subfolders_with_paths = [f.path for f in os.scandir("../../FilteredData/Data/") if f.is_dir()]
     print(list_subfolders_with_paths)
-    print(list_subfolders_with_paths[0].split("/")[-1])
-    for data_folder in list_subfolders_with_paths[subjectStart:subjectEnd]:
+    print(list_subfolders_with_paths[subjectStart-1].split("/")[-1])
+    for data_folder in list_subfolders_with_paths[subjectStart-1:subjectEnd]:
         for activity in activityTypes:
             savedir = "../../NEDData/" + data_folder.split("/")[-1] + "/" + activity + "/"
             if not os.path.exists("../../NEDData/" + data_folder.split("/")[-1]):
@@ -99,7 +103,7 @@ def parse_multiple_subjects(subjectStart, subjectEnd, activityTypes=["Walk"]):
 def main():
     # activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
-    parse_multiple_subjects(13, 15, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    parse_multiple_subjects(15, 17, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
 
 

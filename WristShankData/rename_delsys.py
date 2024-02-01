@@ -10,7 +10,7 @@ def rename_delsys(subjectStart, subjectEnd, activityTypes=["Walk"]):
                 loaddir = subject + "/" + activity + "/" + side + "/"
                 if os.path.isdir(loaddir):
                     for file in os.listdir(loaddir):
-                        renamed = file.replace("A096391_01_00", subject + "-")
+                        renamed = file #.replace("A096391_01_00", subject + "-")
                         os.rename(loaddir + file, loaddir + renamed)
 
 

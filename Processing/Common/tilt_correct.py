@@ -109,7 +109,7 @@ def align_left_to_global(data):
 
 
 def main():
-    filepath = "/Data/Amy/"
+    filepath = "../../Data/Amy/"
     data = np.loadtxt(filepath+"amy-static.txt", delimiter=',', usecols=[2, 3, 4])
     rot_mat = calculate_rotation_matrix(data)
     calibrated_data = apply_calibration(rot_mat, data)

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-from HeadOrientation.MatlabAHRS.plotData import plot_accel, plot_imu_xyz, plot_3axis_data
+from HeadOrientation.Functions.plotData import plot_accel, plot_imu_xyz, plot_3axis_data
 from Data.Functions.filter_data import filter_data
 
 
@@ -40,6 +40,7 @@ def preprocess_imu(data):
     magReadings = np.reshape(mag[:, :], (N, 3))
     return accelReadings, gyroReadings, magReadings
 
+
 def view_orientation_single_subject():
     subject = "TF_01"
     side = "Left"
@@ -60,7 +61,8 @@ def view_orientation_single_subject():
             a = rot_data[i, :].reshape(3, 3)
             # a[:, [0, 1]] = a[:, [1, 0]]
             b = accelReadings[i, :]
-            rot_accelReadings[i, :] = np.matmul(a, b)
+            # rot_accelReadings[i, :] = np.matmul(a, b)
+            rot_accelReadings[i, :] = np.matmul(np.linalg.inv(a), b)
 
         # plot_imu_xyz(accelReadings, gyroReadings, magReadings, range(0, len(accelReadings)), "Before",  figNum=1)
         # plot_imu_xyz(rot_accelReadings, gyroReadings, magReadings, range(0, len(accelReadings)), "After", figNum=2)
@@ -72,6 +74,7 @@ def view_orientation_single_subject():
                    file + " " + side + " " + "After Head Rotation Compensation", figNum=2)
         plt.savefig(img_save_path + file + " " + side + " " + "After Head Rotation Compensation.png",
                     bbox_inches="tight")
+
 
 def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk"], filter=False):
     # all the subfolders in the "/HeadOrientation/Data/" folder in a list
@@ -91,17 +94,24 @@ def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk
                 for file in os.listdir(data_folder + "/" + activity + "/Readings/" + side + "/"):
                     img_save_path = data_folder + "/" + activity + "/Corrected Graphs/" + side + "/"
                     rot_filepath = data_folder + "/" + activity + "/Angles/" + side + "/" + file.split(".")[0] + "-" + side + "-rotmat.csv"
-                    imu_filepath = data_folder + "/" + activity + "/Readings/" + side + "/" + file
+                    # imu_filepath = data_folder + "/" + activity + "/Readings/" + side + "/" + file
+                    imu_filepath = "../../NEDData/" + data_folder.split("/")[-1] + "/" + activity + "/" + side + "/" + file
                     rot_data = pd.read_csv(rot_filepath, skiprows=1, header=None).to_numpy()
                     imu_data = pd.read_csv(imu_filepath)
                     accelReadings, gyroReadings, magReadings = preprocess_imu(imu_data)
+                    print(accelReadings)
                     # Apply rotation correction
                     rot_accelReadings = np.zeros((len(accelReadings), 3))
                     for i in range(0, len(accelReadings) - 1):
                         a = rot_data[i, :].reshape(3, 3)
+                        a[0, 1] = 0
+                        a[1, :] = [0, 1, 0]
+                        a[2, 1] = 0
+                        print(a)
                         # a[:, [0, 1]] = a[:, [1, 0]]
                         b = accelReadings[i, :]
                         rot_accelReadings[i, :] = np.matmul(a, b)
+                        # rot_accelReadings[i, :] = np.matmul(np.linalg.inv(a), b)
 
                     # Filter the data
                     if filter:
@@ -111,15 +121,16 @@ def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk
                         plot_3axis_data(range(0, len(accelReadings)), accelReadings[:, 0], accelReadings[:, 1],
                                         accelReadings[:, 2], file.split(".")[0] + " " + side + " " +
                                         "\nBefore Rotation Compensation (Filtered)", figNum=1)
-                        plt.savefig(img_save_path + file.split(".")[
-                            0] + " " + side + " " + "Before Rotation Compensation Filtered.png",
-                                    bbox_inches="tight")
+                        # plt.savefig(img_save_path + file.split(".")[
+                        #     0] + " " + side + " " + "Before Rotation Compensation Filtered.png",
+                        #             bbox_inches="tight")
                         plot_3axis_data(range(0, len(accelReadings)), rot_accelReadings[:, 0], rot_accelReadings[:, 1],
                                         rot_accelReadings[:, 2], file.split(".")[0] + " " + side + " " +
                                         "\nAfter Rotation Compensation (Filtered)", figNum=2)
-                        plt.savefig(img_save_path + file.split(".")[
-                            0] + " " + side + " " + "After Rotation Compensation Filtered.png",
-                                    bbox_inches="tight")
+                        # plt.savefig(img_save_path + file.split(".")[
+                        #     0] + " " + side + " " + "After Rotation Compensation Filtered.png",
+                        #             bbox_inches="tight")
+                        plt.show()
                         plt.close("all")
                         # plot_accel(range(0, len(accelReadings)), accelReadings,
                         #            file.split(".")[0] + " " + side + " " + "Before Head Rotation Compensation Filtered", figNum=1)
@@ -137,15 +148,16 @@ def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk
                         plot_3axis_data(range(0, len(accelReadings)), accelReadings[:, 0], accelReadings[:, 1],
                                         accelReadings[:, 2], file.split(".")[0] + " " + side + " " +
                                         "\nBefore Rotation Compensation", figNum=1)
-                        plt.savefig(img_save_path + file.split(".")[
-                            0] + " " + side + " " + "Before Rotation Compensation.png",
-                                    bbox_inches="tight")
+                        # plt.savefig(img_save_path + file.split(".")[
+                        #     0] + " " + side + " " + "Before Rotation Compensation.png",
+                        #             bbox_inches="tight")
                         plot_3axis_data(range(0, len(accelReadings)), rot_accelReadings[:, 0], rot_accelReadings[:, 1],
                                         rot_accelReadings[:, 2], file.split(".")[0] + " " + side + " " +
                                         "\nAfter Rotation Compensation", figNum=2)
-                        plt.savefig(img_save_path + file.split(".")[
-                            0] + " " + side + " " + "After Rotation Compensation.png",
-                                    bbox_inches="tight")
+                        # plt.savefig(img_save_path + file.split(".")[
+                        #     0] + " " + side + " " + "After Rotation Compensation.png",
+                        #             bbox_inches="tight")
+                        plt.show()
                         plt.close("all")
                         # using plot_accel() function
                         # plot_accel(range(0, len(accelReadings)), accelReadings,
@@ -158,8 +170,8 @@ def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk
                         #             bbox_inches="tight")
 
 def main():
-    view_orientation_all_subjects(1, 14, ["Walk"], filter=False)
-    view_orientation_all_subjects(1, 14, ["Walk"], filter=True)
+    view_orientation_all_subjects(1, 3, ["Walk"], filter=False)
+    # view_orientation_all_subjects(1, 14, ["Walk"], filter=True)
 
 
 

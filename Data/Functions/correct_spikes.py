@@ -62,24 +62,24 @@ def correct_spikes(loadpath, file, save_path_data, save_path_vis):
         # plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file + " " + imu_locations[i])
 
         # plot_imu_xyz(accelReadings, gyroReadings, np.square(magReadings - np.mean(magReadings, axis=0)), time, file + " " + imu_locations[i])
-
+        #
         # plot_imu_xyz(medfilt(accelReadings), medfilt(gyroReadings), medfilt(magReadings), time,
         #              file + " " + imu_locations[i])
-        # plt.tight_layout()
+        plt.tight_layout()
         # plt.show()
         # save the data
         data.to_csv(save_path_data + file, index=False)
         # save the figures
-        # plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file + " " + imu_locations[i])
-        # plt.savefig(save_path_vis + file.split(".")[0] + imu_locations[i] + ".png")
-        # plt.close()
+        plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file + " " + imu_locations[i])
+        plt.savefig(save_path_vis + file.split(".")[0] + imu_locations[i] + ".png")
+        plt.close()
 
 
 def main():
     # list to loop through for activities
-    activities = ["Static"]#["Walk", "WalkShake", "WalkNod", "WalkSlow", "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
+    activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow", "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
     # Repeat for all participants
-    for i in range(1, 15):
+    for i in range(15, 17):
         save_dir_data = "../../FilteredData/Data/TF_" + str.zfill(str(i), 2) + "/"
         save_dir_vis = "../../FilteredData/Visualisation/TF_" + str.zfill(str(i), 2) + "/"
         if not os.path.exists(save_dir_data): os.mkdir(save_dir_data)

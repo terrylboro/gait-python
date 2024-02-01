@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from scipy.signal import find_peaks, sosfilt, butter
+from scipy.signal import find_peaks, sosfilt, filtfilt, butter
 
 
 def calculate_acc_zero(data):
@@ -59,16 +59,16 @@ def calculate_acc_zero_multiple(subjectStart, subjectEnd, activityTypes=["Walk"]
                 for file in os.listdir(loaddir):
                     filepath = loaddir + file
                     data = pd.read_csv(filepath, usecols=["Time", "AccX", "AccY", "AccZ"])
+                    gyro_data = pd.read_csv(filepath, usecols=["Time", "GyroX", "GyroY", "GyroZ"])
                     # print(data[["AccX", "AccY", "AccZ"]])
                     acc_zero_data = calculate_acc_zero(data[["AccX", "AccY", "AccZ"]].values)
+                    gyro_zero_data = calculate_acc_zero(gyro_data[["GyroX", "GyroY", "GyroZ"]].values)
+                    if side == "Chest":
+                        b, a = butter(2, 25, btype="low", fs=100, output='ba')
+                        acc_zero_data = filtfilt(b, a, acc_zero_data)
                     if side == "Pocket":
-                        means = np.mean(acc_zero_data)
-                        acc_zero_data = acc_zero_data - means
-                        sos = butter(2, 1.5, btype="low", fs=100, output='sos')
-                        filtered_data = sosfilt(sos, acc_zero_data)
-                        # plt.figure()
-                        # plt.plot(filtered_data)
-                        acc_zero_data = filtered_data + means
+                        b, a = butter(2, 15, btype="low", fs=100, output='ba')
+                        acc_zero_data = filtfilt(b, a, acc_zero_data)
                     if mode == "events":
                         if side == "pockets":
                             ICs = find_contacts(acc_zero_data, location="Pocket")
@@ -77,7 +77,7 @@ def calculate_acc_zero_multiple(subjectStart, subjectEnd, activityTypes=["Walk"]
                         # np.savetxt(events_savedir + file, ICs, fmt='%i')
                         np.savetxt(events_savedir + file, data.loc[ICs, 'Time'], fmt='%i')
                     if saveData:
-                        acc_zero_df = pd.DataFrame({'Time': data["Time"].values, 'Acc0': acc_zero_data})
+                        acc_zero_df = pd.DataFrame({'Time': data["Time"].values, 'Acc0': acc_zero_data, 'Gyro0': gyro_zero_data})
                         acc_zero_df.to_csv(data_savedir + file, index=False)
                     if saveFig:
                         title = file.split(".")[0] + " " + side + " " + "Accelerometer As Scalar"
@@ -107,6 +107,8 @@ def calculate_acc_zero_delsys(subjectStart, subjectEnd, activityTypes=["Walk"], 
             for activity in activityTypes:
                 # ensure folders are there to store the outputs
                 for category in ["Contact Events/", "Data/", "Graphs/", "Contact Event Graphs/"]:
+                    if not os.path.exists(category + subject + "/" + activity + "/"):
+                        os.mkdir(category + subject + "/" + activity + "/")
                     if not os.path.exists(category + subject + "/" + activity + "/" + side):
                         os.mkdir(category + subject + "/" + activity + "/" + side)
                 loaddir = "../../WristShankData/" + subject + "/" + activity + "/" + side + "/"
@@ -117,22 +119,28 @@ def calculate_acc_zero_delsys(subjectStart, subjectEnd, activityTypes=["Walk"], 
                 for file in os.listdir(loaddir):
                     filepath = loaddir + file
                     data = np.loadtxt(filepath, usecols=range(0, 3), delimiter=",")
+                    gyro_data = np.loadtxt(filepath, usecols=range(3, 6), delimiter=",")
                     # print(data[["AccX", "AccY", "AccZ"]])
                     acc_zero_data = calculate_acc_zero(data)
-                    # if side == "Wrist":
-                    #     means = np.mean(acc_zero_data)
-                    #     acc_zero_data = acc_zero_data - means
-                    #     sos = butter(2, 1.5, btype="low", fs=100, output='sos')
-                    #     filtered_data = sosfilt(sos, acc_zero_data.squeeze())
-                    #     # plt.figure()
-                    #     # plt.plot(filtered_data)
-                    #     acc_zero_data = filtered_data + means
+                    gyro_zero_data = calculate_acc_zero(gyro_data)
+                    if side == "Shank":
+                        b, a = butter(2, 15, btype="low", fs=1000, output='ba')
+                        filtered_data = filtfilt(b, a, acc_zero_data)
+                        acc_zero_data = filtered_data
+                    elif side == "Wrist":
+                        b, a = butter(2, 25, btype="low", fs=1000, output='ba')
+                        filtered_data = filtfilt(b, a, acc_zero_data)
+                        acc_zero_data = filtered_data
+                    # plt.figure()
+                    # plt.plot(filtered_data)
+                    # acc_zero_data = filtered_data + means
                     if mode == "events":
                         ICs = find_contacts(acc_zero_data, location=side)
                         # np.savetxt(events_savedir + file, ICs, fmt='%i')
                         np.savetxt(events_savedir + file, ICs / 2, fmt='%i')
                     if saveData:
-                        acc_zero_df = pd.DataFrame({'Time': np.linspace(0, len(acc_zero_data)/2, len(acc_zero_data)), 'Acc0': acc_zero_data})
+                        acc_zero_df = pd.DataFrame({'Time': np.linspace(0, len(acc_zero_data)/2, len(acc_zero_data)),
+                                                    'Acc0': acc_zero_data, 'Gyro0': gyro_zero_data})
                         acc_zero_df.to_csv(data_savedir + file, index=False)
                     if saveFig:
                         title = file.split(".")[0] + " " + side + " " + "Accelerometer As Scalar"
@@ -153,32 +161,47 @@ def calculate_acc_zero_delsys(subjectStart, subjectEnd, activityTypes=["Walk"], 
                             plt.show()
 
 
-def compare_two_trials():
-    chest_data = pd.read_csv("Data/TF_01/WalkSlow/Chest/TF_01-22_NED.csv")
-    # ear_data = pd.read_csv("Data/TF_01/WalkSlow/Left/TF_01-22_NED.csv")
-    # pocket_data = pd.read_csv("Data/TF_01/WalkSlow/Pocket/TF_01-22_NED.csv")
-    shank_data = pd.read_csv("Data/TF_01/Walk/Shank/TF_01-21shank.csv")
-    # wrist_data = pd.read_csv("Data/TF_01/Walk/Wrist/TF_01-21wrist.csv")
-    plt.figure(1)
-    plt.clf()
-    plt.plot((shank_data["Time"].values + 890) / 1000, shank_data["Acc0"].values)
-    # plt.plot((wrist_data["Time"].values + 880) / 1000, wrist_data["Acc0"].values)
-    plt.plot(chest_data["Time"].values / 1000, chest_data["Acc0"].values)
-    # plt.plot(ear_data["Time"].values / 1000, ear_data["Acc0"].values)
-    # plt.plot(pocket_data["Time"].values / 1000, pocket_data["Acc0"].values)
-    plt.title("Shank vs Chest")
-    plt.xlabel("Time / s")
-    plt.ylabel(r"Acceleration / $ms^{-2}$")
-    # plt.legend(["Shank", "Wrist", "Chest", "Ear", "Pocket"])
-    plt.legend(["Shank", "Chest"])
-    plt.show()
+def compare_two_trials(subject):
+    delsys_offset = 0#20#86
+    subject = str(subject).zfill(2)
+    activity = "Walk"
+    for trial in range(3,8):
+        chest_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Chest/TF_"+subject+"-"+str(trial).zfill(2)+"_NED.csv")
+        # ear_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Left/TF_"+subject+"-"+str(trial).zfill(2)+"_NED.csv")
+        pocket_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Pocket/TF_"+subject+"-"+str(trial).zfill(2)+"_NED.csv")
+        # shank_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Shank/TF_"+subject+"-"+str(trial).zfill(2)+"shank.csv")
+        # wrist_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Wrist/TF_"+subject+"-"+str(trial).zfill(2)+"wrist.csv")
+        plt.figure(1)
+        plt.clf()
+        # plt.plot((shank_data["Time"].values + delsys_offset) / 1000, shank_data["Acc0"].values)
+        # plt.plot(wrist_data["Time"].values / 1000, wrist_data["Acc0"].values)
+        plt.plot(chest_data["Time"].values / 1000, chest_data["Acc0"].values)
+        # plt.plot(ear_data["Time"].values / 2000, ear_data["Acc0"].values)
+        plt.plot(pocket_data["Time"].values / 1000, pocket_data["Acc0"].values)
+
+        # plt.plot((shank_data["Time"].values + delsys_offset) / 1000, shank_data["Gyro0"].values)
+        # # plt.plot(wrist_data["Time"].values / 1000, wrist_data["Gyro0"].values)
+        # plt.plot(chest_data["Time"].values / 1000, chest_data["Gyro0"].values)
+        # plt.plot(ear_data["Time"].values / 1000, ear_data["Gyro0"].values)
+        # # plt.plot(pocket_data["Time"].values / 1000, pocket_data["Gyro0"].values)
+
+        plt.title("Comparison of Resultant Accelerometer Signals by Location for Subj." + subject + " Trial " + str(trial))
+        plt.xlabel("Time / s")
+        plt.ylabel(r"Acceleration / $ms^{-2}$")
+        # plt.legend(["Shank", "Wrist", "Chest", "Ear", "Pocket"])
+        # plt.legend(["Shank", "Chest", "Wrist"])
+        plt.legend(["Chest", "Pocket"])
+        plt.show()
 
 
 def main():
-    compare_two_trials()
-    # calculate_acc_zero_delsys(1, 2, activityTypes=["Walk"], mode="events")
-    # calculate_acc_zero_multiple(1, 15, activityTypes=["TUG"], mode="events")
-    # calculate_acc_zero_multiple(1, 2, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    for subject in range(10, 15):
+        compare_two_trials(subject)
+    # compare_two_trials()
+    # calculate_acc_zero_delsys(1, 3, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    #                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"], mode="no_events")
+    calculate_acc_zero_multiple(17, 18, activityTypes=["Walk"], mode="no_events")
+    # calculate_acc_zero_multiple(17, 18, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
 
 
