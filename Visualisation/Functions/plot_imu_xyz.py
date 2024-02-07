@@ -55,7 +55,7 @@ def filter(data):
 def main():
     # data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
     #                    "CroppedWalk/20231020-tom-05.txt")
-    data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/TF_18/TUG/TF_18-31.txt")
+    data = pd.read_csv("../../Data/TF_19/Walk/TF_19-05.txt")
     print(data.head())
     # pocket
     # accel = data.iloc[:, [2, 3, 4]].values
@@ -77,12 +77,12 @@ def main():
     # accel = data.loc[:,['AccXchest', 'AccYchest', 'AccZchest']].values
     # gyro = data.loc[:,['GyroXchest', 'GyroYchest', 'GyroZchest']].values
     # mag = data.loc[:,['MagXchest', 'MagYchest', 'MagZchest']].values
-    # accel = data.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
-    # gyro = data.loc[:, ['GyroXlear', 'GyroYlear', 'GyroZlear']].values
-    # mag = data.loc[:, ['MagXlear', 'MagYlear', 'MagZlear']].values
-    accel = data.loc[:, ['AccXpocket', 'AccYpocket', 'AccZpocket']].values
-    gyro = data.loc[:, ['GyroXpocket', 'GyroYpocket', 'GyroZpocket']].values
-    mag = data.loc[:, ['MagXpocket', 'MagYpocket', 'MagZpocket']].values
+    accel = data.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
+    gyro = data.loc[:, ['GyroXlear', 'GyroYlear', 'GyroZlear']].values
+    mag = data.loc[:, ['MagXlear', 'MagYlear', 'MagZlear']].values
+    # accel = data.loc[:, ['AccXpocket', 'AccYpocket', 'AccZpocket']].values
+    # gyro = data.loc[:, ['GyroXpocket', 'GyroYpocket', 'GyroZpocket']].values
+    # mag = data.loc[:, ['MagXpocket', 'MagYpocket', 'MagZpocket']].values
 
     N = np.size(accel, 0)
     # Rearrange the data to fit the correct format

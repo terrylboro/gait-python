@@ -40,30 +40,40 @@ def process_shank_gyro(w_z):
     #########
     # Finding the ICs
     ZCs = np.where(np.diff(np.signbit(w_z.values)))[0]
+    ZCs += 1
     AZs = []
     DZs = []
     ICs = []
     FCs = []
     print(ZCs)
-    for crossing in ZCs:
-        if crossing > 0:
-            if (w_z.loc[crossing + 1] - w_z.loc[crossing - 1]) > 0:
-                AZs.append(crossing)
-            else:
-                DZs.append(crossing)
-    print(AZs)
-    print(DZs)
-    for crossing in DZs:
-        if len(w_z) - crossing > 15:
-            local_min = argrelextrema(w_z.loc[crossing : crossing + 15].values, np.less)[0]
-            print(local_min)
-            ICs.append(crossing + local_min[0])
+    for crossing in range(1, len(ZCs)):
+        count = 0
+        print(ZCs[crossing - 1])
+        print(ZCs[crossing])
+        print(ZCs[crossing+1])
+        for i in range(ZCs[crossing - 1], ZCs[crossing]):
+            # print(w_z.loc[ZCs[crossing]])
+            if w_z.loc[i] > 1: count +=1
+        if count > 5 and (w_z.loc[ZCs[crossing] + 2] - w_z.loc[ZCs[crossing] - 2]) < 0:
+            DZs.append(crossing)
+        print("DZs: ", DZs)
+        wait_time = int(0.5 * len(range(ZCs[crossing - 1], ZCs[crossing])))
+        for crossing in DZs:
+            if len(w_z) - crossing > 15:
+                local_min = argrelextrema(w_z.loc[ZCs[crossing] : ZCs[crossing] + 15].values, np.less)[0]
+                print(local_min)
+                ICs.append(ZCs[crossing] + local_min[0])
+        # Say FC is local min in between IC + wait_time and next
+        if crossing != ZCs[-1]:
+            FC_min = argrelextrema(w_z.loc[ZCs[crossing] + wait_time: ZCs[crossing]+1].values, np.less)[0]
+            print(FC_min)
+            FCs.append(ZCs[crossing] + wait_time + FC_min)
 
-    # Finding the Foot Offs
-    for az in AZs:
-        if az > 15:
-            local_min = argrelextrema(w_z.loc[az-15 : az + 1].values, np.less)[0]
-            FCs.append(az - 15 + local_min[-1])
+    # # Finding the Foot Offs
+    # for az in AZs:
+    #     if az > 15:
+    #         local_min = argrelextrema(w_z.loc[az-15 : az + 1].values, np.less)[0]
+    #         FCs.append(az - 15 + local_min[-1])
     # plt.plot(ap_accel)
     # plt.plot(w_z)
     # plt.plot(AZs, w_z[AZs], 'x')

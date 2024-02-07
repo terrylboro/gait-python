@@ -46,9 +46,10 @@ def process_chest(data, filter_freq=1.5):
     print(ICs)
     plt.figure()
     plt.plot(p)
-    plt.plot(h)
+    # plt.plot(h)
     plt.plot(ICs, p[ICs], 'x')
     plt.plot(FCs, p[FCs], 'x')
+    plt.plot(filter_chest(data[:, 1], 2.5))
     return ICs, FCs
 
 
@@ -119,7 +120,7 @@ def process_chest_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], sav
 
 
 def main():
-    process_chest_multiple(8, 18, ["Walk"])
+    process_chest_multiple(7, 18, ["Walk"])
 
 
 if __name__ == "__main__":
