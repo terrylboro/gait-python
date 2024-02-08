@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
-
 def calculate_rotation_matrix(data):
     """
     A script to correct for the offset of the IMUs on the headset and align

@@ -101,5 +101,6 @@ def main():
     plot_imu_xyz(filteredAccelReadings, filteredGyroReadings, filteredMagReadings, time, "Filtered")
     plt.show()
 
+
 if __name__ == "__main__":
     main()
