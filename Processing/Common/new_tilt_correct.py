@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from scipy.signal import filtfilt, butter
+from Visualisation.Functions.plot_imu_xyz import plot_imu_xyz
 
 
 def calculate_acc_zero(data):
@@ -41,21 +42,91 @@ def filter_trial(data, freq):
 
 def tilt_correct(data, acc_zero):
     gravity = np.mean(data, axis=0)
-    true_gravity = np.array([0., 0., acc_zero])
-    # apply vertical correction in 2D
-    print(gravity[1:3])
-    print([0., np.mean(acc_zero)])
-    tilt_dot = np.dot(gravity[1:3] / np.linalg.norm(gravity[1:3]), [0., np.mean(acc_zero)]/ np.linalg.norm(np.mean(acc_zero)))
-    tilt_angle = np.arccos(tilt_dot)
-    print(tilt_angle)
-    # norm_x = AccX / np.linalg.norm(AccX)
-    # norm_y = AccY / np.linalg.norm(AccY)
-    # norm_z = AccZ / np.linalg.norm(AccZ)
-    # plt.plot(norm_x)
-    # plt.plot(norm_y)
-    # plt.plot(norm_z)
+    sq_acc_total = np.mean(np.square(acc_zero))
+    forward_contrib = np.mean(np.square((gravity[0]))) / sq_acc_total
+    sideways_contrib = np.mean(np.square((gravity[1]))) / sq_acc_total
+    vertical_contrib = np.mean(np.square((gravity[2]))) / sq_acc_total
+    # print("sideways contrib: ", sideways_contrib)
+    # print("forward contrib: ", forward_contrib)
+    # print("upwards contrib: ", vertical_contrib)
+    correct_ratio = forward_contrib / (forward_contrib + sideways_contrib)
+    # print("correction ratio: ", correct_ratio)
 
-    plt.show()
+    # apply vertical correction in 2D
+    tilt_dot = np.dot(gravity[[0, 2]] / np.linalg.norm(gravity[[0, 2]]), [0., np.mean(acc_zero)]/ np.linalg.norm(np.mean(acc_zero)))
+    forward_tilt_angle = np.arccos(tilt_dot) if np.mean(gravity[0]) > 0 else - np.arccos(tilt_dot)
+    # account for fact that some differences may be in the ML plane
+    ang_correct_factor = correct_ratio
+    # rotate AP and SI in 2D
+    rotMatForward = np.array([[np.cos(forward_tilt_angle * ang_correct_factor), -np.sin(forward_tilt_angle * ang_correct_factor)],
+                       [np.sin(forward_tilt_angle * ang_correct_factor), np.cos(forward_tilt_angle * ang_correct_factor)]])
+    for row in range(0, len(data)):
+        data[row, [0, 2]] = np.dot(rotMatForward, data[row, [0, 2]].T)
+
+    # apply side-to-side correction
+    tilt_dot = np.dot(gravity[[1, 2]] / np.linalg.norm(gravity[[1, 2]]),
+                      [0., np.mean(acc_zero)] / np.linalg.norm(np.mean(acc_zero)))
+    sideways_tilt_angle = - np.arccos(tilt_dot) if np.mean(gravity[1]) < 0 else np.arccos(tilt_dot)
+    # account for fact that some differences may be in the ML plane
+    ang_correct_factor = 1
+    # rotate AP and SI in 2D
+    rotMatSideways = np.array(
+        [[np.cos(sideways_tilt_angle * ang_correct_factor), -np.sin(sideways_tilt_angle * ang_correct_factor)],
+         [np.sin(sideways_tilt_angle * ang_correct_factor), np.cos(sideways_tilt_angle * ang_correct_factor)]])
+    for row in range(0, len(data)):
+        data[row, [1, 2]] = np.dot(rotMatSideways, data[row, [1, 2]].T)
+    # plot the result of the transformation
+    # plt.figure()
+    # plt.plot(data)
+    # plt.title("Transformed Data")
+    # plt.legend(["X", "Y", "Z"])
+    # plt.show()
+    return rotMatForward, rotMatSideways
+
+
+def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
+    for subject_num in range(subjectStart, subjectEnd):
+        subject = "TF_" + str(subject_num).zfill(2)
+        if not os.path.exists("../../TiltCorrectedData/" + subject + "/"): os.mkdir("../../TiltCorrectedData/" + subject + "/")
+        sides = ["Left", "Right", "Chest", "Pocket"]
+        activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                      "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
+        for side in sides:
+            loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
+            for file in os.listdir(loaddir):
+                filepath = loaddir + file
+                acc_data = pd.read_csv(filepath, usecols=['AccX', 'AccY', 'AccZ']).values
+                # find the resultant vector
+                acc_zero = calculate_acc_zero(acc_data)
+                rotMatForward, rotMatSideways = tilt_correct(acc_data, acc_zero)
+            for activity in activities:
+                trialdir = "../../NEDData/" + subject + "/" + activity + "/" + side + "/"
+                savedir = "../../TiltCorrectedData/" + subject + "/" + activity + "/" + side + "/"
+                if not os.path.exists("../../TiltCorrectedData/" + subject + "/" + activity): os.mkdir(
+                    "../../TiltCorrectedData/" + subject + "/" + activity)
+                if not os.path.exists(savedir): os.mkdir(savedir)
+                for trial in os.listdir(trialdir):
+                    trial_fp = trialdir + trial
+                    trialAccData = pd.read_csv(trial_fp, usecols=['AccX', 'AccY', 'AccZ']).values
+                    trialGyroData = pd.read_csv(trial_fp, usecols=['GyroX', 'GyroY', 'GyroZ']).values
+                    trialMagData = pd.read_csv(trial_fp, usecols=['MagX', 'MagY', 'MagZ']).values
+                    for row in range(0, len(trialAccData)):
+                        trialAccData[row, [0, 2]] = np.dot(rotMatForward, trialAccData[row, [0, 2]].T)
+                        trialGyroData[row, [0, 2]] = np.dot(rotMatForward, trialGyroData[row, [0, 2]].T)
+                        trialMagData[row, [0, 2]] = np.dot(rotMatForward, trialMagData[row, [0, 2]].T)
+                    for row in range(0, len(trialAccData)):
+                        trialAccData[row, [1, 2]] = np.dot(rotMatSideways, trialAccData[row, [1, 2]].T)
+                        trialGyroData[row, [1, 2]] = np.dot(rotMatSideways, trialGyroData[row, [1, 2]].T)
+                        trialMagData[row, [1, 2]] = np.dot(rotMatSideways, trialMagData[row, [1, 2]].T)
+                    transformed_arr = np.concatenate((trialAccData, trialGyroData, trialMagData), axis=1)
+                    transformed_df = pd.DataFrame(
+                        data=transformed_arr,
+                        index=None,
+                        columns=['AccX', 'AccY', 'AccZ', 'GyroX', 'GyroY', 'GyroZ', 'MagX', 'MagY', 'MagZ']
+                    )
+                    # np.savetxt("NEDwalk.csv", transformed_arr, delimiter=",")
+                    transformed_df.to_csv(savedir+trial, index=False)
+                    # plt.show()
 
 
 def tilt_correct_multiple(subjectStart, subjectEnd):
@@ -65,6 +136,7 @@ def tilt_correct_multiple(subjectStart, subjectEnd):
         for side in sides:
             loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
             for file in os.listdir(loaddir):
+                # if file.split("_")[1][-1] == str(2):
                 filepath = loaddir + file
                 acc_data = pd.read_csv(filepath, usecols=['AccX', 'AccY', 'AccZ']).values
                 # find the resultant vector
@@ -73,18 +145,54 @@ def tilt_correct_multiple(subjectStart, subjectEnd):
                 # apply low pass filtering
                 # acc_data = filter_trial(acc_data, 0.1)
                 # filtered_acc_zero = filter_trial(acc_zero, 0.1)
-                plt.plot(acc_zero)
+                # plt.plot(acc_zero)
                 # plt.plot(range(0, len(p)), p)
                 plt.plot(acc_data)
                 plt.title(file + " " + side)
-                plt.legend(["Resultant", "X", "Y", "Z"])
-                plt.show()
-                tilt_correct(acc_data, acc_zero)
+                plt.legend(["X", "Y", "Z"])
+                # plt.show()
+                rotMatForward, rotMatSideways = tilt_correct(acc_data, acc_zero)
+                # Plot the original and rotation corrected data
+                trialdir = "../../NEDData/" + subject + "/WalkShake/" + side + "/"
+                for trial in os.listdir(trialdir):
+                    if trial == os.listdir(trialdir)[1]:
+                        trial_fp = trialdir + trial
+                        trialAccData = pd.read_csv(trial_fp, usecols=['AccX', 'AccY', 'AccZ']).values
+                        trialGyroData = pd.read_csv(trial_fp, usecols=['GyroX', 'GyroY', 'GyroZ']).values
+                        trialMagData = pd.read_csv(trial_fp, usecols=['MagX', 'MagY', 'MagZ']).values
+                        # plt.figure()
+                        # plt.plot(trialAccData)
+                        # plt.title(trial + ": Original Data")
+                        plot_imu_xyz(trialAccData, trialGyroData, trialMagData,
+                                     np.linspace(0, int(len(trialAccData) / 100), len(trialAccData)),
+                                     trial + ": Original Data", legend=["N", "E", "D"])
+                        for row in range(0, len(trialAccData)):
+                            trialAccData[row, [0, 2]] = np.dot(rotMatForward, trialAccData[row, [0, 2]].T)
+                            trialGyroData[row, [0, 2]] = np.dot(rotMatForward, trialGyroData[row, [0, 2]].T)
+                            trialMagData[row, [0, 2]] = np.dot(rotMatForward, trialMagData[row, [0, 2]].T)
+                        for row in range(0, len(trialAccData)):
+                            trialAccData[row, [1, 2]] = np.dot(rotMatSideways, trialAccData[row, [1, 2]].T)
+                            trialGyroData[row, [1, 2]] = np.dot(rotMatSideways, trialGyroData[row, [1, 2]].T)
+                            trialMagData[row, [1, 2]] = np.dot(rotMatSideways, trialMagData[row, [1, 2]].T)
+                        plot_imu_xyz(trialAccData, trialGyroData, trialMagData,
+                                     np.linspace(0, int(len(trialAccData) / 100), len(trialAccData)),
+                                     trial + ": Transformed Data", legend=["N", "E", "D"])
+                        transformed_arr = np.concatenate((trialAccData, trialGyroData, trialMagData), axis=1)
+                        print(transformed_arr.shape)
+                        np.savetxt("NEDwalk.csv", transformed_arr, delimiter=",")
+                        # plt.figure()
+                        # plt.plot(trialAccData)
+                        # plt.plot(np.linspace(0, int(len(trialAccData) / 100), len(trialAccData)), trialAccData[:, 2])
+                        # plt.title(trial + " Transformed")
+                        # plt.xlabel("Time / s")
+                        # plt.ylabel("Accel / m/s^2")
+                        # plt.legend(["X", "Y", "Z"])
+                        plt.show()
 
 
 def main():
-    tilt_correct_multiple(1, 21)
-
+    # tilt_correct_multiple(22, 23)
+    tilt_correct_multiple_with_save(1, 23)
 
 
 if __name__ == "__main__":

@@ -25,8 +25,8 @@ def process_wrist(data, filter_freq=1.5):
     FCs, _ = find_peaks(-data, prominence=2)
     plt.figure()
     plt.plot(data)
-    plt.plot(ICs, data[ICs], 'x')
-    plt.plot(FCs, data[FCs], 'x')
+    # plt.plot(ICs, data[ICs], 'x')
+    # plt.plot(FCs, data[FCs], 'x')
     return ICs, FCs
 
 
@@ -43,6 +43,9 @@ def process_wrist_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], sav
                 gyro_data = np.loadtxt(filepath, usecols=range(3, 6), delimiter=",")
                 acc_ICs, acc_FCs = process_wrist(acc_data, 35)
                 # gyro_ICs, gyro_FCs = process_wrist(gyro_data, 1.5)
+                plt.title("Wrist Resultant Accelerometer Data")
+                plt.xlabel("Time / samples")
+                plt.ylabel("Acceleration / m/s^2")
                 plt.show()
                 plt.close("all")
                 # if saveFig:
@@ -65,7 +68,7 @@ def process_wrist_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], sav
 
 
 def main():
-    process_wrist_multiple(7, 9)
+    process_wrist_multiple(9, 12)
 
 
 if __name__ == "__main__":

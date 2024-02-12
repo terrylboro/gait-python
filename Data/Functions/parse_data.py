@@ -47,9 +47,14 @@ def parse_data(filepath, savedir, filename):
     data_p.rename(columns=col_mapper_p, inplace=True)
     # convert to NED
     # left ear
-    data_l['AccX'], data_l['AccY'], data_l['AccZ'] = - data_l['AccY'], - data_l['AccZ'], data_l['AccX']
-    data_l['GyroX'], data_l['GyroY'], data_l['GyroZ'] = - data_l['GyroY'], - data_l['GyroZ'], data_l['GyroX']
-    data_l['MagX'], data_l['MagY'], data_l['MagZ'] = - data_l['MagY'], - data_l['MagZ'], data_l['MagX']
+    if np.mean(data_l['AccX'] < 0):
+        data_l['AccX'], data_l['AccY'], data_l['AccZ'] = - data_l['AccY'], data_l['AccZ'], - data_l['AccX']
+        data_l['GyroX'], data_l['GyroY'], data_l['GyroZ'] = - data_l['GyroY'], data_l['GyroZ'], - data_l['GyroX']
+        data_l['MagX'], data_l['MagY'], data_l['MagZ'] = - data_l['MagY'], data_l['MagZ'], - data_l['MagX']
+    else:
+        data_l['AccX'], data_l['AccY'], data_l['AccZ'] = - data_l['AccY'], - data_l['AccZ'], data_l['AccX']
+        data_l['GyroX'], data_l['GyroY'], data_l['GyroZ'] = - data_l['GyroY'], - data_l['GyroZ'], data_l['GyroX']
+        data_l['MagX'], data_l['MagY'], data_l['MagZ'] = - data_l['MagY'], - data_l['MagZ'], data_l['MagX']
     # right ear
     if np.mean(data_r['AccX'] < 0):
         # works for TF_01 up to TF_05
@@ -62,27 +67,42 @@ def parse_data(filepath, savedir, filename):
         data_r['GyroX'], data_r['GyroY'], data_r['GyroZ'] = data_r['GyroY'], data_r['GyroZ'], data_r['GyroX']
         data_r['MagX'], data_r['MagY'], data_r['MagZ'] = data_r['MagY'], data_r['MagZ'], data_r['MagX']
     # chest
-    data_c['AccX'], data_c['AccY'], data_c['AccZ'] = data_c['AccZ'], data_c['AccX'], data_c['AccY']
-    data_c['GyroX'], data_c['GyroY'], data_c['GyroZ'] = data_c['GyroZ'], data_c['GyroX'], data_c['GyroY']
-    data_c['MagX'], data_c['MagY'], data_c['MagZ'] = data_c['MagZ'], data_c['MagX'], data_c['MagY']
+    if np.mean(data_c['AccY'] > 0):
+        data_c['AccX'], data_c['AccY'], data_c['AccZ'] = data_c['AccZ'], data_c['AccX'], data_c['AccY']
+        data_c['GyroX'], data_c['GyroY'], data_c['GyroZ'] = data_c['GyroZ'], data_c['GyroX'], data_c['GyroY']
+        data_c['MagX'], data_c['MagY'], data_c['MagZ'] = data_c['MagZ'], data_c['MagX'], data_c['MagY']
+    else:
+        data_c['AccX'], data_c['AccY'], data_c['AccZ'] = data_c['AccZ'], -data_c['AccX'], -data_c['AccY']
+        data_c['GyroX'], data_c['GyroY'], data_c['GyroZ'] = data_c['GyroZ'], -data_c['GyroX'], -data_c['GyroY']
+        data_c['MagX'], data_c['MagY'], data_c['MagZ'] = data_c['MagZ'], -data_c['MagX'], -data_c['MagY']
     # pocket
-    data_p['AccX'], data_p['AccY'], data_p['AccZ'] = data_p['AccZ'], data_p['AccY'], data_p['AccX']
-    data_p['GyroX'], data_p['GyroY'], data_p['GyroZ'] = data_p['GyroZ'], data_p['GyroY'], data_p['GyroX']
-    data_p['MagX'], data_p['MagY'], data_p['MagZ'] = data_p['MagZ'], data_p['MagY'], data_p['MagX']
-    print("saving to:\n")
-    print(savedir + "/Right/" + filename + "_NED.csv")
-    data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
-    data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
+    if np.mean(data_p['AccX'] > 0):
+        data_p['AccX'], data_p['AccY'], data_p['AccZ'] = data_p['AccZ'], data_p['AccY'], data_p['AccX']
+        data_p['GyroX'], data_p['GyroY'], data_p['GyroZ'] = data_p['GyroZ'], data_p['GyroY'], data_p['GyroX']
+        data_p['MagX'], data_p['MagY'], data_p['MagZ'] = data_p['MagZ'], data_p['MagY'], data_p['MagX']
+    else:
+        data_p['AccX'], data_p['AccY'], data_p['AccZ'] = data_p['AccZ'], -data_p['AccY'], -data_p['AccX']
+        data_p['GyroX'], data_p['GyroY'], data_p['GyroZ'] = data_p['GyroZ'], -data_p['GyroY'], -data_p['GyroX']
+        data_p['MagX'], data_p['MagY'], data_p['MagZ'] = data_p['MagZ'], -data_p['MagY'], -data_p['MagX']
+    # print("saving to:\n")
+    # print(savedir + "/Right/" + filename + "_NED.csv")
+    # data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
+    # data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
     data_c.to_csv(savedir + "/Chest/" + filename + "_NED.csv", index=False)
     data_p.to_csv(savedir + "/Pocket/" + filename + "_NED.csv", index=False)
 
 
-def parse_multiple_subjects(subjectStart, subjectEnd, activityTypes=["Walk"]):
+def parse_multiple_subjects(subjectRange, activityTypes=["Walk"]):
     # all the subfolders in the "/FilteredData/" folder in a list
     list_subfolders_with_paths = [f.path for f in os.scandir("../../FilteredData/Data/") if f.is_dir()]
-    print(list_subfolders_with_paths)
-    print(list_subfolders_with_paths[subjectStart-1].split("/")[-1])
-    for data_folder in list_subfolders_with_paths[subjectStart-1:subjectEnd]:
+    print(len(list_subfolders_with_paths))
+    print(subjectRange[0])
+    print(list_subfolders_with_paths[subjectRange[0]-1].split("/")[-1])
+    print(subjectRange)
+    subject_subfolders = []
+    for subject in range(0, len(subjectRange)):
+        subject_subfolders.append(list_subfolders_with_paths[subjectRange[subject] - 1])
+    for data_folder in subject_subfolders:
         for activity in activityTypes:
             savedir = "../../NEDData/" + data_folder.split("/")[-1] + "/" + activity + "/"
             if not os.path.exists("../../NEDData/" + data_folder.split("/")[-1]):
@@ -103,7 +123,7 @@ def parse_multiple_subjects(subjectStart, subjectEnd, activityTypes=["Walk"]):
 def main():
     # activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
-    parse_multiple_subjects(17, 21, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    parse_multiple_subjects(range(20, 21), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
 
 

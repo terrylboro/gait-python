@@ -78,7 +78,7 @@ def view_orientation_single_subject():
 
 def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk"], filter=False):
     # all the subfolders in the "/HeadOrientation/Data/" folder in a list
-    list_subfolders_with_paths = [f.path for f in os.scandir("../Data/") if f.is_dir()]
+    list_subfolders_with_paths = [f.path for f in os.scandir("../NEDData/") if f.is_dir()]
     print(list_subfolders_with_paths)
     for data_folder in list_subfolders_with_paths[subjectStart:subjectEnd]:
         for activity in activityTypes:

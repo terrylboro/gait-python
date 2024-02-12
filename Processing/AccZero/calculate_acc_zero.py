@@ -165,7 +165,7 @@ def compare_two_trials(subject):
     delsys_offset = 0#20#86
     subject = str(subject).zfill(2)
     activity = "Walk"
-    for trial in range(7, 9):
+    for trial in range(3, 13):
         chest_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Chest/TF_"+subject+"-"+str(trial).zfill(2)+"_NED.csv")
         ear_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Left/TF_"+subject+"-"+str(trial).zfill(2)+"_NED.csv")
         pocket_data = pd.read_csv("Data/TF_"+subject+"/"+activity+"/Pocket/TF_"+subject+"-"+str(trial).zfill(2)+"_NED.csv")
@@ -175,8 +175,8 @@ def compare_two_trials(subject):
         plt.clf()
         # plt.plot((shank_data["Time"].values + delsys_offset) / 1000, shank_data["Acc0"].values)
         # plt.plot(wrist_data["Time"].values / 1000, wrist_data["Acc0"].values)
-        plt.plot((chest_data["Time"].values % 65536) / 1000, chest_data["Acc0"].values)
-        plt.plot((chest_data["Time"].values % 65536) / 1000, ear_data["Acc0"].values)
+        # plt.plot((chest_data["Time"].values % 65536) / 1000, chest_data["Acc0"].values)
+        # plt.plot((chest_data["Time"].values % 65536) / 1000, ear_data["Acc0"].values)
         plt.plot((chest_data["Time"].values % 65536) / 1000, pocket_data["Acc0"].values)
 
         # plt.plot((shank_data["Time"].values + delsys_offset) / 1000, shank_data["Gyro0"].values)
@@ -185,23 +185,24 @@ def compare_two_trials(subject):
         # plt.plot(ear_data["Time"].values / 1000, ear_data["Gyro0"].values)
         # # plt.plot(pocket_data["Time"].values / 1000, pocket_data["Gyro0"].values)
 
-        plt.title("Comparison of Resultant Accelerometer Signals by Location for Subj." + subject + " Trial " + str(trial))
+        plt.title("Comparison of Resultant Accelerometer Signals by Location for Participant " + subject + " Trial " + str(trial))
         plt.xlabel("Time / s")
         plt.ylabel(r"Acceleration / $ms^{-2}$")
         # plt.legend(["Shank", "Wrist", "Chest", "Ear", "Pocket"])
         # plt.legend(["Shank", "Chest", "Wrist"])
-        plt.legend(["Chest", "Ear", "Pocket"])
+        # plt.legend(["Chest", "Ear", "Pocket"])
+        plt.legend(["Ear"])
         plt.show()
 
 
 def main():
-    for subject in range(19, 20):
+    for subject in range(22, 23):
         compare_two_trials(subject)
     # compare_two_trials()
     # calculate_acc_zero_delsys(1, 3, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"], mode="no_events")
     # calculate_acc_zero_multiple(18, 20, activityTypes=["Walk"], mode="no_events")
-    # calculate_acc_zero_multiple(18, 21, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    # calculate_acc_zero_multiple(22, 23, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
 
 

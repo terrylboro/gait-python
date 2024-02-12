@@ -92,9 +92,9 @@ def filter(data):
 
 
 def main():
-    subject = str(1).zfill(2)
+    subject = str(17).zfill(2)
     activity = "Walk"
-    for trial in range(5, 8):
+    for trial in range(2, 8):
         data = pd.read_csv("../../WristShankData/TF_"+subject+"/"+activity+"/Shank/TF_"+subject+"-"
                            +str(trial).zfill(2)+"shank.csv", usecols=range(0,6))
         # get rid of leading zeros
@@ -110,6 +110,9 @@ def main():
         # the sagittal plane angular velocity signal, w_z
         w_z = -gyro_data.iloc[:, 2]#[:, 2]
         plt.plot(w_z)
+        plt.title("Shank Forward Rotation from Gyroscope During Walking")
+        plt.xlabel("Time / Samples")
+        plt.ylabel("Angular Velocity / rad/s")
         plt.show()
         ap_accel = -data.iloc[:, 1]
         # swing_phase = find_w_z_peaks(w_z)
