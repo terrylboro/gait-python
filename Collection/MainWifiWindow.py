@@ -146,7 +146,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def prefill_entries(self):
         """ pre-fill the boxes with the file path and default file name """
         self.subjectLineEdit.setText("subjectName")
-        self.trialNumLineEdit.setText("2")
+        self.trialNumLineEdit.setText("1")
 
     def fill_activity_entry(self):
         """ pre-fill the list of activities dropbox """

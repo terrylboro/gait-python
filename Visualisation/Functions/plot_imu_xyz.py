@@ -51,9 +51,12 @@ def filter(data):
     # plt.figure()
     # plt.plot(filtered_data)
 
+
 def plot_multiple(subjectRange, activities, sides):
     for subject in subjectRange:
         loaddir = "../../NEDData/TF_" + str(subject).zfill(2) + "/"
+        # loaddir = "../../Data/240214SynchTest/"
+        # loaddir = "../../TiltCorrectedData/TF_" + str(subject).zfill(2) + "/"
         for side in sides:
             for activity in activities:
                 for file in os.listdir(loaddir + activity + "/" + side):
@@ -83,11 +86,11 @@ def plot_multiple(subjectRange, activities, sides):
 
 
 def main():
-    plot_multiple(range(22, 24), ["Walk", "WalkNod"], ["Left"])
+    plot_multiple(range(25, 26), ["Walk"], ["Left"])
 
-    # # data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
-    # #                    "CroppedWalk/20231020-tom-05.txt")
-    # data = pd.read_csv("../../Data/TF_07/Walk/TF_07-07.txt")
+    # data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
+    #                    "CroppedWalk/20231020-tom-05.txt")
+    # data = pd.read_csv("../../Data/240214SynchTest/Walk/240214SynchTest-03.txt")
     # print(data.head())
     # # pocket
     # # accel = data.iloc[:, [2, 3, 4]].values
@@ -106,12 +109,12 @@ def main():
     # # gyro = data.iloc[:, [32, 33, 34]].values
     # # mag = data.iloc[:, [35, 36, 37]].values
     #
-    # # accel = data.loc[:,['AccXchest', 'AccYchest', 'AccZchest']].values
-    # # gyro = data.loc[:,['GyroXchest', 'GyroYchest', 'GyroZchest']].values
-    # # mag = data.loc[:,['MagXchest', 'MagYchest', 'MagZchest']].values
-    # accel = data.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
-    # gyro = data.loc[:, ['GyroXlear', 'GyroYlear', 'GyroZlear']].values
-    # mag = data.loc[:, ['MagXlear', 'MagYlear', 'MagZlear']].values
+    # accel = data.loc[:,['AccXchest', 'AccYchest', 'AccZchest']].values
+    # gyro = data.loc[:,['GyroXchest', 'GyroYchest', 'GyroZchest']].values
+    # mag = data.loc[:,['MagXchest', 'MagYchest', 'MagZchest']].values
+    # # accel = data.loc[:, ['AccXlear', 'AccYlear', 'AccZlear']].values
+    # # gyro = data.loc[:, ['GyroXlear', 'GyroYlear', 'GyroZlear']].values
+    # # mag = data.loc[:, ['MagXlear', 'MagYlear', 'MagZlear']].values
     # # accel = data.loc[:, ['AccXpocket', 'AccYpocket', 'AccZpocket']].values
     # # gyro = data.loc[:, ['GyroXpocket', 'GyroYpocket', 'GyroZpocket']].values
     # # mag = data.loc[:, ['MagXpocket', 'MagYpocket', 'MagZpocket']].values

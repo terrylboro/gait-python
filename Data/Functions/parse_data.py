@@ -86,8 +86,8 @@ def parse_data(filepath, savedir, filename):
         data_p['MagX'], data_p['MagY'], data_p['MagZ'] = data_p['MagZ'], -data_p['MagY'], -data_p['MagX']
     # print("saving to:\n")
     # print(savedir + "/Right/" + filename + "_NED.csv")
-    # data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
-    # data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
+    data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
+    data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
     data_c.to_csv(savedir + "/Chest/" + filename + "_NED.csv", index=False)
     data_p.to_csv(savedir + "/Pocket/" + filename + "_NED.csv", index=False)
 
@@ -123,7 +123,7 @@ def parse_multiple_subjects(subjectRange, activityTypes=["Walk"]):
 def main():
     # activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
-    parse_multiple_subjects(range(20, 21), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    parse_multiple_subjects(range(26, 27), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
 
 
