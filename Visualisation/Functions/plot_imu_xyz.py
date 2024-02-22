@@ -86,7 +86,7 @@ def plot_multiple(subjectRange, activities, sides):
 
 
 def main():
-    plot_multiple(range(25, 26), ["Walk"], ["Left"])
+    plot_multiple(range(28, 29), ["Walk"], ["Left"])
 
     # data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
     #                    "CroppedWalk/20231020-tom-05.txt")
