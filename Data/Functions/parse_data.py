@@ -90,10 +90,56 @@ def parse_data(filepath, savedir, filename):
         data_p['MagX'], data_p['MagY'], data_p['MagZ'] = data_p['MagZ'], -data_p['MagY'], -data_p['MagX']
     # print("saving to:\n")
     # print(savedir + "/Right/" + filename + "_NED.csv")
-    # data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
+    data_r.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
     data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
     data_c.to_csv(savedir + "/Chest/" + filename + "_NED.csv", index=False)
     data_p.to_csv(savedir + "/Pocket/" + filename + "_NED.csv", index=False)
+
+
+def parse_ntf_subjects(subjectRange, activityTypes):
+    # all the subfolders in the "/FilteredData/" folder in a list
+    subjectSubfolders = []
+    for subject in subjectRange:
+        subjectSubfolders.append("NTF_" + str(subject).zfill(2) + "/")
+    for data_folder in subjectSubfolders:
+        for activity in activityTypes:
+            savedir = "../../NEDData/" + data_folder + "/" + activity + "/"
+            if not os.path.exists("../../NEDData/" + data_folder):
+                os.mkdir("../../NEDData/" + data_folder)
+            if not os.path.exists("../../NEDData/" + data_folder + "/" + activity):
+                os.mkdir("../../NEDData/" + data_folder + "/" + activity)
+            if not os.path.exists(savedir): os.mkdir(savedir)
+            if not os.path.exists(savedir + "/Right/"): os.mkdir(savedir + "/Right/")
+            if not os.path.exists(savedir + "/Left/"): os.mkdir(savedir + "/Left/")
+            if not os.path.exists(savedir + "/Chest/"): os.mkdir(savedir + "/Chest/")
+            if not os.path.exists(savedir + "/Pocket/"): os.mkdir(savedir + "/Pocket/")
+            for file in os.listdir("../../Data/" + data_folder + "/" + activity + "/"):
+                print(file)
+                print(data_folder)
+                parse_data("../../Data/" + data_folder + "/" + activity + "/" + file, savedir, file.split(".")[0])
+
+
+def parse_tf_subjects(subjectRange, activityTypes):
+    # all the subfolders in the "/FilteredData/" folder in a list
+    subjectSubfolders = []
+    for subject in subjectRange:
+        subjectSubfolders.append("TF_" + str(subject).zfill(2) + "/")
+    for data_folder in subjectSubfolders:
+        for activity in activityTypes:
+            savedir = "../../NEDData/" + data_folder + "/" + activity + "/"
+            if not os.path.exists("../../NEDData/" + data_folder):
+                os.mkdir("../../NEDData/" + data_folder)
+            if not os.path.exists("../../NEDData/" + data_folder + "/" + activity):
+                os.mkdir("../../NEDData/" + data_folder + "/" + activity)
+            if not os.path.exists(savedir): os.mkdir(savedir)
+            if not os.path.exists(savedir + "/Right/"): os.mkdir(savedir + "/Right/")
+            if not os.path.exists(savedir + "/Left/"): os.mkdir(savedir + "/Left/")
+            if not os.path.exists(savedir + "/Chest/"): os.mkdir(savedir + "/Chest/")
+            if not os.path.exists(savedir + "/Pocket/"): os.mkdir(savedir + "/Pocket/")
+            for file in os.listdir("../../Data/" + data_folder + "/" + activity + "/"):
+                print(file)
+                print(data_folder)
+                parse_data("../../Data/" + data_folder + "/" + activity + "/" + file, savedir, file.split(".")[0])
 
 
 def parse_multiple_subjects(subjectRange, activityTypes=["Walk"]):
@@ -127,9 +173,12 @@ def parse_multiple_subjects(subjectRange, activityTypes=["Walk"]):
 def main():
     # activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
-    parse_multiple_subjects(range(28, 29), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-                                                   "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
-
+    # parse_multiple_subjects(range(30, 31), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    #                                                "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
+    # parse_tf_subjects(range(32, 34), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+    #                                                       "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",
+    #                                                 "ShoeBox", "Turf"])
+    parse_ntf_subjects(range(30, 32), activityTypes=["ShoeBox", "Turf"])
 
 if __name__ == "__main__":
     main()

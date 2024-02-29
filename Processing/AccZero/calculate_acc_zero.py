@@ -44,10 +44,13 @@ def find_contacts(data, location=None):
 
 
 def calculate_acc_zero_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], saveData=True, saveFig=True,
-                                mode="no_events"):
+                                mode="no_events", isTF=True):
     # all the subfolders in the "/FilteredData/" folder in a list
     for subject_num in range(subjectStart, subjectEnd):
-        subject = "TF_" + str(subject_num).zfill(2)
+        if isTF:
+            subject = "TF_" + str(subject_num).zfill(2)
+        else:
+            subject = "NTF_" + str(subject_num).zfill(2)
         prep_folders(subject, activityTypes)
         for side in ["Left", "Right", "Chest", "Pocket"]:
             for activity in activityTypes:
@@ -196,14 +199,14 @@ def compare_two_trials(subject):
 
 
 def main():
-    for subject in range(9, 13):
-        compare_two_trials(subject)
+    # for subject in range(9, 13):
+    #     compare_two_trials(subject)
     # compare_two_trials()
     # calculate_acc_zero_delsys(9, 13, activityTypes=["Walk"])#["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                    # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"], mode="no_events")
     # calculate_acc_zero_multiple(17, 20, activityTypes=["Walk"], mode="no_events")
-    # calculate_acc_zero_multiple(22, 23, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-    #                                                    "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
+    calculate_acc_zero_multiple(30, 32, activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                                                       "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"], isTF=False)
 
 
 if __name__ == "__main__":

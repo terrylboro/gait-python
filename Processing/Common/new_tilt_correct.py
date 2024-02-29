@@ -89,8 +89,8 @@ def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
     for subject_num in range(subjectStart, subjectEnd):
         subject = "TF_" + str(subject_num).zfill(2)
         if not os.path.exists("../../TiltCorrectedData/" + subject + "/"): os.mkdir("../../TiltCorrectedData/" + subject + "/")
-        # sides = ["Left", "Right", "Chest", "Pocket"]
-        sides = ["Right"]
+        sides = ["Left", "Right", "Chest", "Pocket"]
+        # sides = ["Left"]
         activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
                       "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
         for side in sides:
@@ -121,9 +121,59 @@ def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
                         trialGyroData[row, [1, 2]] = np.dot(rotMatSideways, trialGyroData[row, [1, 2]].T)
                         trialMagData[row, [1, 2]] = np.dot(rotMatSideways, trialMagData[row, [1, 2]].T)
                     # for TF_14 right
-                    trialAccData[:, [2, 0]] = trialAccData[:, [0, 2]]
-                    trialGyroData[:, [2, 0]] = trialGyroData[:, [0, 2]]
-                    trialMagData[:, [2, 0]] = trialMagData[:, [0, 2]]
+                    # trialAccData[:, [2, 0]] = trialAccData[:, [0, 2]]
+                    # trialGyroData[:, [2, 0]] = trialGyroData[:, [0, 2]]
+                    # trialMagData[:, [2, 0]] = trialMagData[:, [0, 2]]
+                    transformed_arr = np.concatenate((trialAccData, trialGyroData, trialMagData), axis=1)
+                    transformed_df = pd.DataFrame(
+                        data=transformed_arr,
+                        index=None,
+                        columns=['AccX', 'AccY', 'AccZ', 'GyroX', 'GyroY', 'GyroZ', 'MagX', 'MagY', 'MagZ']
+                    )
+                    # np.savetxt("NEDwalk.csv", transformed_arr, delimiter=",")
+                    transformed_df.to_csv(savedir+trial, index=False)
+                    # plt.show()
+
+
+def tilt_correct_ntf_save(subjectRange):
+    for subject_num in subjectRange:
+        subject = "NTF_" + str(subject_num).zfill(2)
+        if not os.path.exists("../../TiltCorrectedData/" + subject + "/"): os.mkdir("../../TiltCorrectedData/" + subject + "/")
+        sides = ["Left", "Right", "Chest", "Pocket"]
+        # sides = ["Left"]
+        activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                      "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
+        for side in sides:
+            loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
+            for file in os.listdir(loaddir):
+                filepath = loaddir + file
+                acc_data = pd.read_csv(filepath, usecols=['AccX', 'AccY', 'AccZ']).values
+                # find the resultant vector
+                acc_zero = calculate_acc_zero(acc_data)
+                rotMatForward, rotMatSideways = tilt_correct(acc_data, acc_zero)
+            for activity in activities:
+                trialdir = "../../NEDData/" + subject + "/" + activity + "/" + side + "/"
+                savedir = "../../TiltCorrectedData/" + subject + "/" + activity + "/" + side + "/"
+                if not os.path.exists("../../TiltCorrectedData/" + subject + "/" + activity): os.mkdir(
+                    "../../TiltCorrectedData/" + subject + "/" + activity)
+                if not os.path.exists(savedir): os.mkdir(savedir)
+                for trial in os.listdir(trialdir):
+                    trial_fp = trialdir + trial
+                    trialAccData = pd.read_csv(trial_fp, usecols=['AccX', 'AccY', 'AccZ']).values
+                    trialGyroData = pd.read_csv(trial_fp, usecols=['GyroX', 'GyroY', 'GyroZ']).values
+                    trialMagData = pd.read_csv(trial_fp, usecols=['MagX', 'MagY', 'MagZ']).values
+                    for row in range(0, len(trialAccData)):
+                        trialAccData[row, [0, 2]] = np.dot(rotMatForward, trialAccData[row, [0, 2]].T)
+                        trialGyroData[row, [0, 2]] = np.dot(rotMatForward, trialGyroData[row, [0, 2]].T)
+                        trialMagData[row, [0, 2]] = np.dot(rotMatForward, trialMagData[row, [0, 2]].T)
+                    for row in range(0, len(trialAccData)):
+                        trialAccData[row, [1, 2]] = np.dot(rotMatSideways, trialAccData[row, [1, 2]].T)
+                        trialGyroData[row, [1, 2]] = np.dot(rotMatSideways, trialGyroData[row, [1, 2]].T)
+                        trialMagData[row, [1, 2]] = np.dot(rotMatSideways, trialMagData[row, [1, 2]].T)
+                    # for TF_14 right
+                    # trialAccData[:, [2, 0]] = trialAccData[:, [0, 2]]
+                    # trialGyroData[:, [2, 0]] = trialGyroData[:, [0, 2]]
+                    # trialMagData[:, [2, 0]] = trialMagData[:, [0, 2]]
                     transformed_arr = np.concatenate((trialAccData, trialGyroData, trialMagData), axis=1)
                     transformed_df = pd.DataFrame(
                         data=transformed_arr,
@@ -138,8 +188,8 @@ def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
 def tilt_correct_multiple(subjectStart, subjectEnd):
     for subject_num in range(subjectStart, subjectEnd):
         subject = "TF_" + str(subject_num).zfill(2)
-        # sides = ["Left", "Right"]
-        sides = ["Right"]
+        sides = ["Left", "Right"]
+        # sides = ["Left"]
         for side in sides:
             loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
             for file in os.listdir(loaddir):
@@ -208,7 +258,8 @@ def tilt_correct_multiple(subjectStart, subjectEnd):
 
 def main():
     # tilt_correct_multiple(14, 15)
-    tilt_correct_multiple_with_save(14, 15)
+    tilt_correct_multiple_with_save(33, 35)
+    # tilt_correct_ntf_save(range(30, 32))
 
 
 if __name__ == "__main__":

@@ -41,42 +41,39 @@ def preprocess_imu(data):
     return accelReadings, gyroReadings, magReadings
 
 
-def view_orientation_single_subject(subject, activity, sides, trials):
+def view_orientation_single_subject(subject, activity, side, trials):
     # subject = "TF_01"
     # side = "Left"
     # activity = "Walk"
     # trials = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 34, 35, 36]
-    for trial in trials:
-        for side in sides:
-            # file = subject + "-10_NED"
-            file = subject + "-" + str(trial).zfill(2) + "_NED"
-            # img_save_path = "../Data/" + subject + "/" + activity + "/Corrected Graphs/" + side + "/"
-            rot_filepath = "../Data/" + subject + "/" + activity + "/Angles/" + side + "/" + file + "-" + side + "-rotmat.csv"
-            imu_filepath = "../Data/" + subject + "/" + activity + "/Readings/" + side + "/" + file + ".csv"
-            imu_filepath = "../../TiltCorrectedData/" + subject + "/" + activity + "/" + side + "/" + file + ".csv"
-            rot_data = pd.read_csv(rot_filepath, skiprows=1, header=None).to_numpy()
-            imu_data = pd.read_csv(imu_filepath)
-            accelReadings, gyroReadings, magReadings = preprocess_imu(imu_data)
-            # Apply rotation correction
-            rot_accelReadings = np.zeros((len(accelReadings), 3))
-            for i in range(0, len(accelReadings) - 1):
-                a = rot_data[i, :].reshape(3, 3)
-                # a[:, [0, 1]] = a[:, [1, 0]]
-                b = accelReadings[i, :]
-                rot_accelReadings[i, :] = np.matmul(a, b)
-                # rot_accelReadings[i, :] = np.matmul(np.linalg.inv(a), b)
+    for trial in os.listdir("../../TiltCorrectedData/" + subject + "/" + activity + "/" + side + "/"):
+        file = subject + "-" + str(trial).zfill(2) + "_NED"
+        # img_save_path = "../Data/" + subject + "/" + activity + "/Corrected Graphs/" + side + "/"
+        rot_filepath = "../Data/" + subject + "/" + activity + "/Angles/" + side + "/" + trial.split(".")[0] + "-" + side + "-rotmat.csv"
+        imu_filepath = "../../TiltCorrectedData/" + subject + "/" + activity + "/" + side + "/" + file + ".csv"
+        rot_data = pd.read_csv(rot_filepath, skiprows=1, header=None).to_numpy()
+        imu_data = pd.read_csv(imu_filepath)
+        accelReadings, gyroReadings, magReadings = preprocess_imu(imu_data)
+        # Apply rotation correction
+        rot_accelReadings = np.zeros((len(accelReadings), 3))
+        for i in range(0, len(accelReadings) - 1):
+            a = rot_data[i, :].reshape(3, 3)
+            # a[:, [0, 1]] = a[:, [1, 0]]
+            b = accelReadings[i, :]
+            rot_accelReadings[i, :] = np.matmul(a, b)
+            # rot_accelReadings[i, :] = np.matmul(np.linalg.inv(a), b)
 
-            # plot_imu_xyz(accelReadings, gyroReadings, magReadings, range(0, len(accelReadings)), "Before",  figNum=1)
-            # plot_imu_xyz(rot_accelReadings, gyroReadings, magReadings, range(0, len(accelReadings)), "After", figNum=2)
-            # plot_accel(range(0, len(accelReadings)), accelReadings,
-            #            file + " " + side + " " + "Before Head Rotation Compensation", figNum=1)
-            # plt.savefig(img_save_path + file + " " + side + " " + "Before Head Rotation Compensation.png",
-            #             bbox_inches="tight")
-            plot_accel(range(0, len(accelReadings)), rot_accelReadings,
-                       file + " " + side + " " + "After Head Rotation Compensation", figNum=2, c=['g', 'm', 'c'])
-            plt.show()
-            # plt.savefig(img_save_path + file + " " + side + " " + "After Head Rotation Compensation.png",
-            #             bbox_inches="tight")
+        # plot_imu_xyz(accelReadings, gyroReadings, magReadings, range(0, len(accelReadings)), "Before",  figNum=1)
+        # plot_imu_xyz(rot_accelReadings, gyroReadings, magReadings, range(0, len(accelReadings)), "After", figNum=2)
+        # plot_accel(range(0, len(accelReadings)), accelReadings,
+        #            file + " " + side + " " + "Before Head Rotation Compensation", figNum=1)
+        # plt.savefig(img_save_path + file + " " + side + " " + "Before Head Rotation Compensation.png",
+        #             bbox_inches="tight")
+        plot_accel(range(0, len(accelReadings)), rot_accelReadings,
+                   file + " " + side + " " + "After Head Rotation Compensation", figNum=2, c=['g', 'm', 'c'])
+        plt.show()
+        # plt.savefig(img_save_path + file + " " + side + " " + "After Head Rotation Compensation.png",
+        #             bbox_inches="tight")
 
 
 def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk"], filter=False):
@@ -176,16 +173,22 @@ def view_orientation_all_subjects(subjectStart, subjectEnd, activityTypes=["Walk
 def main():
     # view_orientation_all_subjects(1, 3, ["Walk"], filter=False)
     # view_orientation_all_subjects(1, 14, ["Walk"], filter=True)
-    view_orientation_single_subject("TF_21", "WalkShake", ["Left"], [13, 14, 15])
+    # view_orientation_single_subject("TF_27", "WalkShake", "Left", [13, 14, 15])
 
-    # filepath = "../Data/TF_21/Walk/Angles/Right/"
-    # for file in os.listdir(filepath):
-    #     if "euler" in file:
-    #         data = pd.read_csv(filepath + file, skiprows=1, header=None)
-    #         print(data.iloc[:, 1])
-    #         # view_head_orientation(range(0, len(data)), data["angles"], file)
-    #         view_head_orientation(range(0, len(data)), data.to_numpy(), file)
-    #         plt.show()
+    filepath = "../Data/TF_26/PickUp/Angles/Left/"
+    filepath2 = "../Data/TF_27/PickUp/Angles/Left/"
+    file = "TF_26-31_NED-Left-euler.csv"
+    file2 = "TF_27-31_NED-Left-euler.csv"
+    # for file in os.listdir(filepath2):
+    if "euler" in file:
+        data = pd.read_csv(filepath + file, skiprows=1, header=None)
+        data2 = pd.read_csv(filepath2 + file2, skiprows=1, header=None)
+        print(data.iloc[:, 1])
+        # view_head_orientation(range(0, len(data)), data["angles"], file)
+        view_head_orientation(range(0, len(data)), data.to_numpy(), "PickUp - TF_26 vs TF_27")
+        view_head_orientation(range(0, len(data2)), data2.to_numpy(), "PickUp - TF_26 vs TF_27",
+                              c=["r--", "b--", "y--"])
+        plt.show()
 
 
 if __name__ == "__main__":
