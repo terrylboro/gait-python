@@ -119,6 +119,7 @@ def plot_multiple_ntf(subjectRange, activities, sides):
                     plot_imu_xyz(filteredAccelReadings, filteredGyroReadings, filteredMagReadings, time, file+" Filtered")
                     plt.show()
 
+
 def plot_multiple(subjectRange, activities, sides):
     for subject in subjectRange:
         # loaddir = "../../NEDData/TF_" + str(subject).zfill(2) + "/"
@@ -175,8 +176,8 @@ def plot_accels(subjectRange, activities, sides):
 
 
 def main():
-    # plot_multiple(range(27, 28), ["WalkShake"], ["Left"])
-    plot_multiple_ntf(range(30, 31), ["Walk"], ["Left"])
+    # plot_multiple(range(50, 51), ["ShoeBox"], ["Left"])
+    plot_multiple_ntf(range(54, 56), ["Walk"], ["Right"])
     # plot_accels(range(29, 30), ["Walk"], ["Left"])
     # plot_accels(range(28, 29), ["Walk"], ["Left"])
     # plt.title("Comparison of Sideways Signals from TF_26 and TF_27")

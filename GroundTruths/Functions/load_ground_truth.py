@@ -3,6 +3,7 @@
 import os.path
 
 import pandas as pd
+import json
 
 
 def load_ground_truth(subject, trial_num):
@@ -16,3 +17,25 @@ def load_ground_truth(subject, trial_num):
     RTO = gt_data[gt_data['RTO'] != 0]['RTO'].values.tolist()
     return LHC, RHC, LTO, RTO
 
+
+def load_ground_truth_json(subject, trial):
+    filepath = "../Participants/gait_events_A096391_" + str(subject).zfill(2) + ".json"
+    # read json file
+    with open(filepath, 'r') as jsonfile:
+        data = json.load(jsonfile)
+    data = data["A096391_" + str(subject).zfill(2)]
+    # parse file
+    pd_df = pd.read_json(json.dumps(data["A096391_" + str(subject).zfill(2) + "_" + str(trial).zfill(4)]), orient='index')
+    return pd_df
+
+
+def main():
+    """ Test for the json function """
+    subject = 10
+    for trial in range(3, 6):
+        tsps = load_ground_truth_json(subject, trial)
+        print(tsps)
+
+
+if __name__ == "__main__":
+    main()

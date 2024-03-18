@@ -151,7 +151,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def fill_activity_entry(self):
         """ pre-fill the list of activities dropbox """
         activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow", "Sit2Stand", "Stand2Sit", "TUG", "Reach",
-                      "PickUp", "ShoeBox", "Turf"]
+                      "PickUp", "ShoeBox", "Turf2Floor", "Floor2Turf"]
         self.activityComboBox.addItems(activities)
         self.activityComboBox.setCurrentText("Static")
 
