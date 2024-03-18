@@ -37,7 +37,7 @@ def plot_imu_xyz(accel, gyro, mag, time, title, legend=["X", "Y", "Z"]):
 
     # plt.tight_layout()
     fig.set_tight_layout(True)
-
+    return fig, axs
     # plt.show()
 
 def plot_accel_xyz(accel, time, title, legend=["X", "Y", "Z"], c='r-', axs=None):
