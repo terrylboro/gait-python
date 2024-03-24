@@ -176,8 +176,8 @@ def plot_accels(subjectRange, activities, sides):
 
 
 def main():
-    # plot_multiple(range(50, 51), ["ShoeBox"], ["Left"])
-    plot_multiple_ntf(range(54, 56), ["Walk"], ["Right"])
+    plot_multiple(range(62, 63), ["WalkSlow"], ["Left"])
+    # plot_multiple_ntf(range(54, 56), ["Walk"], ["Right"])
     # plot_accels(range(29, 30), ["Walk"], ["Left"])
     # plot_accels(range(28, 29), ["Walk"], ["Left"])
     # plt.title("Comparison of Sideways Signals from TF_26 and TF_27")
