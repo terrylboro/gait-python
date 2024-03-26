@@ -4,7 +4,8 @@
 
 import numpy as np
 import pandas as pd
-from GroundTruths.Functions.load_ground_truth import load_ground_truth, load_ground_truth_json
+from GroundTruths.Functions.load_ground_truth import load_ground_truth, load_ground_truth_json, \
+    load_ground_truth_json_new
 from Visualisation.Functions.plot_gait_data import plot_gait_data
 import matplotlib.pyplot as plt
 import os
@@ -28,11 +29,11 @@ def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=
     plot_gait_data(data, "Gait Event Comparison for Subject B", plot_legend=False, chest=chest)
     # Load the ground truth arrays
     try:
-        gt_df = load_ground_truth_json(subject, trial_num)
+        gt_df = load_ground_truth_json_new(subject, trial_num)
         LHC_gt = gt_df.iloc[0, :].values
         RHC_gt = gt_df.iloc[1, :].values
-        LTO_gt = gt_df.iloc[2, :].values
-        RTO_gt = gt_df.iloc[3, :].values
+        # LTO_gt = gt_df.iloc[2, :].values
+        # RTO_gt = gt_df.iloc[3, :].values
     except FileNotFoundError:
         print("No ground truth data for trial: ", trial_num)
         ground_truth_available = False
@@ -47,12 +48,12 @@ def compare_with_ground_truth(data_filepath, LHC, RHC, LTO=None, RTO=None, save=
         plt.vlines(LHC[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='r', alpha=0.5)#, linestyles='-.')
         plt.vlines(RHC[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='g', alpha=0.5)#, linestyles='-.')
         # Do the same with Toe-Offs if info provided
-        if LTO is not None and RTO is not None:
-            if ground_truth_available:
-                plt.vlines(LTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles='--')
-                plt.vlines(RTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles='--')
-            plt.vlines(LTO[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles=':', alpha=0.5)
-            plt.vlines(RTO[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles=':', alpha=0.5)
+        # if LTO is not None and RTO is not None:
+        #     if ground_truth_available:
+        #         plt.vlines(LTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles='--')
+        #         plt.vlines(RTO_gt, data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles='--')
+        #     plt.vlines(LTO[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='r', linestyles=':', alpha=0.5)
+        #     plt.vlines(RTO[:, fig_num-1], data.to_numpy().min(), data.to_numpy().max(), color='g', linestyles=':', alpha=0.5)
 
         ax = plt.gca()
         if ground_truth_available:

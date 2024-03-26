@@ -28,13 +28,22 @@ def load_ground_truth_json(subject, trial):
     pd_df = pd.read_json(json.dumps(data["A096391_" + str(subject).zfill(2) + "_" + str(trial).zfill(4)]), orient='index')
     return pd_df
 
+def load_ground_truth_json_new(subject, trial):
+    filepath = "../../C3d/GroundTruth/A096391_" + str(subject).zfill(2) + ".json"
+    # read json file
+    with open(filepath, 'r') as jsonfile:
+        data = json.load(jsonfile)
+    json_str = json.dumps(data[str(trial).zfill(4)])
+    pd_df = pd.read_json(json_str, orient='index')
+    return pd_df
+
 
 def main():
     """ Test for the json function """
-    subject = 10
+    subject = 17
     for trial in range(3, 6):
-        tsps = load_ground_truth_json(subject, trial)
-        print(tsps)
+        tsps = load_ground_truth_json_new(subject, trial)
+        print(tsps.shape)
 
 
 if __name__ == "__main__":

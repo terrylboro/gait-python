@@ -42,7 +42,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.isRunning = False  # Initialise to not running state
         # self.mSerial = serial.Serial()
         self.DataSaveEnabled = False
-        self.UsingVicon = True  # Change this to true to incorporate Vicon
+        self.UsingVicon = False  # Change this to true to incorporate Vicon
         self.IsMobileLab = False  # Set to true if using mobile lab (i.e. receiver rather than trigger)
         if self.UsingVicon:
             self.serial_worker = ViconComms(port="COM6", baudrate=1000000)  # setup vicon with selected port
@@ -54,7 +54,7 @@ class MainWifiWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.imudatafile = None  # this will be the variable storing the .txt file
         self.firstFrameFlag = True  # this is set to false once we start saving
         # self.colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/timestampedColumnHeaders", "r").read()
-        self.colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/reducedColumnHeaders",
+        self.colNames = open("../Utils/reducedColumnHeaders",
                              "r").read()
 
         # variables to process the incoming data frames
