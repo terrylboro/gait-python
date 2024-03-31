@@ -6,7 +6,7 @@ import numpy as np
 def parse_data(filepath, savedir, filename):
     # colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/timestampedColumnHeaders",
     #                      "r").read()
-    colNames = open("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/reducedColumnHeaders",
+    colNames = open("../../Utils/reducedColumnHeaders",
                     "r").read()
     print(colNames)
     col_mapper_r = {'Time': 'Time', 'AccXrear': 'AccX', 'AccYrear': 'AccY', 'AccZrear': 'AccZ',
@@ -175,9 +175,9 @@ def main():
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
     # parse_multiple_subjects(range(30, 31), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
-    parse_tf_subjects(range(62, 63), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-                                                          "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",
-                                                    "ShoeBox", "Turf2Floor", "Floor2Turf"])
+    parse_tf_subjects(range(40, 46), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                                                          "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])#,
+                                                    # "ShoeBox", "Turf2Floor", "Floor2Turf"])
     # parse_ntf_subjects(range(54, 56), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                       "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",
     #                                                  "ShoeBox", "Turf2Floor", "Floor2Turf"])

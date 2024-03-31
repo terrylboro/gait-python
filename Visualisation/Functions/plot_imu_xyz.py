@@ -125,30 +125,39 @@ def plot_multiple(subjectRange, activities, sides):
         # loaddir = "../../NEDData/TF_" + str(subject).zfill(2) + "/"
         # loaddir = "../../Data/240214SynchTest/"
         loaddir = "../../TiltCorrectedData/TF_" + str(subject).zfill(2) + "/"
-        for side in sides:
-            for activity in activities:
-                for file in os.listdir(loaddir + activity + "/" + side):
-                    data = pd.read_csv(loaddir + activity + "/" + side + "/" + file)
-                    print(data.head(2))
-                    accel = data.loc[:, ['AccX', 'AccY', 'AccZ']].values
-                    gyro = data.loc[:, ['GyroX', 'GyroY', 'GyroZ']].values
-                    mag = data.loc[:, ['MagX', 'MagY', 'MagZ']].values
-                    N = np.size(accel, 0)
-                    # Rearrange the data to fit the correct format
-                    accelReadings = np.reshape(accel[:, :], (N, 3))
-                    gyroReadings = np.reshape(gyro[:, :], (N, 3))
-                    magReadings = np.reshape(mag[:, :], (N, 3))
-                    #
-                    # filtering
-                    filteredAccelReadings = filter(accelReadings)
-                    filteredGyroReadings = filter(gyroReadings)
-                    filteredMagReadings = filter(magReadings)
+        count = 0
+        try:
+            for side in sides:
+                for activity in activities:
+                    for file in os.listdir(loaddir + activity + "/" + side):
+                        if count == 0:
+                            data = pd.read_csv(loaddir + activity + "/" + side + "/" + file)
+                            print(data.head(2))
+                            accel = data.loc[:, ['AccX', 'AccY', 'AccZ']].values
+                            gyro = data.loc[:, ['GyroX', 'GyroY', 'GyroZ']].values
+                            mag = data.loc[:, ['MagX', 'MagY', 'MagZ']].values
+                            N = np.size(accel, 0)
+                            # Rearrange the data to fit the correct format
+                            accelReadings = np.reshape(accel[:, :], (N, 3))
+                            gyroReadings = np.reshape(gyro[:, :], (N, 3))
+                            magReadings = np.reshape(mag[:, :], (N, 3))
+                            #
+                            # filtering
+                            filteredAccelReadings = filter(accelReadings)
+                            filteredGyroReadings = filter(gyroReadings)
+                            filteredMagReadings = filter(magReadings)
 
-                    time = range(0, len(data))
+                            time = range(0, len(data))
 
-                    plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file+" Unfiltered")
-                    plot_imu_xyz(filteredAccelReadings, filteredGyroReadings, filteredMagReadings, time, file+" Filtered")
-                    plt.show()
+                            plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file+" Unfiltered")
+                            plt.savefig("../DemoPlots/Unfiltered/" + str(subject) + "-demo.png")
+                            plot_imu_xyz(filteredAccelReadings, filteredGyroReadings, filteredMagReadings, time, file+" Filtered")
+                            # plt.show()
+                            plt.savefig("../DemoPlots/Filtered/" + str(subject) + "-demo.png")
+                            plt.close()
+                            count += 1
+        except:
+            print("No TF data for this subject number")
 
 
 def plot_accels(subjectRange, activities, sides):
@@ -176,7 +185,7 @@ def plot_accels(subjectRange, activities, sides):
 
 
 def main():
-    plot_multiple(range(62, 63), ["WalkSlow"], ["Left"])
+    plot_multiple(range(0, 21), ["Walk"], ["Left"])
     # plot_multiple_ntf(range(54, 56), ["Walk"], ["Right"])
     # plot_accels(range(29, 30), ["Walk"], ["Left"])
     # plot_accels(range(28, 29), ["Walk"], ["Left"])
@@ -184,7 +193,7 @@ def main():
     # plt.legend(["TF_26", "TF_27"])
     # plt.ylabel("Acceleration / m/s^2")
     # plt.xlabel("Time / Samples")
-    plt.show()
+    # plt.show()
 
     # data = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Data/20231020-tom/"
     #                    "CroppedWalk/20231020-tom-05.txt")

@@ -134,7 +134,7 @@ class SSA(object):
 
     def plot_wcorr(self, min=None, max=None):
         """
-        Plots the w-correlation matrix for the decomposed time series.
+        DemoPlots the w-correlation matrix for the decomposed time series.
         """
         if min is None:
             min = 0

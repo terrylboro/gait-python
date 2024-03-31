@@ -29,11 +29,15 @@ def load_ground_truth_json(subject, trial):
     return pd_df
 
 def load_ground_truth_json_new(subject, trial):
-    filepath = "../../C3d/GroundTruth/A096391_" + str(subject).zfill(2) + ".json"
+    filepath = "../../C3d/GaitEvents/A096391_" + str(subject).zfill(2) + ".json"
     # read json file
     with open(filepath, 'r') as jsonfile:
         data = json.load(jsonfile)
-    json_str = json.dumps(data[str(trial).zfill(4)])
+    try:
+        json_str = json.dumps(data[str(trial).zfill(4)])
+    except:
+        id = str(subject).zfill(2) + str(trial).zfill(2)
+        json_str = json.dumps(data[id])
     pd_df = pd.read_json(json_str, orient='index')
     return pd_df
 
