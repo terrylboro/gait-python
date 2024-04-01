@@ -55,13 +55,13 @@ def main():
         # find the subject number from the directory name
         subjectNum = subjectDir.split("_")[-1]
         # if int(subjectNum) < 19 and int(subjectNum) > 17:
-        if int(subjectNum) in range(49, 50):
+        if int(subjectNum) in range(49, 65):
             for trial in os.listdir(subjectPath + subjectDir):
                 if trial.endswith(".c3d"):
                     # load the wrist and shank data into a csv
                     print(subjectPath + subjectDir + "/" + trial)
                     sensor_arr = read_c3d(subjectPath + subjectDir + "/" + trial)
-                    print(sensor_arr)
+                    # print(sensor_arr)
                     print("Saving to: ")
                     print(savePath + subjectNum + "/" + trial.split(".")[0] + ".csv")
                     np.savetxt(savePath + subjectNum + "/" + trial.split(".")[0] + ".csv", sensor_arr, delimiter=",")

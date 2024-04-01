@@ -71,7 +71,7 @@ def main():
     subjectPath = "C:/Users/teri-/Documents/GaitC3Ds/"
     for subject in os.listdir(subjectPath)[1:]:
         print(subject)
-        if int(subject.split("_")[1]) not in [2, 3, 4, 5, 16, 20]:
+        if int(subject.split("_")[1]) not in [2, 3, 4, 5, 16, 20] and int(subject.split("_")[1]) > 23:
         # if int(subject.split("_")[1]) in [10]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}

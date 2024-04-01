@@ -7,41 +7,8 @@ from Processing.AccZero.calculate_acc_zero import calculate_acc_zero
 
 
 
-def plot_systems_together():
-    print("TODO")
-
-
-def load_shank(subject, trial):
-    try:
-        filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
-            str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
-        data = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-    except:
-        try:
-            filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
-                str(subject).zfill(2), str(subject).zfill(2), str(subject).zfill(2)+str(trial).zfill(2))
-            data = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-        except:
-            try:
-                filepath = "../WristShankData/TF_{}/15_CU_A096391_{}.csv".format(
-                    str(subject).zfill(2), str(subject).zfill(2) + str(trial).zfill(2))
-                data = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-            except:
-                filepath = "../WristShankData/TF_{}/A096391_{}_{}.csv".format(
-                    str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
-                data = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-    return data, len(data)
-
-
-def load_chest(subject, trial, activity, side):
-    filepath = "../TiltCorrectedData/TF_{}/{}/{}/TF_{}-{}_NED.csv".format(
-        str(subject).zfill(2), activity, side, str(subject).zfill(2), str(trial).zfill(2))
-    data = pd.read_csv(filepath, header=0, usecols=["AccX", "AccY", "AccZ"])
-    return data, len(data)
-
-
-def main():
-    for subject in range(60, 63):
+def plot_systems_together(subjectRange, activity, accGyro="Acc"):
+    for subject in subjectRange:
         print("Subject: ", subject)
         trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)
         trialNums = []
@@ -49,16 +16,34 @@ def main():
             trialNums.append(file.split("-")[-1][0:2])
         for trialNum in trialNums:
             # try:
-            shankData, shankLength = load_shank(subject, trialNum)
-            chestData, chestLength = load_chest(subject, trialNum, "Walk", "Pocket")
+            shankData, shankLength, wristData, wristLen = load_shank(subject, trialNum)
+            pocketData, pocketLength = load_earable(subject, trialNum, activity, "Pocket")
+            chestData, chestLength = load_earable(subject, trialNum, activity, "Chest")
+            leftData, leftLength = load_earable(subject, trialNum, activity, "Left")
+            rightData, rightLength = load_earable(subject, trialNum, activity, "Right")
             # plt.plot(shankPeaks, shankData.iloc[shankPeaks, 1], 'go')
             # plt.plot(shankData["AccZ"])
             shankData = shankData.iloc[::20, :].reset_index(drop=True)
-            # find resultant vector
-            chestData = calculate_acc_zero(chestData[["AccX", "AccY", "AccZ"]].values)
-            shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
-            shankPeaks, _ = find_peaks(shankData, height=13)
-            chestPeaks, _ = find_peaks(chestData, height=13)
+            wristData = wristData.iloc[::20, :].reset_index(drop=True)
+
+            # find resultant vectors
+            if accGyro == "Acc":
+                chestData = calculate_acc_zero(chestData[["AccX", "AccY", "AccZ"]].values)
+                pocketData = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
+                leftData = calculate_acc_zero(leftData[["AccX", "AccY", "AccZ"]].values)
+                rightData = calculate_acc_zero(rightData[["AccX", "AccY", "AccZ"]].values)
+                shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+                wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
+            else:
+                chestData = calculate_acc_zero(chestData[["GyroX", "GyroY", "GyroZ"]].values)
+                pocketData = calculate_acc_zero(pocketData[["GyroX", "GyroY", "GyroZ"]].values)
+                leftData = calculate_acc_zero(leftData[["GyroX", "GyroY", "GyroZ"]].values)
+                rightData = calculate_acc_zero(rightData[["GyroX", "GyroY", "GyroZ"]].values)
+                shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+                wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
+
+            shankPeaks, _ = find_peaks(shankData, height=50, prominence=10)
+            chestPeaks, _ = find_peaks(pocketData, height=20)
             print("Trial: ", trialNum)
             print("Shank Len: ", shankLength / 20)
             print("Chest Len: ", chestLength)
@@ -66,16 +51,122 @@ def main():
             print(chestPeaks)
             print("********")
             # print(chestData.values)
-            plt.plot(chestData)
+            plt.plot(pocketData / max(pocketData))
+            # plt.plot(chestData)
+            # plt.plot(leftData)
+            # plt.plot(rightData)
             # plt.plot(np.linspace(0, len(shankData) * 20, len(shankData)), calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values))
-            plt.plot(shankData)
+            plt.plot(shankData/ max(shankData))
+            # plt.plot(wristData)
             # plt.plot(chestPeaks, chestData.iloc[chestPeaks, 2], 'bo')
-            plt.plot(shankPeaks, shankData[shankPeaks], 'go')
+            # plt.plot(shankPeaks, shankData[shankPeaks], 'go')
             plt.legend(["Pocket", "Shank"])
             # plt.plot(shankData)
             plt.show()
             # except:
             #     print("No data for trial: ", trialNum)
+
+
+def load_shank(subject, trial):
+    try:
+        filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
+            str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
+        wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
+        shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
+        # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
+        # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+    except:
+        try:
+            filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
+                str(subject).zfill(2), str(subject).zfill(2), str(subject).zfill(2)+str(trial).zfill(2))
+            wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
+            shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
+            # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
+            # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+        except:
+            try:
+                filepath = "../WristShankData/TF_{}/15_CU_A096391_{}.csv".format(
+                    str(subject).zfill(2), str(subject).zfill(2) + str(trial).zfill(2))
+                wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
+                shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
+                # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
+                # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+            except:
+                filepath = "../WristShankData/TF_{}/A096391_{}_{}.csv".format(
+                    str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
+                wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
+                shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
+                # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
+                # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+    return shankData, len(shankData), wristData, len(wristData)
+
+
+def load_earable(subject, trial, activity, side):
+    filepath = "../TiltCorrectedData/TF_{}/{}/{}/TF_{}-{}_NED.csv".format(
+        str(subject).zfill(2), activity, side, str(subject).zfill(2), str(trial).zfill(2))
+    data = pd.read_csv(filepath, header=0, usecols=["AccX", "AccY", "AccZ"])
+    # data = pd.read_csv(filepath, header=0, usecols=["GyroX", "GyroY", "GyroZ"])
+    return data, len(data)
+
+
+def main():
+    plot_systems_together(range(50, 52), "Walk", "Acc")
+    # for subject in range(57, 60):
+    #     print("Subject: ", subject)
+    #     trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)
+    #     trialNums = []
+    #     for file in os.listdir(trialNumDir):
+    #         trialNums.append(file.split("-")[-1][0:2])
+    #     for trialNum in trialNums:
+    #         # try:
+    #         shankData, shankLength, wristData, wristLen = load_shank(subject, trialNum)
+    #         pocketData, pocketLength = load_earable(subject, trialNum, "Walk", "Pocket")
+    #         chestData, chestLength = load_earable(subject, trialNum, "Walk", "Chest")
+    #         leftData, leftLength = load_earable(subject, trialNum, "Walk", "Left")
+    #         rightData, rightLength = load_earable(subject, trialNum, "Walk", "Right")
+    #         # plt.plot(shankPeaks, shankData.iloc[shankPeaks, 1], 'go')
+    #         # plt.plot(shankData["AccZ"])
+    #         shankData = shankData.iloc[::20, :].reset_index(drop=True)
+    #         wristData = wristData.iloc[::20, :].reset_index(drop=True)
+    #
+    #         # find resultant vectors
+    #         chestData = calculate_acc_zero(chestData[["AccX", "AccY", "AccZ"]].values)
+    #         pocketData = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
+    #         leftData = calculate_acc_zero(leftData[["AccX", "AccY", "AccZ"]].values)
+    #         rightData = calculate_acc_zero(rightData[["AccX", "AccY", "AccZ"]].values)
+    #         shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+    #         wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
+    #         #
+    #         # chestData = calculate_acc_zero(chestData[["GyroX", "GyroY", "GyroZ"]].values)
+    #         # pocketData = calculate_acc_zero(pocketData[["GyroX", "GyroY", "GyroZ"]].values)
+    #         # leftData = calculate_acc_zero(leftData[["GyroX", "GyroY", "GyroZ"]].values)
+    #         # rightData = calculate_acc_zero(rightData[["GyroX", "GyroY", "GyroZ"]].values)
+    #         # shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+    #         # wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
+    #
+    #         shankPeaks, _ = find_peaks(shankData, height=13)
+    #         chestPeaks, _ = find_peaks(chestData, height=13)
+    #         print("Trial: ", trialNum)
+    #         print("Shank Len: ", shankLength / 20)
+    #         print("Chest Len: ", chestLength)
+    #         print(shankPeaks)
+    #         print(chestPeaks)
+    #         print("********")
+    #         # print(chestData.values)
+    #         plt.plot(pocketData)
+    #         # plt.plot(chestData)
+    #         # plt.plot(leftData)
+    #         # plt.plot(rightData)
+    #         # plt.plot(np.linspace(0, len(shankData) * 20, len(shankData)), calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values))
+    #         plt.plot(shankData)
+    #         # plt.plot(wristData)
+    #         # plt.plot(chestPeaks, chestData.iloc[chestPeaks, 2], 'bo')
+    #         # plt.plot(shankPeaks, shankData[shankPeaks], 'go')
+    #         plt.legend(["Pocket", "Right", "Shank", "Wrist"])
+    #         # plt.plot(shankData)
+    #         plt.show()
+    #         # except:
+    #         #     print("No data for trial: ", trialNum)
 
 
 if __name__ == "__main__":
