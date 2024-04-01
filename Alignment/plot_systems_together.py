@@ -2,8 +2,10 @@ import os
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-import pyc3dserver
 from scipy.signal import find_peaks
+from Processing.AccZero.calculate_acc_zero import calculate_acc_zero
+
+
 
 def plot_systems_together():
     print("TODO")
@@ -39,7 +41,7 @@ def load_chest(subject, trial, activity, side):
 
 
 def main():
-    for subject in range(63, 65):
+    for subject in range(60, 63):
         print("Subject: ", subject)
         trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)
         trialNums = []
@@ -48,20 +50,27 @@ def main():
         for trialNum in trialNums:
             # try:
             shankData, shankLength = load_shank(subject, trialNum)
-            chestData, chestLength = load_chest(subject, trialNum, "Walk", "Chest")
+            chestData, chestLength = load_chest(subject, trialNum, "Walk", "Pocket")
+            # plt.plot(shankPeaks, shankData.iloc[shankPeaks, 1], 'go')
+            # plt.plot(shankData["AccZ"])
             shankData = shankData.iloc[::20, :].reset_index(drop=True)
-            shankPeaks, _ = find_peaks(shankData["AccZ"], height=13)
-            chestPeaks, _ = find_peaks(chestData["AccZ"], height=13)
+            # find resultant vector
+            chestData = calculate_acc_zero(chestData[["AccX", "AccY", "AccZ"]].values)
+            shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+            shankPeaks, _ = find_peaks(shankData, height=13)
+            chestPeaks, _ = find_peaks(chestData, height=13)
             print("Trial: ", trialNum)
             print("Shank Len: ", shankLength / 20)
             print("Chest Len: ", chestLength)
             print(shankPeaks)
             print(chestPeaks)
             print("********")
-            plt.plot(chestData["AccZ"])
-            plt.plot(shankData["AccZ"])
-            plt.plot(chestPeaks, chestData.iloc[chestPeaks, 2], 'bo')
-            plt.plot(shankPeaks, shankData.iloc[shankPeaks, 1], 'go')
+            # print(chestData.values)
+            plt.plot(chestData)
+            # plt.plot(np.linspace(0, len(shankData) * 20, len(shankData)), calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values))
+            plt.plot(shankData)
+            # plt.plot(chestPeaks, chestData.iloc[chestPeaks, 2], 'bo')
+            plt.plot(shankPeaks, shankData[shankPeaks], 'go')
             plt.legend(["Pocket", "Shank"])
             # plt.plot(shankData)
             plt.show()
