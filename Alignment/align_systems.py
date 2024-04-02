@@ -28,11 +28,11 @@ def align_systems(subjectRange, activity):
             shankData = shankData.iloc[::20, :].reset_index(drop=True)
 
             # find resultant vectors
-            pocketData = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
-            shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+            pocketDataAccZero = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
+            shankDataAccZero = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
 
-            shankPeaks, _ = find_peaks(shankData, height=50, prominence=10)
-            chestPeaks, _ = find_peaks(pocketData, height=20)
+            shankPeaks, _ = find_peaks(shankDataAccZero, height=50, prominence=10)
+            chestPeaks, _ = find_peaks(pocketDataAccZero, height=20)
             print("Trial: ", trialNum)
             print(shankPeaks)
             print(chestPeaks)
@@ -40,8 +40,8 @@ def align_systems(subjectRange, activity):
 
             while isGood != 1:
                 # plot normalised values
-                plt.plot(pocketData / max(pocketData))
-                plt.plot(shankData / max(shankData))
+                plt.plot(pocketDataAccZero / max(pocketDataAccZero))
+                plt.plot(shankDataAccZero / max(shankDataAccZero))
                 plt.legend(["Pocket", "Shank"])
                 plt.show()
 
@@ -49,13 +49,13 @@ def align_systems(subjectRange, activity):
                 array_len = max(shankLength / 20, pocketLength)
                 combined_arr = np.zeros((array_len, 49))  # 49 IMU streams
                 shiftVal = int(input("Input how far to shift pocket data: "))
-                newData = np.roll(pocketData, -shiftVal)
+                newData = np.roll(pocketDataAccZero, -shiftVal)
                 # newData[0:shiftVal] = 0
 
                 # plot rolled values
                 plt.close()
-                plt.plot(newData / max(pocketData))
-                plt.plot(shankData / max(shankData))
+                plt.plot(newData / max(newData))
+                plt.plot(shankDataAccZero / max(shankDataAccZero))
                 plt.legend(["Pocket", "Shank"])
                 plt.show()
 
@@ -68,11 +68,21 @@ def align_systems(subjectRange, activity):
                     newRightData = load_9axis_earable(subject, trialNum, activity, "Right")
                     newEarableData = np.concatenate((newPocketData, newChestData, newLeftData, newRightData), axis=1)
                     newEarableData = np.roll(newEarableData, -shiftVal)
-                    combined_arr[:len(newEarableData), range(0,36)] = newEarableData
+                    # setup the new array for saving
+                    combined_arr[:len(newEarableData), range(0, 36)] = newEarableData
                     print(combined_arr)
                     plt.plot(combined_arr)
                     plt.show()
-                    np.savetxt("newEarableData.txt", newEarableData, delimiter=",")
+                    headers = open("../Utils/columnHeaders", "r").read().split(",")[2:]
+                    headers.extend([
+                                    "AccXWrist", "AccYWrist", "AccXZWrist",
+                                    "GyroXWrist", "GyroXWrist", "GyroXWrist"
+                                    "AccXShank", "AccYShank", "AccXZShank",
+                                    "GyroXShank", "GyroXShank", "GyroXShank"
+                                    ])
+                    headers = ",".join(headers)
+                    print(headers)
+                    np.savetxt("newEarableData.txt", newEarableData, delimiter=",", header=headers, fmt="8f")
 
 
 
