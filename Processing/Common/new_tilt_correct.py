@@ -91,11 +91,12 @@ def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
         if not os.path.exists("../../TiltCorrectedData/" + subject + "/"): os.mkdir("../../TiltCorrectedData/" + subject + "/")
         sides = ["Left", "Right", "Chest", "Pocket"]
         # sides = ["Left"]
-        activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-                      "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"
-        ]
-                     # "Floor2Turf", "Turf2Floor", "ShoeBox"
+        activities = [
+        #     "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+        #               "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"
         # ]
+                     "Floor2Turf", "Turf2Floor", "ShoeBox"
+        ]
         for side in sides:
             loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
             for file in os.listdir(loaddir):
@@ -262,7 +263,7 @@ def tilt_correct_multiple(subjectStart, subjectEnd):
 
 def main():
     # tilt_correct_multiple(14, 15)
-    tilt_correct_multiple_with_save(20, 66)
+    tilt_correct_multiple_with_save(34, 37)
     # tilt_correct_ntf_save(range(54, 56))
 
 

@@ -27,13 +27,13 @@ def read_c3d(filepath):
     # Get indices using label instead of guessing index
     sensor1Range = populate_imu_array(itf, 1) #range(93, 98+1)
     sensor2Range = populate_imu_array(itf, 2) #range(165, 170+1)
-    sensor_arr = np.zeros(((end_fr+1) * 20, 12), dtype=np.float32)
+    sensor_arr = np.zeros((end_fr * 20, 12), dtype=np.float32)
     for sig_idx in sensor1Range:
         data = np.asarray(itf.GetAnalogDataEx(sig_idx, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
-        sensor_arr[start_fr*20:, sig_idx - sensor1Range[0]] = data
+        sensor_arr[(start_fr-1)*20:, sig_idx - sensor1Range[0]] = data
     for sig_idx in sensor2Range:
         data = np.asarray(itf.GetAnalogDataEx(sig_idx, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
-        sensor_arr[start_fr*20:, sig_idx - sensor2Range[0] + 6] = data
+        sensor_arr[(start_fr-1)*20:, sig_idx - sensor2Range[0] + 6] = data
 
     # sensor_arr = np.empty(((end_fr - start_fr + 1) * 20, 12))
     # Loop through and add all sensor readings to one file
@@ -55,7 +55,7 @@ def main():
         # find the subject number from the directory name
         subjectNum = subjectDir.split("_")[-1]
         # if int(subjectNum) < 19 and int(subjectNum) > 17:
-        if int(subjectNum) in range(49, 65):
+        if int(subjectNum) in range(57, 63):# and int(subjectNum) not in [0, 2, 3, 4, 5, 11, 16, 38, 46, 47, 48, 54]:
             for trial in os.listdir(subjectPath + subjectDir):
                 if trial.endswith(".c3d"):
                     # load the wrist and shank data into a csv

@@ -89,13 +89,14 @@ def process_chest_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], sav
     for subject_num in range(subjectStart, subjectEnd):
         subject = "TF_" + str(subject_num).zfill(2)
         for activity in activityTypes:
-            loaddir = "../../NEDData/" + subject + "/" + activity + "/Chest/"
+            # loaddir = "../../NEDData/" + subject + "/" + activity + "/Chest/"
+            loaddir = "../../AlignedData/" + subject + "/" #+ activity + "/Chest/"
             for file in os.listdir(loaddir):
                 filepath = loaddir + file
                 # acc_data = np.loadtxt(filepath, usecols=range(1, 4), delimiter=",")
-                acc_data = pd.read_csv(filepath, usecols=['AccX', 'AccY', 'AccZ']).values
+                acc_data = pd.read_csv(filepath, usecols=['AccXrear', 'AccYrear', 'AccZrear']).values
                 # plot_vertical_component(acc_data)
-                process_chest(acc_data, 30)
+                process_chest(acc_data, 40)
                 # acc_ICs, acc_FCs = process_chest(acc_data, 25)
                 plt.title(file)
                 plt.show()

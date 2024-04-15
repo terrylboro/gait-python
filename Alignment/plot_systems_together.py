@@ -10,7 +10,7 @@ from Processing.AccZero.calculate_acc_zero import calculate_acc_zero
 def plot_systems_together(subjectRange, activity, accGyro="Acc"):
     for subject in subjectRange:
         print("Subject: ", subject)
-        trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)
+        trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(str(subject).zfill(2))
         trialNums = []
         for file in os.listdir(trialNumDir):
             trialNums.append(file.split("-")[-1][0:2])
@@ -69,35 +69,43 @@ def plot_systems_together(subjectRange, activity, accGyro="Acc"):
 
 def load_shank(subject, trial):
     try:
-        filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
+        filepath = "../WristShankData/TF_{}/TF_{}_{}.csv".format(
             str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
-        wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-        shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
-        # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
-        # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+        wristData = - pd.read_csv(filepath, header=None, usecols=range(0, 6),
+                                names=["AccZ", "AccX", "AccY", "GyroZ", "GyroX", "GyroY"])
+        shankData = - pd.read_csv(filepath, header=None, usecols=range(6, 12),
+                                names=["AccZ", "AccX", "AccY", "GyroZ", "GyroX", "GyroY"])
     except:
         try:
             filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
-                str(subject).zfill(2), str(subject).zfill(2), str(subject).zfill(2)+str(trial).zfill(2))
-            wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-            shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
-            # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
-            # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+                str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
+            wristData = pd.read_csv(filepath, header=None, usecols=range(0, 6),
+                                    names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
+            shankData = pd.read_csv(filepath, header=None, usecols=range(6, 12),
+                                    names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
         except:
             try:
-                filepath = "../WristShankData/TF_{}/15_CU_A096391_{}.csv".format(
-                    str(subject).zfill(2), str(subject).zfill(2) + str(trial).zfill(2))
-                wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-                shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
-                # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
-                # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+                filepath = "../WristShankData/TF_{}/15_CU_A096391_{}_{}.csv".format(
+                    str(subject).zfill(2), str(subject).zfill(2), str(subject).zfill(2)+str(trial).zfill(2))
+                wristData = pd.read_csv(filepath, header=None, usecols=range(0, 6),
+                                        names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
+                shankData = pd.read_csv(filepath, header=None, usecols=range(6, 12),
+                                        names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
             except:
-                filepath = "../WristShankData/TF_{}/A096391_{}_{}.csv".format(
-                    str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
-                wristData = pd.read_csv(filepath, header=None, usecols=[0, 1, 2], names=["AccX", "AccZ", "AccY"])
-                shankData = pd.read_csv(filepath, header=None, usecols=[6, 7, 8], names=["AccX", "AccZ", "AccY"])
-                # wristData = pd.read_csv(filepath, header=None, usecols=[3, 4, 5], names=["AccX", "AccZ", "AccY"])
-                # shankData = pd.read_csv(filepath, header=None, usecols=[9, 10, 11], names=["AccX", "AccZ", "AccY"])
+                try:
+                    filepath = "../WristShankData/TF_{}/15_CU_A096391_{}.csv".format(
+                        str(subject).zfill(2), str(subject).zfill(2) + str(trial).zfill(2))
+                    wristData = pd.read_csv(filepath, header=None, usecols=range(0, 6),
+                                            names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
+                    shankData = pd.read_csv(filepath, header=None, usecols=range(6, 12),
+                                            names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
+                except:
+                    filepath = "../WristShankData/TF_{}/A096391_{}_{}.csv".format(
+                        str(subject).zfill(2), str(subject).zfill(2), str(trial).zfill(4))
+                    wristData = pd.read_csv(filepath, header=None, usecols=range(0, 6),
+                                            names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
+                    shankData = pd.read_csv(filepath, header=None, usecols=range(6, 12),
+                                            names=["AccX", "AccZ", "AccY", "GyroX", "GyroZ", "GyroY"])
     return shankData, len(shankData), wristData, len(wristData)
 
 
@@ -110,7 +118,7 @@ def load_earable(subject, trial, activity, side):
 
 
 def main():
-    plot_systems_together(range(50, 52), "Walk", "Acc")
+    plot_systems_together(range(6, 10), "Walk", "Acc")
     # for subject in range(57, 60):
     #     print("Subject: ", subject)
     #     trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)

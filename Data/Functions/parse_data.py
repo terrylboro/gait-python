@@ -175,9 +175,10 @@ def main():
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
     # parse_multiple_subjects(range(30, 31), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
-    parse_tf_subjects(range(20, 66), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-                                                          "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])#,
-                                                    # "ShoeBox", "Turf2Floor", "Floor2Turf"])
+    parse_tf_subjects(range(64, 67), activityTypes=[
+        # "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+        #                                           "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])#,
+                                                  "ShoeBox", "Turf2Floor", "Floor2Turf"])
     # parse_ntf_subjects(range(54, 56), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                       "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",
     #                                                  "ShoeBox", "Turf2Floor", "Floor2Turf"])

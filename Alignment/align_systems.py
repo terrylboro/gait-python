@@ -14,10 +14,12 @@ def load_9axis_earable(subject, trial, activity, side):
                        usecols=["AccX", "AccY", "AccZ", "GyroX", "GyroY", "GyroZ", "MagX", "MagY", "MagZ"])
     return data
 
+
 def align_systems(subjectRange, activity):
     for subject in subjectRange:
         print("Subject: ", subject)
-        trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)
+        saveDir = "../AlignedData/TF_{}/".format(str(subject).zfill(2))
+        trialNumDir = "../TiltCorrectedData/TF_{}/{}/Pocket/".format(str(subject).zfill(2), activity)
         trialNums = []
         for file in os.listdir(trialNumDir):
             trialNums.append(file.split("-")[-1][0:2])
@@ -26,6 +28,7 @@ def align_systems(subjectRange, activity):
             shankData, shankLength, wristData, wristLen = load_shank(subject, trialNum)
             pocketData, pocketLength = load_earable(subject, trialNum, activity, "Pocket")
             shankData = shankData.iloc[::20, :].reset_index(drop=True)
+            wristData = wristData.iloc[::20, :].reset_index(drop=True)
 
             # find resultant vectors
             pocketDataAccZero = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
@@ -34,8 +37,6 @@ def align_systems(subjectRange, activity):
             shankPeaks, _ = find_peaks(shankDataAccZero, height=50, prominence=10)
             chestPeaks, _ = find_peaks(pocketDataAccZero, height=20)
             print("Trial: ", trialNum)
-            print(shankPeaks)
-            print(chestPeaks)
             print("********")
 
             while isGood != 1:
@@ -46,9 +47,11 @@ def align_systems(subjectRange, activity):
                 plt.show()
 
                 # determine parameters for new file
-                array_len = max(shankLength / 20, pocketLength)
-                combined_arr = np.zeros((array_len, 49))  # 49 IMU streams
+                array_len = int(max(shankLength / 20, pocketLength))
+                combined_arr = np.zeros((array_len, 48))  # 48 IMU streams
                 shiftVal = int(input("Input how far to shift pocket data: "))
+                if len(pocketDataAccZero) < array_len:
+                    pocketDataAccZero = np.pad(pocketDataAccZero, (0, array_len - pocketLength))
                 newData = np.roll(pocketDataAccZero, -shiftVal)
                 # newData[0:shiftVal] = 0
 
@@ -66,28 +69,38 @@ def align_systems(subjectRange, activity):
                     newChestData = load_9axis_earable(subject, trialNum, activity, "Chest")
                     newLeftData = load_9axis_earable(subject, trialNum, activity, "Left")
                     newRightData = load_9axis_earable(subject, trialNum, activity, "Right")
-                    newEarableData = np.concatenate((newPocketData, newChestData, newLeftData, newRightData), axis=1)
-                    newEarableData = np.roll(newEarableData, -shiftVal)
+                    newEarableData = np.zeros((len(newRightData) - shiftVal, 36))
+                    if shiftVal >= 0:
+                        newEarableData = np.concatenate((newLeftData.loc[shiftVal:, :], newRightData.loc[shiftVal:, :], newChestData.loc[shiftVal:, :], newPocketData.loc[shiftVal:, :]), axis=1)
+                    else:
+                        newEarableData[shiftVal:, :] = np.concatenate((newLeftData, newRightData, newChestData, newPocketData), axis=1)
+                    # newEarableData = np.roll(newEarableData, -shiftVal)
                     # setup the new array for saving
+                    # newEarableData[0:shiftVal, :] = 0  # firstly, we want to set the rolled values to zero
                     combined_arr[:len(newEarableData), range(0, 36)] = newEarableData
-                    print(combined_arr)
-                    plt.plot(combined_arr)
+                    # add in the shank and wrist
+                    combined_arr[:int(shankLength / 20), range(36, 48)] = np.concatenate((shankData, wristData), axis=1)
+                    # check this looks ok
+                    plt.close()
+                    plt.plot(shankData)
                     plt.show()
+                    # then format the headers to match the columns
                     headers = open("../Utils/columnHeaders", "r").read().split(",")[2:]
                     headers.extend([
-                                    "AccXWrist", "AccYWrist", "AccXZWrist",
-                                    "GyroXWrist", "GyroXWrist", "GyroXWrist"
-                                    "AccXShank", "AccYShank", "AccXZShank",
-                                    "GyroXShank", "GyroXShank", "GyroXShank"
-                                    ])
+                        "AccXShank", "AccYShank", "AccZShank",
+                        "GyroXShank", "GyroYShank", "GyroZShank",
+                        "AccXWrist", "AccYWrist", "AccZWrist",
+                        "GyroXWrist", "GyroYWrist", "GyroZWrist"
+                    ])
                     headers = ",".join(headers)
-                    print(headers)
-                    np.savetxt("newEarableData.txt", newEarableData, delimiter=",", header=headers, fmt="8f")
+                    plt.close("all")
+                    # save to a file
+                    np.savetxt(saveDir + "{}-{}.csv".format(str(subject).zfill(2), trialNum), combined_arr, delimiter=",", header=headers, fmt="%2.8f")
 
 
 
 def main():
-    align_systems(range(50, 52), "Walk")
+    align_systems(range(19, 20), "Walk")
 
 
 if __name__ == "__main__":
