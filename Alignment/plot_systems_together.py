@@ -10,7 +10,7 @@ from Processing.AccZero.calculate_acc_zero import calculate_acc_zero
 def plot_systems_together(subjectRange, activity, accGyro="Acc"):
     for subject in subjectRange:
         print("Subject: ", subject)
-        trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(str(subject).zfill(2))
+        trialNumDir = "../TiltCorrectedData/TF_{}/{}/Pocket/".format(str(subject).zfill(2), activity)
         trialNums = []
         for file in os.listdir(trialNumDir):
             trialNums.append(file.split("-")[-1][0:2])
@@ -118,7 +118,7 @@ def load_earable(subject, trial, activity, side):
 
 
 def main():
-    plot_systems_together(range(6, 10), "Walk", "Acc")
+    plot_systems_together(range(49, 50), "Turf2Floor", "Acc")
     # for subject in range(57, 60):
     #     print("Subject: ", subject)
     #     trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)

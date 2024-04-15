@@ -95,12 +95,11 @@ def align_systems(subjectRange, activity):
                     headers = ",".join(headers)
                     plt.close("all")
                     # save to a file
-                    np.savetxt(saveDir + "{}-{}.csv".format(str(subject).zfill(2), trialNum), combined_arr, delimiter=",", header=headers, fmt="%2.8f")
-
+                    np.savetxt(saveDir + "{}-{}.csv".format(str(subject).zfill(2), trialNum), combined_arr, delimiter=",", header=headers, fmt="%2.8f", comments='')
 
 
 def main():
-    align_systems(range(19, 20), "Walk")
+    align_systems(range(49, 50), "Floor2Turf")
 
 
 if __name__ == "__main__":

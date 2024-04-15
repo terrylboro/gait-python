@@ -55,7 +55,7 @@ def main():
         # find the subject number from the directory name
         subjectNum = subjectDir.split("_")[-1]
         # if int(subjectNum) < 19 and int(subjectNum) > 17:
-        if int(subjectNum) in range(57, 63):# and int(subjectNum) not in [0, 2, 3, 4, 5, 11, 16, 38, 46, 47, 48, 54]:
+        if int(subjectNum) in range(23, 45):# and int(subjectNum) not in [0, 2, 3, 4, 5, 11, 16, 38, 46, 47, 48, 54]:
             for trial in os.listdir(subjectPath + subjectDir):
                 if trial.endswith(".c3d"):
                     # load the wrist and shank data into a csv
