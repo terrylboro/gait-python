@@ -37,8 +37,15 @@ def get_heel_trajectory(filepath):
     end_fr = itf.GetVideoFrame(1)
     n_frs = end_fr - start_fr + 1
 
+    # find markers by label
     mkr_RHEE = c3d.get_marker_index(itf, "RHEE")
+    mkr_RTIB = c3d.get_marker_index(itf, "RTIB")
+    mkr_RANK = c3d.get_marker_index(itf, "RANK")
+    mkr_RTOE = c3d.get_marker_index(itf, "RTOE")
     mkr_LHEE = c3d.get_marker_index(itf, "LHEE")
+    mkr_LTIB = c3d.get_marker_index(itf, "LTIB")
+    mkr_LANK = c3d.get_marker_index(itf, "LANK")
+    mkr_LTOE = c3d.get_marker_index(itf, "LTOE")
 
     fp_1 = np.zeros((end_fr * 20), dtype=np.float32)
     fp_2 = np.zeros((end_fr * 20), dtype=np.float32)
@@ -47,18 +54,34 @@ def get_heel_trajectory(filepath):
     fp_2[(start_fr-1) * 20:] = np.asarray(itf.GetAnalogDataEx(8, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
     heel_data_l = np.zeros((end_fr, 3), dtype=np.float32)
     heel_data_r = np.zeros((end_fr, 3), dtype=np.float32)
+    tib_data_l = np.zeros((end_fr, 3), dtype=np.float32)
+    tib_data_r = np.zeros((end_fr, 3), dtype=np.float32)
+    ank_data_l = np.zeros((end_fr, 3), dtype=np.float32)
+    ank_data_r = np.zeros((end_fr, 3), dtype=np.float32)
+    toe_data_l = np.zeros((end_fr, 3), dtype=np.float32)
+    toe_data_r = np.zeros((end_fr, 3), dtype=np.float32)
     for j in range(3):
         # try:
         heel_data_l[(start_fr-1):, j] = np.asarray(itf.GetPointDataEx(mkr_LHEE, j, start_fr, end_fr, '1'), dtype=np.float32)
         heel_data_r[(start_fr-1):, j] = np.asarray(itf.GetPointDataEx(mkr_RHEE, j, start_fr, end_fr, '1'), dtype=np.float32)
+        tib_data_l[(start_fr-1):, j] = np.asarray(itf.GetPointDataEx(mkr_LTIB, j, start_fr, end_fr, '1'), dtype=np.float32)
+        tib_data_r[(start_fr - 1):, j] = np.asarray(itf.GetPointDataEx(mkr_RTIB, j, start_fr, end_fr, '1'),
+                                                    dtype=np.float32)
+        ank_data_l[(start_fr - 1):, j] = np.asarray(itf.GetPointDataEx(mkr_LANK, j, start_fr, end_fr, '1'),
+                                                    dtype=np.float32)
+        ank_data_r[(start_fr - 1):, j] = np.asarray(itf.GetPointDataEx(mkr_RANK, j, start_fr, end_fr, '1'),
+                                                    dtype=np.float32)
+        toe_data_l[(start_fr-1):, j] = np.asarray(itf.GetPointDataEx(mkr_LTOE, j, start_fr, end_fr, '1'), dtype=np.float32)
+        toe_data_r[(start_fr - 1):, j] = np.asarray(itf.GetPointDataEx(mkr_RTOE, j, start_fr, end_fr, '1'),
+                                                    dtype=np.float32)
         # except:
         #     print("No heel data")
 
-
+    ank_angle_arr_l = np.concatenate((tib_data_l, ank_data_l, toe_data_l), axis=1)
+    ank_angle_arr_r = np.concatenate((tib_data_r, ank_data_r, toe_data_r), axis=1)
     # Close the C3D file from C3Dserver
     ret = c3d.close_c3d(itf)
-    return heel_data_l, heel_data_r, fp_1, fp_2, (start_fr-1)
-
+    return heel_data_l, heel_data_r, fp_1, fp_2, (start_fr-1), ank_angle_arr_l, ank_angle_arr_r
 
 def IC_from_fp(fp_data):
     return int(round(np.where(fp_data < -10)[0][0] / 20)-1)
@@ -68,6 +91,38 @@ def autocorr(x):
     result = np.correlate(x, x, mode='full')
     return result[result.size // 2:]
 
+
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
+def FO_from_angles(data):
+    # 0 = TIB, 1 = ANK, 2 = TOE
+    v1 = data[:, 0:3] - data[:, 3:6]
+    v2 = data[:, 6:9] - data[:, 3:6]
+    angle_arr = np.zeros((len(data), 1))
+    for i in range(0, len(data)):
+        angle_arr[i, 0] = angle_between(v1[i, :], v2[i, :])
+    angle_arr = angle_arr.flatten()
+    # plt.plot(angle_arr)
+    TOs, _ = find_peaks(angle_arr, distance=75)
+    # plt.plot(TOs, angle_arr[TOs])
+    # plt.show()
+    return (TOs - 2)
 
 def IC_from_heel(heel_data):
     # # original method using scipy peaks
@@ -113,10 +168,12 @@ def freq_based_peak(heel_data_l, offset):
     plt.plot(ultraHPPeaks, heel_data_l[ultraHPPeaks, 2], 'x')
     plt.show()
 
-def send_to_json(LHC, RHC, trial, subjectDict):
+def send_to_json(LHC, RHC, LFO, RFO, trial, subjectDict):
     subjectDict[trial] = {
         "LHC": LHC,
-        "RHC": RHC
+        "RHC": RHC,
+        "LFO": LFO,
+        "RFO": RFO
     }
 
 
@@ -125,9 +182,12 @@ def main():
     # Create json file for given subject
     subjectPath = "C:/Users/teri-/Documents/GaitC3Ds/"
     for subject in os.listdir(subjectPath): #[1:]:
-    # for subject in ["TF_52", "TF_53", "TF_54"]:  # [1:]:
+    # for subject in ["TF_52", "TF_53", "TF_54"]:
+        goodSubjects = open("../Utils/goodTrials",
+                            "r").read()
         print(subject)
-        if int(subject.split("_")[1]) not in [2, 3, 4, 5, 16, 20] and int(subject.split("_")[1]) > 23:
+        # if ","+str(subject.split("_")[1])+"," in goodSubjects and int(subject.split("_")[1])<10:
+        if int(subject.split("_")[1]) in range(1, 3):
         # if int(subject.split("_")[1]) in [10]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
@@ -136,24 +196,16 @@ def main():
                     trial = file.split('_')[-1].split(".")[0]
                     print(trial)
                     if int(trial) != 1:
-                        heel_data_l, heel_data_r, fp_1, fp_2, offset = get_heel_trajectory(filepath + file)
-                        # remove rows having all zeroes
-
-                        # print("Min point is: {}".format(find_min_z(heel_data_l[offset:, 2])))
-                        # HCList = find_min_z(heel_data_l[offset:, 2])
-                        # plt.plot(heel_data_l[offset:, 2])
-                        # plt.vlines(HCList, 0, 200)
-                        # plt.show()
+                        heel_data_l, heel_data_r, fp_1, fp_2, offset, ank_angle_l, ank_angle_r = get_heel_trajectory(filepath + file)
+                        # find HCs using heel minima
                         l_ICs, _ = find_peaks(-heel_data_l[offset:, 2], distance=75)
                         r_ICs, _ = find_peaks(-heel_data_r[offset:, 2], distance=75)
-                        # plt.plot(-heel_data_l[offset:, 2])
-                        # plt.plot(peakList, -heel_data_l[peakList + offset, 2], 'x')
-                        # plt.show()
-                        # l_ICs = IC_from_heel(heel_data_l[:, 2])
-                        # r_ICs = IC_from_heel(heel_data_r[:, 2])
+                        # find FOs using ank angles
+                        l_FOs = FO_from_angles(ank_angle_l)
+                        r_FOs = FO_from_angles(ank_angle_r)
                         l_ICs += offset
                         r_ICs += offset
-                        send_to_json(l_ICs.tolist(), r_ICs.tolist(), trial, subjectDict)
+                        send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs.tolist(), r_FOs.tolist(), trial, subjectDict)
             out_file = open(subject + ".json", "w")
             print(subjectDict)
             json.dump(subjectDict, out_file, indent=4)
