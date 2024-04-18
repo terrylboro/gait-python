@@ -13,15 +13,16 @@ def normalize(v):
        return v
     return v / norm
 
-for subjectNum in range(15, 24):
+for subjectNum in range(30, 60):
     goodSubjects = open("../../Utils/goodTrials",
                         "r").read()
     if "," + str(subjectNum) + "," in goodSubjects:
         subjectDir = "../../AlignedData/TF_{}".format(str(subjectNum).zfill(2))
-        for file in os.listdir(subjectDir)[4:6]:
+        for file in os.listdir(subjectDir)[2:3]:
             trialNum = int(file.split(".")[0].split("-")[-1])
             data = pd.read_csv(os.path.join(subjectDir, file))
-            dataToPlot = data[["AccYlear", "AccZlear", "AccXlear"]]
+            # dataToPlot = data[["AccZrear", "AccZlear", "AccZchest"]]
+            dataToPlot = data[["GyroZShank"]]
             plt.plot(dataToPlot)
             # plt.plot(dataToPlot / abs(max(dataToPlot.max().array)))
             wristData = data[["AccXWrist", "AccYWrist", "AccZWrist"]]
@@ -30,13 +31,13 @@ for subjectNum in range(15, 24):
             normalized_accZero = calculate_acc_zero(shankData.to_numpy()) / np.max(calculate_acc_zero(shankData.to_numpy()))
             # plt.plot(normalized_accZero)
             # load the gt data
-            df = load_ground_truth_json_new(subjectNum, trialNum)
-            ymin = min(dataToPlot.min().array)
-            ymax = max(dataToPlot.max().array)
+            # df = load_ground_truth_json_new(subjectNum, trialNum)
+            # ymin = min(dataToPlot.min().array)
+            # ymax = max(dataToPlot.max().array)
             # plt.vlines(df.iloc[0, :], ymin=ymin, ymax=ymax, color='r', linestyle='solid')
             # plt.vlines(df.iloc[1, :], ymin=ymin, ymax=ymax, color='g', linestyle='solid')
-            plt.vlines(df.iloc[2, :], ymin=ymin, ymax=ymax, color='r', linestyle='dashed')
-            plt.vlines(df.iloc[3, :], ymin=ymin, ymax=ymax, color='g', linestyle='dashed')
+            # plt.vlines(df.iloc[2, :], ymin=ymin, ymax=ymax, color='r', linestyle='dashed')
+            # plt.vlines(df.iloc[3, :], ymin=ymin, ymax=ymax, color='g', linestyle='dashed')
             plt.title(file)
             plt.show()
 

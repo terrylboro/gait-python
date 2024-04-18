@@ -24,8 +24,18 @@ def align_systems(subjectRange, activity):
             saveDir = "../AlignedData/TF_{}/".format(str(subject).zfill(2))
             trialNumDir = "../TiltCorrectedData/TF_{}/{}/Pocket/".format(str(subject).zfill(2), activity)
             trialNums = []
-            for file in os.listdir(trialNumDir):
-                trialNums.append(file.split("-")[-1][0:2])
+            if subject == 18:
+                if activity == "Walk":
+                    trialNums = range(8, 15)
+                elif activity == "WalkShake":
+                    trialNums = range(15, 18)
+                elif activity == "WalkNod":
+                    trialNums = range(18, 21)
+                elif activity == "WalkSlow":
+                    trialNums = range(21, 24)
+            else:
+                for file in os.listdir(trialNumDir):
+                    trialNums.append(file.split("-")[-1][0:2])
             for trialNum in trialNums:
                 isGood = 0
                 shankData, shankLength, wristData, wristLen = load_shank(subject, trialNum)
@@ -102,7 +112,7 @@ def align_systems(subjectRange, activity):
 
 
 def main():
-    align_systems(range(19, 24), "Walk")
+    align_systems(range(54, 55), "WalkSlow")
 
 
 if __name__ == "__main__":

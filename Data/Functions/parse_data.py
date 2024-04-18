@@ -61,6 +61,10 @@ def parse_data(filepath, savedir, filename):
         data_r['AccX'], data_r['AccY'], data_r['AccZ'] = data_r['AccY'], data_r['AccZ'], - data_r['AccX']
         data_r['GyroX'], data_r['GyroY'], data_r['GyroZ'] = data_r['GyroY'], data_r['GyroZ'], - data_r['GyroX']
         data_r['MagX'], data_r['MagY'], data_r['MagZ'] = data_r['MagY'], data_r['MagZ'], - data_r['MagX']
+        # for TF_14
+        # data_r['AccX'], data_r['AccY'], data_r['AccZ'] = data_r['AccY'], data_r['AccZ'], -data_r['AccX']
+        # data_r['GyroX'], data_r['GyroY'], data_r['GyroZ'] = data_r['GyroY'], data_r['GyroZ'], -data_r['GyroX']
+        # data_r['MagX'], data_r['MagY'], data_r['MagZ'] = data_r['MagY'], data_r['MagZ'], -data_r['MagX']
     else:
         # # try for TF_06 onwards
         data_r['AccX'], data_r['AccY'], data_r['AccZ'] = data_r['AccY'], data_r['AccZ'], data_r['AccX']
@@ -94,6 +98,11 @@ def parse_data(filepath, savedir, filename):
     data_l.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
     data_c.to_csv(savedir + "/Chest/" + filename + "_NED.csv", index=False)
     data_p.to_csv(savedir + "/Pocket/" + filename + "_NED.csv", index=False)
+    # for TF_13 where pocket/chest is swapped with left/right
+    # data_r.to_csv(savedir + "/Chest/" + filename + "_NED.csv", index=False)
+    # data_l.to_csv(savedir + "/Pocket/" + filename + "_NED.csv", index=False)
+    # data_c.to_csv(savedir + "/Right/" + filename + "_NED.csv", index=False)
+    # data_p.to_csv(savedir + "/Left/" + filename + "_NED.csv", index=False)
 
 
 def parse_ntf_subjects(subjectRange, activityTypes):
@@ -137,9 +146,11 @@ def parse_tf_subjects(subjectRange, activityTypes):
             if not os.path.exists(savedir + "/Chest/"): os.mkdir(savedir + "/Chest/")
             if not os.path.exists(savedir + "/Pocket/"): os.mkdir(savedir + "/Pocket/")
             for file in os.listdir("../../Data/" + data_folder + "/" + activity + "/"):
+            # for file in os.listdir("../../FilteredData/FramesInserted/" + data_folder + "/" + activity + "/"):
                 print(file)
                 print(data_folder)
                 parse_data("../../Data/" + data_folder + "/" + activity + "/" + file, savedir, file.split(".")[0])
+                # parse_data("../../FilteredData/FramesInserted/" + data_folder + "/" + activity + "/" + file, savedir, file.split(".")[0])
 
 
 def parse_multiple_subjects(subjectRange, activityTypes=["Walk"]):
@@ -175,9 +186,9 @@ def main():
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
     # parse_multiple_subjects(range(30, 31), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
-    parse_tf_subjects(range(42, 46), activityTypes=["ShoeBox", "Turf2Floor", "Floor2Turf"])
-        # "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-        #                                           "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])#,
+    parse_tf_subjects(range(54, 55), activityTypes=[
+        "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                                                  "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])#,
         #                                           "ShoeBox", "Turf2Floor", "Floor2Turf"])
     # parse_ntf_subjects(range(54, 56), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                       "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",

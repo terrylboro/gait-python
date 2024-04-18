@@ -92,13 +92,16 @@ def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
         sides = ["Left", "Right", "Chest", "Pocket"]
         # sides = ["Left"]
         activities = [
-        #     "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-        #               "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"
-        # ]
-                     "Floor2Turf", "Turf2Floor", "ShoeBox"
+            "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
+                      "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"
         ]
+        #              "Floor2Turf", "Turf2Floor", "ShoeBox"
+        # ]
         for side in sides:
-            loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
+            if side == "Right" and subject_num == 14:
+                loaddir = "../../NEDData/" + subject + "/Static/Left/"
+            else:
+                loaddir = "../../NEDData/" + subject + "/Static/" + side + "/"
             for file in os.listdir(loaddir):
                 filepath = loaddir + file
                 acc_data = pd.read_csv(filepath, usecols=['AccX', 'AccY', 'AccZ']).values
@@ -263,7 +266,7 @@ def tilt_correct_multiple(subjectStart, subjectEnd):
 
 def main():
     # tilt_correct_multiple(14, 15)
-    tilt_correct_multiple_with_save(42, 46)
+    tilt_correct_multiple_with_save(54, 55)
     # tilt_correct_ntf_save(range(54, 56))
 
 
