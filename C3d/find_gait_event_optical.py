@@ -96,6 +96,7 @@ def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
 
+
 def angle_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2'::
 
@@ -109,6 +110,7 @@ def angle_between(v1, v2):
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 
 def FO_from_angles(data):
     # 0 = TIB, 1 = ANK, 2 = TOE
@@ -124,6 +126,7 @@ def FO_from_angles(data):
     # plt.show()
     return (TOs - 2)
 
+
 def IC_from_heel(heel_data):
     # # original method using scipy peaks
     # # issue is setting thresholds
@@ -138,6 +141,7 @@ def IC_from_heel(heel_data):
     print(peak_vals)
     print(np.diff(peak_vals))
     # return ICs
+
 
 def find_min_z(heel_data):
     heel_data = heel_data[~np.all(heel_data == 0)]
@@ -158,6 +162,7 @@ def find_min_z(heel_data):
     # plt.show()
     return HCList
 
+
 def freq_based_peak(heel_data_l, offset):
     ultraHP = bp_filter(heel_data_l[offset:, 2], 12, 25)
     plt.plot(np.square(ultraHP))
@@ -167,6 +172,7 @@ def freq_based_peak(heel_data_l, offset):
     plt.plot(heel_data_l[offset:, 2])
     plt.plot(ultraHPPeaks, heel_data_l[ultraHPPeaks, 2], 'x')
     plt.show()
+
 
 def send_to_json(LHC, RHC, LFO, RFO, trial, subjectDict):
     subjectDict[trial] = {

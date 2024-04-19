@@ -1,10 +1,42 @@
 # Calculate the temporal-spatial parameters (TSPs) from processed gait data
 # Written by Terry Fawden 1/9/2023
+import json
 
 import numpy as np
 import pandas as pd
 from scipy.ndimage import shift  # use this to shift the arrays
 import os
+
+
+def load_events_json(subject, trial, usingEarables):
+    eventsDict = {}
+    if usingEarables:
+        filepath = "../Ear/Events/AdaptedDiao/TF_" + str(subject).zfill(2) + ".json"
+        # read json file
+        with open(filepath, 'r') as jsonfile:
+            data = json.load(jsonfile)
+        sides = ["left", "right", "chest"]
+        for side in sides:
+            try:
+                json_str = json.dumps(data[str(trial).zfill(4)][side])
+                pd_df = pd.read_json(json_str, orient='index')
+                eventsDict[side] = pd_df.T
+                return eventsDict
+            except:
+                print("No events for subject {} side {}".format(subject, side))
+    else:
+        filepath = "../../C3d/OwnGroundTruth/TF_" + str(subject).zfill(2) + ".json"
+        # read json file
+        with open(filepath, 'r') as jsonfile:
+            data = json.load(jsonfile)
+        try:
+            json_str = json.dumps(data[str(trial).zfill(4)])
+            pd_df = pd.read_json(json_str, orient='index')
+            eventsDict = pd_df.T
+            return eventsDict
+        except:
+            print("No events for subject {}".format(subject))
+
 
 
 def calculate_TSPs(RHC, LHC, RTO, LTO, save_dir):
@@ -46,7 +78,9 @@ def calculate_TSPs(RHC, LHC, RTO, LTO, save_dir):
     # except OSError as error:
     #     print(error)
     # df.to_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/" + subject + "/trial-" + str(trial_num).zfill(2) + "-" + side + "-TSPs.csv")
-    df.to_csv(save_dir, index_label="Index")
+    # df.to_csv(save_dir, index_label="Index")
+    return df
+    # print(df)
 
 
 def stride_time(HC):
@@ -131,28 +165,48 @@ def apply_padding(data, col_len):
 
 
 def main():
-    # We can test using the ground truth arrays
-    # df = pd.read_csv("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/Jamie/Parsed/events-02.csv")
-    # LHC = df['LHC'].values
-    # RHC = df['RHC'].values
-    # LTO = df['LTO'].values
-    # RTO = df['RTO'].values
-    # calculate_TSPs(RHC, LHC, RTO, LTO, "events-02")
+    usingEarables = False
     # Try this in a loop
-    subject = "Jamie"
-    filepath = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/GroundTruths/" + subject + "/Parsed/"
-    savedir_TSP = "C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/" + subject + "/"
-    for i in [2, 3, 4, 5, 6, 7]:
-        try:
-            df = pd.read_csv(filepath + "events-" + str(i).zfill(2) + ".csv")
-        except FileNotFoundError as error:
-            print("No ground truth data for trial: ", i)
-            return
-        LHC = df['LHC'].values
-        RHC = df['RHC'].values
-        LTO = df['LTO'].values
-        RTO = df['RTO'].values
-        calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP+str(i)+'truth')
+    trialNum = 4
+    for subjectNum in range(0, 65):
+        colNames = ["Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
+                               "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
+        tspSummarydf = pd.DataFrame(columns=colNames)
+
+        goodSubjects = open("../../Utils/goodTrials",
+                            "r").read()
+        if "," + str(subjectNum) + "," in goodSubjects:
+            print(subjectNum)
+            if usingEarables:
+                subjectDir = "../../AlignedData/TF_{}".format(str(subjectNum).zfill(2))
+                for file in os.listdir(subjectDir):
+                    trialNum = int(file.split(".")[0].split("-")[-1])
+                    eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
+                    if eventsDict is not None:
+                        print(eventsDict["left"])
+                        savedir_TSP = "tsps-{}.csv".format(subjectNum)
+                        LHC = eventsDict["left"]['LHC'].values
+                        RHC = eventsDict["left"]['RHC'].values
+                        LTO = eventsDict["left"]['LFO'].values
+                        RTO = eventsDict["left"]['RFO'].values
+                        trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
+                        tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
+            else:
+                subjectDir = "../../C3d/OwnGroundTruth/".format(str(subjectNum).zfill(2))
+                for file in os.listdir(subjectDir):
+                    trialNum = int(file.split(".")[0].split("_")[-1])
+                    eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
+                    if eventsDict is not None:
+                        print(eventsDict)
+                        savedir_TSP = "tsps-{}.csv".format(subjectNum)
+                        LHC = eventsDict['LHC'].values
+                        RHC = eventsDict['RHC'].values
+                        LTO = eventsDict['LFO'].values
+                        RTO = eventsDict['RFO'].values
+                        trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
+                        tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
+
+        tspSummarydf.to_csv(str(subjectNum).zfill(2) + ".csv", index=False)
 
 
 if __name__ == "__main__":

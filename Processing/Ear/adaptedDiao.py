@@ -72,7 +72,7 @@ def send_to_json(LHC, RHC, LFO, RFO, trial, side, subjectDict):
 
 # setup the SSA object
 window_length = 100  # sampling freq in Hz
-ssa = SingularSpectrumAnalysis(window_size=int(window_length), groups=[[0], [1], np.arange(2, window_length, 1)])
+ssa = SingularSpectrumAnalysis(window_size=int(window_length), groups=[[0], [1], [2], np.arange(3, window_length, 1)])
 
 # import the data
 for subjectNum in range(61, 65):
@@ -94,8 +94,8 @@ for subjectNum in range(61, 65):
                 acc_ssa_ml = ssa.fit_transform(acc_ml)
 
                 # find gait events
-                ic, ic_sides = detect_ic(acc_ssa_si[0, 1], acc_ssa_ml[0, 1] + acc_ssa_ml[0, 2], window_length)
-                tc, tc_sides = detect_tc(acc_ssa_ml[0, 1] + acc_ssa_ml[0, 2], ic, ic_sides)
+                ic, ic_sides = detect_ic(acc_ssa_si[0, 1], acc_ssa_ml[0, 1], window_length)
+                tc, tc_sides = detect_tc(acc_ssa_ml[0, 1] + acc_ssa_ml[0, 2] + acc_ssa_ml[0, 3], ic, ic_sides)
                 # add these to df
                 LICs_l, RICs_l, LTCs_l, RTCs_l = [], [], [], []
                 # LICs, RICs, LTCs, RTCs = pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
@@ -139,8 +139,8 @@ for subjectNum in range(61, 65):
                 send_to_json(LICs_l, RICs_l, LTCs_l, RTCs_l, str(trialNum).zfill(4), side, subjectDict)
                 # print(eventsDF)
                 # eventsDF.to_csv(file, index=False)
-                # ##################
-                #
+                ##################
+
                 # # Show the results for the first time series and its subseries
                 # plt.figure(figsize=(16, 6))
                 #
@@ -162,7 +162,7 @@ for subjectNum in range(61, 65):
                 #
                 # plt.tight_layout()
                 # plt.subplots_adjust(top=0.88)
-                # # plt.show()
+                # plt.show()
             # dump to subject-specific json file
             out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
             json.dump(subjectDict, out_file, indent=4)
