@@ -1,10 +1,11 @@
 import os
 import pandas as pd
+from matplotlib import pyplot as plt
 
 gtDir = "../../C3d/OwnGroundTruth/TSPs/"
-diaoDir = "../Ear/eVENTS/AdaptedDiao/TSPs/"
+diaoDir = "../Ear/Events/AdaptedDiao/TSPs/"
 
-for file in os.listdir(gtDir)[25:26]:
+for file in os.listdir(gtDir)[25:27]:
     df = pd.read_csv(gtDir + file)
     if not df.empty:
         for column in range(0, 2):
@@ -12,9 +13,18 @@ for file in os.listdir(gtDir)[25:26]:
                 data = df.iloc[:, column]#.values
                 data.dropna(inplace=True)
                 if column == 0:
+                    q_low = data.quantile(0.25)
+                    q_hi = data.quantile(0.75)
                     sortedVals = data.sort_values(ignore_index=True)
-                    print(sortedVals[int(0.5*len(sortedVals)) - 2 : int(0.5*len(sortedVals)) + 2])
-                    avgVal = sortedVals[int(0.5*len(sortedVals)) - 2 : int(0.5*len(sortedVals)) + 2].mean()
+                    plt.plot(sortedVals, 'bo')
+                    plt.hlines([q_low, q_hi], 0, 120)
+                    plt.title(file)
+                    plt.show()
+                    # print(sortedVals[int(0.5*len(sortedVals)) - 2 : int(0.5*len(sortedVals)) + 2])
+                    cutoff_hi = sortedVals[sortedVals < q_hi]
+                    cutVals = cutoff_hi[cutoff_hi > q_low]
+                    # print(cutVals)
+                    avgVal = cutVals.mean()
                     print(avgVal)
 
 
@@ -22,7 +32,7 @@ for file in os.listdir(gtDir)[25:26]:
 
         # print(df.describe())
 
-for file in os.listdir(diaoDir)[20:21]:
+for file in os.listdir(diaoDir)[25:27]:
     df = pd.read_csv(diaoDir + file)
     if not df.empty:
         if not df.empty:
@@ -31,9 +41,20 @@ for file in os.listdir(diaoDir)[20:21]:
                     data = df.iloc[:, column]  # .values
                     data.dropna(inplace=True)
                     if column == 0:
+                        q_low = data.quantile(0.25)
+                        q_hi = data.quantile(0.75)
                         sortedVals = data.sort_values(ignore_index=True)
-                        print(sortedVals[int(0.5 * len(sortedVals)) - 2: int(0.5 * len(sortedVals)) + 2])
-                        avgVal = sortedVals[int(0.5 * len(sortedVals)) - 2: int(0.5 * len(sortedVals)) + 2].mean()
+                        plt.plot(sortedVals, 'ro')
+                        plt.hlines([q_low, q_hi], 0, 120)
+                        plt.title(file)
+                        plt.show()
+                        # print(sortedVals[int(0.5 * len(sortedVals)) - 2: int(0.5 * len(sortedVals)) + 2])
+                        # avgVal = sortedVals[int(0.5 * len(sortedVals)) - 2: int(0.5 * len(sortedVals)) + 2].mean()
+                        # print(avgVal)
+                        cutoff_hi = sortedVals[sortedVals < q_hi]
+                        cutVals = cutoff_hi[cutoff_hi > q_low]
+                        # print(cutVals)
+                        avgVal = cutVals.mean()
                         print(avgVal)
         # print(df[["Left Stride Time", "Right Stride Time"]].median())
 

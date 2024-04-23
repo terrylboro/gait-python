@@ -193,7 +193,7 @@ def main():
                             "r").read()
         print(subject)
         # if ","+str(subject.split("_")[1])+"," in goodSubjects and int(subject.split("_")[1])<10:
-        if int(subject.split("_")[1]) in range(1, 3):
+        if int(subject.split("_")[1]) in range(12, 14):
         # if int(subject.split("_")[1]) in [10]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
@@ -211,9 +211,20 @@ def main():
                         r_FOs = FO_from_angles(ank_angle_r)
                         l_ICs += offset
                         r_ICs += offset
+                        if abs(l_ICs[0] - r_ICs[0] < 50):
+                            print(l_ICs, r_ICs)
+                            if l_ICs[0] < r_ICs[0]:
+                                l_ICs = l_ICs[1:]
+                            else:
+                                r_ICs = r_ICs[1:]
+                        if abs(l_ICs[-1] - r_ICs[-1] < 50):
+                            print(l_ICs, r_ICs)
+                            if l_ICs[-1] < r_ICs[-1]:
+                                r_ICs = r_ICs[:-1]
+                            else:
+                                l_ICs = l_ICs[:-1]
                         send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs.tolist(), r_FOs.tolist(), trial, subjectDict)
             out_file = open(subject + ".json", "w")
-            print(subjectDict)
             json.dump(subjectDict, out_file, indent=4)
             plt.show()
 

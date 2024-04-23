@@ -34,12 +34,15 @@ def process_shank_accel(ap_accel):
 
 
 def process_shank_gyro(w_z):
-    swing_phase = w_z[w_z > 1.2].index
+    # swing_phase = w_z[w_z > 1.2].index
     #### If we want to block out the swing phase ####
     # w_z = w_z.loc[~w_z.index.isin(swing_phase)]
     #########
     # Finding the ICs
-    ZCs = np.where(np.diff(np.signbit(w_z.values)))[0]
+    # print(np.signbit(w_z))
+    print(np.where(np.diff(np.signbit(w_z.flatten()))).values)
+    # print(np.where(np.diff(np.signbit(w_z)), 0, 1))
+    ZCs = np.where(np.diff(np.signbit(w_z)))[0]
     ZCs += 1
     AZs = []
     DZs = []
@@ -53,19 +56,19 @@ def process_shank_gyro(w_z):
         print(ZCs[crossing+1])
         for i in range(ZCs[crossing - 1], ZCs[crossing]):
             # print(w_z.loc[ZCs[crossing]])
-            if w_z.loc[i] > 1: count +=1
-        if count > 5 and (w_z.loc[ZCs[crossing] + 2] - w_z.loc[ZCs[crossing] - 2]) < 0:
+            if w_z[i] > 1: count +=1
+        if count > 5 and (w_z[ZCs[crossing] + 2] - w_z[ZCs[crossing] - 2]) < 0:
             DZs.append(crossing)
         print("DZs: ", DZs)
         wait_time = int(0.5 * len(range(ZCs[crossing - 1], ZCs[crossing])))
         for crossing in DZs:
             if len(w_z) - crossing > 15:
-                local_min = argrelextrema(w_z.loc[ZCs[crossing] : ZCs[crossing] + 15].values, np.less)[0]
+                local_min = argrelextrema(w_z[ZCs[crossing] : ZCs[crossing] + 15].values, np.less)[0]
                 print(local_min)
                 ICs.append(ZCs[crossing] + local_min[0])
         # Say FC is local min in between IC + wait_time and next
         if crossing != ZCs[-1]:
-            FC_min = argrelextrema(w_z.loc[ZCs[crossing] + wait_time: ZCs[crossing]+1].values, np.less)[0]
+            FC_min = argrelextrema(w_z[ZCs[crossing] + wait_time: ZCs[crossing]+1], np.less)[0]
             print(FC_min)
             FCs.append(ZCs[crossing] + wait_time + FC_min)
 
@@ -84,42 +87,42 @@ def process_shank_gyro(w_z):
     return ICs, FCs
 
 
-def filter(data):
-    b, a = butter(2, 25, btype="lp", fs=2000, output='ba')
+def filter_shank(data):
+    b, a = butter(2, 25, btype="lp", fs=100, output='ba')
     filtered_data = filtfilt(b, a, data, axis=0)
     data = filtered_data
     return data
 
 
 def main():
-    subject = str(17).zfill(2)
+    subject = str(25).zfill(2)
     activity = "Walk"
-    for trial in range(2, 8):
-        data = pd.read_csv("../../WristShankData/TF_"+subject+"/"+activity+"/Shank/TF_"+subject+"-"
-                           +str(trial).zfill(2)+"shank.csv", usecols=range(0,6))
+    for trial in range(5, 6):
+        data = pd.read_csv("../../AlignedData/TF_{}/{}-{}.csv".format(subject, subject, str(trial).zfill(2)),
+                           usecols=["GyroZShank"])
         # get rid of leading zeros
         first_real_val = np.nonzero(data.values)[0][0]
         print(first_real_val)
         data = data[first_real_val:]
         # low pass filter to chosen frequency
-        data = filter(data.values)
+        data = filter_shank(data.values)
         # apply decimation
-        data = pd.DataFrame(decimate(data, 20, axis=0, zero_phase=True))
+        # data = pd.DataFrame(decimate(data, 20, axis=0, zero_phase=True))
 
-        gyro_data = data.iloc[:, range(3,6)]
+        # gyro_data = data.iloc[:, range(3,6)]
         # the sagittal plane angular velocity signal, w_z
-        w_z = -gyro_data.iloc[:, 2]#[:, 2]
+        w_z = data#["AccZShank"]#-gyro_data.iloc[:, 2]#[:, 2]
         plt.plot(w_z)
         plt.title("Shank Forward Rotation from Gyroscope During Walking")
         plt.xlabel("Time / Samples")
         plt.ylabel("Angular Velocity / rad/s")
         plt.show()
-        ap_accel = -data.iloc[:, 1]
+        # ap_accel = -data.iloc[:, 1]
         # swing_phase = find_w_z_peaks(w_z)
         ICs, FCs = process_shank_gyro(w_z)
         # swing_phase.to_csv("swingphase.csv")
         plt.plot(w_z)
-        plt.plot(ap_accel)
+        # plt.plot(ap_accel)
         # plt.legend(['X', 'Y', 'Z'])
         plt.plot(ICs, w_z[ICs], 'o')
         plt.plot(FCs, w_z[FCs], 'o')

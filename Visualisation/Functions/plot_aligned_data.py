@@ -17,7 +17,25 @@ def normalize(v):
 
 
 def load_events_json(subject, trial):
-    filepath = "../../Processing/Ear/Events/AdaptedDiao/TF_" + str(subject).zfill(2) + ".json"
+    # filepath = "../../Processing/Ear/Events/AdaptedDiao/TF_" + str(subject).zfill(2) + ".json"
+    filepath = "../../C3d/OwnGroundTruth/RawEvents/TF_" + str(subject).zfill(2) + ".json"
+    eventsDict = {}
+    # read json file
+    with open(filepath, 'r') as jsonfile:
+        data = json.load(jsonfile)
+    for side in ["left", "right", "chest"]:
+        try:
+            json_str = json.dumps(data[str(trial).zfill(4)][side])
+        except:
+            id = str(subject).zfill(2) + str(trial).zfill(2)
+            json_str = json.dumps(data[id])
+        pd_df = pd.read_json(json_str, orient='index')
+        eventsDict[side] = pd_df
+    return eventsDict
+
+def load_gt_events_json(subject, trial):
+    # filepath = "../../Processing/Ear/Events/AdaptedDiao/TF_" + str(subject).zfill(2) + ".json"
+    filepath = "../../C3d/OwnGroundTruth/RawEvents/TF_" + str(subject).zfill(2) + ".json"
     eventsDict = {}
     # read json file
     with open(filepath, 'r') as jsonfile:
