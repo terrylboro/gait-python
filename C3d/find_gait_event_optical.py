@@ -3,12 +3,18 @@ import os
 import numpy as np
 import pyc3dserver as c3d
 import matplotlib.pyplot as plt
-from scipy.signal import find_peaks, butter, filtfilt
+from scipy.ndimage import gaussian_filter1d
+from scipy.signal import find_peaks, butter, filtfilt, argrelmax
 import json
+import re
 
 
 def hp_filter(data, freq):
     b, a = butter(2, freq, btype="high", fs=100, output='ba')
+    return filtfilt(b, a, data, axis=0)
+
+def lp_filter(data, freq):
+    b, a = butter(2, freq, btype="low", fs=100, output='ba')
     return filtfilt(b, a, data, axis=0)
 
 def bp_filter(data, freq1, freq2):
@@ -120,27 +126,44 @@ def FO_from_angles(data):
     for i in range(0, len(data)):
         angle_arr[i, 0] = angle_between(v1[i, :], v2[i, :])
     angle_arr = angle_arr.flatten()
+    angle_arr = angle_arr[~np.isnan(angle_arr)]
+    angle_arr[angle_arr < np.mean(angle_arr)] = 0
+    print(angle_arr)
+    # print(angle_arr[angle_arr < np.mean(angle_arr)])
     # plt.plot(angle_arr)
+    # try similar approach to ICs
+    # i.e. thresholding and squaring
+    # toeVel = np.gradient(data[:, 6], 1)
+    # toeAcc = np.gradient(lp_filter(toeVel, 6), 1)
+    # toeAcc[abs(toeAcc) > 1] = 0
+    dataFiltered = gaussian_filter1d(angle_arr, sigma=3)
+    plt.plot(dataFiltered)
+    # plt.plot(toeAcc)
+    # plt.plot(data[:, 8] / np.max(data[:, 8]))
     TOs, _ = find_peaks(angle_arr, distance=75)
     # plt.plot(TOs, angle_arr[TOs])
     # plt.show()
     return (TOs - 2)
 
 
-def IC_from_heel(heel_data):
-    # # original method using scipy peaks
-    # # issue is setting thresholds
-    # max_peaks = find_peaks(heel_data, prominence=15)[0]
-    # print(max_peaks)
-    # ICs = []
-    # for peak in max_peaks:
-    #     ICs.append(int(np.argmin(heel_data[peak:peak+50]) + peak))
-    min_val = np.argmin(heel_data)
-    # find the autocorrelation peaks
-    peak_vals = find_peaks(autocorr(heel_data.flatten()))
-    print(peak_vals)
-    print(np.diff(peak_vals))
-    # return ICs
+def IC_from_heel(data):
+    """ Accepts heel_data[offset:, 2] i.e. z co-ordinate allowing for cropping """
+    data[data > 60] = 60  # apply hard threshold to focus on where ground is
+    data = np.square(data - 60)
+    dataFiltered = gaussian_filter1d(data, sigma=2)
+    tMax = argrelmax(dataFiltered)[0]
+    diffs = np.diff(tMax)
+    toDelete = []
+    for i in range(0, len(diffs)):
+        if diffs[i] < 75:
+            if dataFiltered[tMax[i]] > dataFiltered[tMax[i+1]]:
+                toDelete.append(i+1)
+            else:
+                toDelete.append(i)
+    tMax = np.delete(tMax, toDelete, None)
+    # plt.plot(dataFiltered)
+    # plt.vlines(tMax, 0, 50, 'r')
+    return tMax
 
 
 def find_min_z(heel_data):
@@ -183,6 +206,15 @@ def send_to_json(LHC, RHC, LFO, RFO, trial, subjectDict):
     }
 
 
+def find_trial_nums(dir):
+    trialNums = []
+    for file in dir:
+        temp = re.findall(r'\d+', file)
+        res = list(map(int, temp))
+        trialNums.append(res[1])
+    return trialNums
+
+
 def main():
     # filepath = "C:/Users/teri-/Documents/GaitC3Ds/A096391_58/A096391_58_0009.c3d"
     # Create json file for given subject
@@ -192,25 +224,42 @@ def main():
         goodSubjects = open("../Utils/goodTrials",
                             "r").read()
         print(subject)
-        # if ","+str(subject.split("_")[1])+"," in goodSubjects and int(subject.split("_")[1])<10:
-        if int(subject.split("_")[1]) in range(12, 14):
+        if ","+str(subject.split("_")[1])+"," in goodSubjects and int(subject.split("_")[1]) in range(42, 45):
+        # if int(subject.split("_")[1]) in range(34, 60):
         # if int(subject.split("_")[1]) in [10]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
+
+            turf2floorTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/Turf2Floor/Right/".format(str(subject).zfill(2)))
+            floor2turfTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/Floor2Turf/Right/".format(str(subject).zfill(2)))
+            turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
+            floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
+            print(turf2floorTrialNums)
+            print(floor2turfTrialNums)
+
             for file in os.listdir(filepath):
                 if file.endswith(".c3d"):
                     trial = file.split('_')[-1].split(".")[0]
-                    print(trial)
-                    if int(trial) != 1:
+                    # print(trial)
+                    if int(trial) in turf2floorTrialNums:
                         heel_data_l, heel_data_r, fp_1, fp_2, offset, ank_angle_l, ank_angle_r = get_heel_trajectory(filepath + file)
+                        # plot
+                        # plt.plot(-heel_data_l[offset:, 2])
+                        heel_data_l_z = heel_data_l[offset:, 2]
+                        heel_data_r_z = heel_data_r[offset:, 2]
+                        # plt.plot(heel_data_l_z)
+                        l_ICs = IC_from_heel(heel_data_l_z)
+                        r_ICs = IC_from_heel(heel_data_r_z)
                         # find HCs using heel minima
-                        l_ICs, _ = find_peaks(-heel_data_l[offset:, 2], distance=75)
-                        r_ICs, _ = find_peaks(-heel_data_r[offset:, 2], distance=75)
+                        # l_ICs, _ = find_peaks(heel_data_l_z, distance=70)
+                        # r_ICs, _ = find_peaks(-heel_data_r[offset:, 2], distance=70)
                         # find FOs using ank angles
                         l_FOs = FO_from_angles(ank_angle_l)
                         r_FOs = FO_from_angles(ank_angle_r)
-                        l_ICs += offset
-                        r_ICs += offset
+                        # l_ICs += offset
+                        # r_ICs += offset
                         if abs(l_ICs[0] - r_ICs[0] < 50):
                             print(l_ICs, r_ICs)
                             if l_ICs[0] < r_ICs[0]:
@@ -223,10 +272,13 @@ def main():
                                 r_ICs = r_ICs[:-1]
                             else:
                                 l_ICs = l_ICs[:-1]
-                        send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs.tolist(), r_FOs.tolist(), trial, subjectDict)
-            out_file = open(subject + ".json", "w")
-            json.dump(subjectDict, out_file, indent=4)
-            plt.show()
+                        # plt.vlines(l_ICs, min(heel_data_l[l_ICs + offset, 2]), max(heel_data_l[l_ICs + offset, 2]) + 100, 'g')
+                        plt.title(file)
+                        plt.show()
+            # #             send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs.tolist(), r_FOs.tolist(), trial, subjectDict)
+            # # out_file = open(subject + ".json", "w")
+            # # json.dump(subjectDict, out_file, indent=4)
+            # # plt.show()
 
 
 if __name__ == "__main__":

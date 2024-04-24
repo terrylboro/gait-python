@@ -40,7 +40,7 @@ def main():
                         "r").read()
     for subjectDir in os.listdir(dataPath):
         subject = int(subjectDir.split("_")[-1])
-        if "," + str(subject) + "," in goodSubjects and subject < 20 and subject > 13:
+        if "," + str(subject) + "," in goodSubjects and subject < 58 and subject > 41:
             for activity in activityList:
                 for file in os.listdir(dataPath + subjectDir + "/" + activity + "/Right/"):
                     trialNum = int(file.split("-")[-1][0:2])
