@@ -39,11 +39,11 @@ def load_events_json(subject, trial, usingEarables):
             print("No events for subject {}".format(subject))
 
 
-def calculate_TSPs(RHC, LHC, RTO, LTO, save_dir):
+def calculate_TSPs(RHC, LHC, RTO, LTO, trialNum):
     """
     Calculate all the TSPs from the initial contact and foot off locations
     """
-    col_names = ["Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
+    col_names = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
                                "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
     col_len = max(len(RHC), len(LHC)) - 1
     # Create a Dataframe to store all the info
@@ -73,6 +73,7 @@ def calculate_TSPs(RHC, LHC, RTO, LTO, save_dir):
     df["Left Swing/Stance Ratio"] = pd.Series(ssr_left)
     df["Right Swing/Stance Ratio"] = pd.Series(ssr_right)
     df["Step Asymmetry"] = pd.Series(step_asymmetry)
+    df["Trial"] = pd.Series([trialNum] * len(df))
     # try:
     #     os.mkdir("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/TSPs/"+subject)
     # except OSError as error:
@@ -131,8 +132,8 @@ def calculate_step_asymmetry(ssrL, ssrR):
     :param ssrR: Right SSR
     :return: Step asymmetry measure
     """
-    ssrL = np.mean(ssrL)
-    ssrR = np.mean(ssrR)
+    ssrL = np.nanmean(ssrL)
+    ssrR = np.nanmean(ssrR)
     print(ssrL)
     print(ssrR)
     return max(ssrL, ssrR) / min(ssrL, ssrR)
@@ -170,26 +171,26 @@ def find_trial_nums(dir):
         temp = re.findall(r'\d+', file)
         res = list(map(int, temp))
         trialNums.append(res[1])
-        return trialNums
+    return trialNums
 
 
 def main():
     usingEarables = False
     # Try this in a loop
-    for subjectNum in range(42, 65):
-        colNames = ["Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
+    for subjectNum in [x for x in range(62, 68) if x != 67]:
+        colNames = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
                                "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
         tspSummarydf = pd.DataFrame(columns=colNames)
 
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
-        if "," + str(subjectNum) + "," in goodSubjects:
+        if "," + str(subjectNum) + "," in goodSubjects or subjectNum == 65:
             # find the trial numbers which correspond to various walking events
             walkTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Walk/Right/".format(str(subjectNum).zfill(2)))
             walkSlowTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkSlow/Right/".format(str(subjectNum).zfill(2)))
             walkNodTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkNod/Right/".format(str(subjectNum).zfill(2)))
             walkShakeTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkShake/Right/".format(str(subjectNum).zfill(2)))
-            if subjectNum > 33:
+            if subjectNum > 33 and str(subjectNum) not in ["41", "61"]:
                 turf2floorTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Turf2Floor/Right/".format(str(subjectNum).zfill(2)))
                 floor2turfTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Floor2Turf/Right/".format(str(subjectNum).zfill(2)))
                 turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
@@ -216,21 +217,22 @@ def main():
                         trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
                         tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
             else:
-                subjectDir = "../../C3d/OwnGroundTruth/RawEvents/"#.format(str(subjectNum).zfill(2))
-                for file in os.listdir(subjectDir):
-                    if file.endswith(".json"):
-                        trialNum = int(file.split(".")[0].split("_")[-1])
-                        if trialNum in turf2floorTrialNums:
-                            eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
-                            if eventsDict is not None:
-                                print(eventsDict)
-                                savedir_TSP = "tsps-{}.csv".format(subjectNum)
-                                LHC = eventsDict['LHC'].values
-                                RHC = eventsDict['RHC'].values
-                                LTO = eventsDict['LFO'].values
-                                RTO = eventsDict['RFO'].values
-                                trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
-                                tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
+                subjectDir = "../../C3d/OwnGroundTruth/RawEvents/TF_{}.json".format(str(subjectNum).zfill(2))
+                # for file in os.listdir(subjectDir):
+                #     if file.endswith(".json"):
+                # trialNum = int(file.split(".")[0].split("_")[-1])
+                # print(trialNum)
+                for trialNum in walkTrialNums:
+                    eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
+                    if eventsDict is not None:
+                        print(eventsDict)
+                        savedir_TSP = "tsps-{}.csv".format(subjectNum)
+                        LHC = eventsDict['LHC'].values
+                        RHC = eventsDict['RHC'].values
+                        LTO = eventsDict['LFO'].values
+                        RTO = eventsDict['RFO'].values
+                        trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, trialNum)
+                        tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
 
             tspSummarydf.to_csv(str(subjectNum).zfill(2) + ".csv", index=False)
 

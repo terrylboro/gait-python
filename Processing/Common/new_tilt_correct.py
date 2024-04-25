@@ -93,10 +93,9 @@ def tilt_correct_multiple_with_save(subjectStart, subjectEnd):
         # sides = ["Left"]
         activities = [
             "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
-                      "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"
+                      "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",
+                     "Floor2Turf", "Turf2Floor", "ShoeBox"
         ]
-        #              "Floor2Turf", "Turf2Floor", "ShoeBox"
-        # ]
         for side in sides:
             if side == "Right" and subject_num == 14:
                 loaddir = "../../NEDData/" + subject + "/Static/Left/"
@@ -266,7 +265,7 @@ def tilt_correct_multiple(subjectStart, subjectEnd):
 
 def main():
     # tilt_correct_multiple(14, 15)
-    tilt_correct_multiple_with_save(54, 55)
+    tilt_correct_multiple_with_save(67, 68)
     # tilt_correct_ntf_save(range(54, 56))
 
 

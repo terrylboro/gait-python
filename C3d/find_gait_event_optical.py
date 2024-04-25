@@ -118,7 +118,7 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 
-def FO_from_angles(data):
+def FO_from_angles(data, ICs):
     # 0 = TIB, 1 = ANK, 2 = TOE
     v1 = data[:, 0:3] - data[:, 3:6]
     v2 = data[:, 6:9] - data[:, 3:6]
@@ -128,7 +128,6 @@ def FO_from_angles(data):
     angle_arr = angle_arr.flatten()
     angle_arr = angle_arr[~np.isnan(angle_arr)]
     angle_arr[angle_arr < np.mean(angle_arr)] = 0
-    print(angle_arr)
     # print(angle_arr[angle_arr < np.mean(angle_arr)])
     # plt.plot(angle_arr)
     # try similar approach to ICs
@@ -136,14 +135,38 @@ def FO_from_angles(data):
     # toeVel = np.gradient(data[:, 6], 1)
     # toeAcc = np.gradient(lp_filter(toeVel, 6), 1)
     # toeAcc[abs(toeAcc) > 1] = 0
-    dataFiltered = gaussian_filter1d(angle_arr, sigma=3)
-    plt.plot(dataFiltered)
     # plt.plot(toeAcc)
-    # plt.plot(data[:, 8] / np.max(data[:, 8]))
-    TOs, _ = find_peaks(angle_arr, distance=75)
-    # plt.plot(TOs, angle_arr[TOs])
-    # plt.show()
-    return (TOs - 2)
+    dataFiltered = gaussian_filter1d(angle_arr, sigma=3)
+    # plt.plot(dataFiltered)
+    # use the ICs to find the FOs
+    FOs = []
+    for i in range(0, len(ICs)):
+        startIndex = ICs[i]
+        endIndex = ICs[i + 1] if i < len(ICs) - 1 else len(dataFiltered)   # crop to either next IC or end
+        croppedData = dataFiltered[startIndex:endIndex]
+        # plt.plot(croppedData)
+        # plt.show()
+        tMax = argrelmax(croppedData)[0]
+        # plt.plot(tMax[0], croppedData[tMax[0]], 'x')
+        # # pick only the first peak after IC
+        if tMax.size:
+            FOs.append(int(tMax[0] + startIndex - 2))
+    # then we need to find the ones we've potentially missed at the start
+    # print()
+    if FOs[0] - np.mean(FOs) > 0:
+        tMax = argrelmax(dataFiltered[0:FOs[0]])[0]
+        if tMax.size:
+            FOs.append(int(tMax[0] - 2))
+        FOs = FOs.sort()
+    return FOs
+
+
+
+    # # plt.plot(data[:, 8] / np.max(data[:, 8]))
+    # TOs, _ = find_peaks(angle_arr, distance=75)
+    # # plt.plot(TOs, angle_arr[TOs])
+    # # plt.show()
+    # return (TOs - 2)
 
 
 def IC_from_heel(data):
@@ -224,26 +247,43 @@ def main():
         goodSubjects = open("../Utils/goodTrials",
                             "r").read()
         print(subject)
-        if ","+str(subject.split("_")[1])+"," in goodSubjects and int(subject.split("_")[1]) in range(42, 45):
+        if ","+str(subject.split("_")[1]).zfill(2)+"," in goodSubjects and int(subject.split("_")[1]) in range(67, 68)\
+                and int(subject.split("_")[1]) != 61:
         # if int(subject.split("_")[1]) in range(34, 60):
         # if int(subject.split("_")[1]) in [10]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
-
+            print("Hi")
             turf2floorTrialFiles = os.listdir(
                 "../TiltCorrectedData/{}/Turf2Floor/Right/".format(str(subject).zfill(2)))
             floor2turfTrialFiles = os.listdir(
                 "../TiltCorrectedData/{}/Floor2Turf/Right/".format(str(subject).zfill(2)))
+            walkTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/Walk/Right/".format(str(subject).zfill(2)))
+            walkSlowTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/WalkSlow/Right/".format(str(subject).zfill(2)))
+            # walkShakeTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/WalkShake/Right/".format(str(subject).zfill(2)))
+            # walkNodTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/WalkNod/Right/".format(str(subject).zfill(2)))
             turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
             floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
-            print(turf2floorTrialNums)
-            print(floor2turfTrialNums)
+            walkTrialNums = find_trial_nums(walkTrialFiles)
+            walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
+            # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
+            # walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
+            validTrials = (turf2floorTrialNums + floor2turfTrialNums + walkTrialNums + walkSlowTrialNums)
+                           # + walkShakeTrialNums + walkNodTrialNums)
+            print(validTrials)
+            # print(turf2floorTrialNums)
+            # print(floor2turfTrialNums)
 
             for file in os.listdir(filepath):
                 if file.endswith(".c3d"):
                     trial = file.split('_')[-1].split(".")[0]
-                    # print(trial)
-                    if int(trial) in turf2floorTrialNums:
+                    print(trial)
+                    if int(trial) in validTrials:
+                        # if int(trial) in turf2floorTrialNums:
                         heel_data_l, heel_data_r, fp_1, fp_2, offset, ank_angle_l, ank_angle_r = get_heel_trajectory(filepath + file)
                         # plot
                         # plt.plot(-heel_data_l[offset:, 2])
@@ -255,30 +295,34 @@ def main():
                         # find HCs using heel minima
                         # l_ICs, _ = find_peaks(heel_data_l_z, distance=70)
                         # r_ICs, _ = find_peaks(-heel_data_r[offset:, 2], distance=70)
-                        # find FOs using ank angles
-                        l_FOs = FO_from_angles(ank_angle_l)
-                        r_FOs = FO_from_angles(ank_angle_r)
+
                         # l_ICs += offset
                         # r_ICs += offset
-                        if abs(l_ICs[0] - r_ICs[0] < 50):
-                            print(l_ICs, r_ICs)
+                        if abs(l_ICs[0] - r_ICs[0]) < 40:
+                            # print(l_ICs, r_ICs)
                             if l_ICs[0] < r_ICs[0]:
                                 l_ICs = l_ICs[1:]
                             else:
                                 r_ICs = r_ICs[1:]
-                        if abs(l_ICs[-1] - r_ICs[-1] < 50):
-                            print(l_ICs, r_ICs)
+                        if abs(l_ICs[-1] - r_ICs[-1]) < 40:
+                            # print(l_ICs, r_ICs)
                             if l_ICs[-1] < r_ICs[-1]:
                                 r_ICs = r_ICs[:-1]
                             else:
                                 l_ICs = l_ICs[:-1]
-                        # plt.vlines(l_ICs, min(heel_data_l[l_ICs + offset, 2]), max(heel_data_l[l_ICs + offset, 2]) + 100, 'g')
-                        plt.title(file)
-                        plt.show()
-            # #             send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs.tolist(), r_FOs.tolist(), trial, subjectDict)
-            # # out_file = open(subject + ".json", "w")
-            # # json.dump(subjectDict, out_file, indent=4)
-            # # plt.show()
+                        # find FOs using ank angles
+                        l_FOs = FO_from_angles(ank_angle_l, r_ICs)
+                        r_FOs = FO_from_angles(ank_angle_r, l_ICs)
+                        # plt.vlines(r_ICs, 0, 2, 'g', linestyles='solid')
+                        # plt.vlines(l_ICs, 0, 2, 'r', linestyles='solid')
+                        # plt.vlines(r_FOs, 0, 2, 'g', linestyles='dotted')
+                        # plt.vlines(l_FOs, 0, 2, 'r', linestyles='dotted')
+                        # plt.title(file)
+                        # plt.show()
+                        send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs, r_FOs, trial, subjectDict)
+            out_file = open(subject + ".json", "w")
+            json.dump(subjectDict, out_file, indent=4)
+            # plt.show()
 
 
 if __name__ == "__main__":
