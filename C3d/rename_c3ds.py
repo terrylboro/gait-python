@@ -3,13 +3,13 @@ import os
 c3dDir = "C:/Users/teri-/Documents/GaitC3Ds/"
 # c3dDir = "../WristShankData/"
 
-# for num in range(0, 10):
+# for num in range(66, 68):
 #     os.mkdir(c3dDir + "TF_" + str(num).zfill(2) + "/")
 
 for path, subdirs, files in os.walk(c3dDir):
     for name in files:
         if "gait" not in name:
-            if "A096391" in name:
+            if "A096391" in name and "_66_" in name:
                 print(name)
                 # os.remove(os.path.join(path, name))
                 old_name = os.path.join(path, name)

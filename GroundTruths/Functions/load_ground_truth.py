@@ -29,7 +29,7 @@ def load_ground_truth_json(subject, trial):
     return pd_df
 
 def load_ground_truth_json_new(subject, trial):
-    filepath = "../../C3d/GaitEvents/A096391_" + str(subject).zfill(2) + ".json"
+    filepath = "../../C3d/OwnGroundTruth/RawEvents/TF_" + str(subject).zfill(2) + ".json"
     # read json file
     with open(filepath, 'r') as jsonfile:
         data = json.load(jsonfile)

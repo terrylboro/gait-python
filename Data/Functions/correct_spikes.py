@@ -9,7 +9,7 @@ import os
 
 def correct_spikes(loadpath, file, save_path_data, save_path_vis):
     # generate column names
-    colNames = np.loadtxt("C:/Users/teri-/PycharmProjects/fourIMUReceiverPlotter/Utils/timestampedColumnHeaders", delimiter=',',
+    colNames = np.loadtxt("../../Utils/timestampedColumnHeaders", delimiter=',',
                           dtype=str)
     # print(colNames)
     imu_locations = ['lear', 'rear', 'chest', 'pocket']
@@ -70,8 +70,8 @@ def correct_spikes(loadpath, file, save_path_data, save_path_vis):
         # save the data
         data.to_csv(save_path_data + file, index=False)
         # save the figures
-        plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file + " " + imu_locations[i])
-        plt.savefig(save_path_vis + file.split(".")[0] + imu_locations[i] + ".png")
+        # plot_imu_xyz(accelReadings, gyroReadings, magReadings, time, file + " " + imu_locations[i])
+        # plt.savefig(save_path_vis + file.split(".")[0] + imu_locations[i] + ".png")
         plt.close()
 
 
@@ -79,17 +79,17 @@ def main():
     # list to loop through for activities
     activities = ["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow", "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
     # Repeat for all participants
-    for i in range(15, 17):
-        save_dir_data = "../../FilteredData/Data/TF_" + str.zfill(str(i), 2) + "/"
+    for i in range(8, 17):
+        save_dir_data = "../../FilteredData/TF_" + str.zfill(str(i), 2) + "/"
         save_dir_vis = "../../FilteredData/Visualisation/TF_" + str.zfill(str(i), 2) + "/"
         if not os.path.exists(save_dir_data): os.mkdir(save_dir_data)
-        if not os.path.exists(save_dir_vis): os.mkdir(save_dir_vis)
+        # if not os.path.exists(save_dir_vis): os.mkdir(save_dir_vis)
         for activity_name in activities:
             save_path_data = save_dir_data + activity_name + "/"
             save_path_vis = save_dir_vis + activity_name + "/"
             load_path = "../../Data/TF_" + str.zfill(str(i), 2) + "/" + activity_name + "/"
             if not os.path.exists(save_path_data): os.mkdir(save_path_data)
-            if not os.path.exists(save_path_vis): os.mkdir(save_path_vis)
+            # if not os.path.exists(save_path_vis): os.mkdir(save_path_vis)
             for file in os.listdir(load_path):
                 # plot_all_new_data(load_path, file, save_path)
                 correct_spikes(load_path, file, save_path_data, save_path_vis)

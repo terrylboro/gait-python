@@ -9,62 +9,65 @@ from Processing.AccZero.calculate_acc_zero import calculate_acc_zero
 
 def plot_systems_together(subjectRange, activity, accGyro="Acc"):
     for subject in subjectRange:
-        print("Subject: ", subject)
-        trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(str(subject).zfill(2))
-        trialNums = []
-        for file in os.listdir(trialNumDir):
-            trialNums.append(file.split("-")[-1][0:2])
-        for trialNum in trialNums:
-            # try:
-            shankData, shankLength, wristData, wristLen = load_shank(subject, trialNum)
-            pocketData, pocketLength = load_earable(subject, trialNum, activity, "Pocket")
-            chestData, chestLength = load_earable(subject, trialNum, activity, "Chest")
-            leftData, leftLength = load_earable(subject, trialNum, activity, "Left")
-            rightData, rightLength = load_earable(subject, trialNum, activity, "Right")
-            # plt.plot(shankPeaks, shankData.iloc[shankPeaks, 1], 'go')
-            # plt.plot(shankData["AccZ"])
-            shankData = shankData.iloc[::20, :].reset_index(drop=True)
-            wristData = wristData.iloc[::20, :].reset_index(drop=True)
+        goodSubjects = open("../Utils/goodTrials",
+                            "r").read()
+        if "," + str(subject) + "," in goodSubjects:
+            print("Subject: ", subject)
+            trialNumDir = "../TiltCorrectedData/TF_{}/{}/Pocket/".format(str(subject).zfill(2), activity)
+            trialNums = []
+            for file in os.listdir(trialNumDir):
+                trialNums.append(file.split("-")[-1][0:2])
+            for trialNum in trialNums:
+                # try:
+                shankData, shankLength, wristData, wristLen = load_shank(subject, trialNum)
+                pocketData, pocketLength = load_earable(subject, trialNum, activity, "Pocket")
+                chestData, chestLength = load_earable(subject, trialNum, activity, "Chest")
+                leftData, leftLength = load_earable(subject, trialNum, activity, "Left")
+                rightData, rightLength = load_earable(subject, trialNum, activity, "Right")
+                # plt.plot(shankPeaks, shankData.iloc[shankPeaks, 1], 'go')
+                # plt.plot(shankData["AccZ"])
+                shankData = shankData.iloc[::20, :].reset_index(drop=True)
+                wristData = wristData.iloc[::20, :].reset_index(drop=True)
 
-            # find resultant vectors
-            if accGyro == "Acc":
-                chestData = calculate_acc_zero(chestData[["AccX", "AccY", "AccZ"]].values)
-                pocketData = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
-                leftData = calculate_acc_zero(leftData[["AccX", "AccY", "AccZ"]].values)
-                rightData = calculate_acc_zero(rightData[["AccX", "AccY", "AccZ"]].values)
-                shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
-                wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
-            else:
-                chestData = calculate_acc_zero(chestData[["GyroX", "GyroY", "GyroZ"]].values)
-                pocketData = calculate_acc_zero(pocketData[["GyroX", "GyroY", "GyroZ"]].values)
-                leftData = calculate_acc_zero(leftData[["GyroX", "GyroY", "GyroZ"]].values)
-                rightData = calculate_acc_zero(rightData[["GyroX", "GyroY", "GyroZ"]].values)
-                shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
-                wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
+                # find resultant vectors
+                if accGyro == "Acc":
+                    chestData = calculate_acc_zero(chestData[["AccX", "AccY", "AccZ"]].values)
+                    pocketData = calculate_acc_zero(pocketData[["AccX", "AccY", "AccZ"]].values)
+                    leftData = calculate_acc_zero(leftData[["AccX", "AccY", "AccZ"]].values)
+                    rightData = calculate_acc_zero(rightData[["AccX", "AccY", "AccZ"]].values)
+                    shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+                    wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
+                else:
+                    chestData = calculate_acc_zero(chestData[["GyroX", "GyroY", "GyroZ"]].values)
+                    pocketData = calculate_acc_zero(pocketData[["GyroX", "GyroY", "GyroZ"]].values)
+                    leftData = calculate_acc_zero(leftData[["GyroX", "GyroY", "GyroZ"]].values)
+                    rightData = calculate_acc_zero(rightData[["GyroX", "GyroY", "GyroZ"]].values)
+                    shankData = calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values)
+                    wristData = calculate_acc_zero(wristData[["AccX", "AccY", "AccZ"]].values)
 
-            shankPeaks, _ = find_peaks(shankData, height=50, prominence=10)
-            chestPeaks, _ = find_peaks(pocketData, height=20)
-            print("Trial: ", trialNum)
-            print("Shank Len: ", shankLength / 20)
-            print("Chest Len: ", chestLength)
-            print(shankPeaks)
-            print(chestPeaks)
-            print("********")
-            # print(chestData.values)
-            plt.plot(pocketData / max(pocketData))
-            # plt.plot(chestData)
-            # plt.plot(leftData)
-            # plt.plot(rightData)
-            # plt.plot(np.linspace(0, len(shankData) * 20, len(shankData)), calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values))
-            plt.plot(shankData/ max(shankData))
-            # plt.plot(wristData)
-            # plt.plot(chestPeaks, chestData.iloc[chestPeaks, 2], 'bo')
-            # plt.plot(shankPeaks, shankData[shankPeaks], 'go')
-            plt.legend(["Pocket", "Shank"])
-            # plt.plot(shankData)
-            plt.show()
-            # except:
-            #     print("No data for trial: ", trialNum)
+                shankPeaks, _ = find_peaks(shankData, height=50, prominence=10)
+                chestPeaks, _ = find_peaks(pocketData, height=20)
+                print("Trial: ", trialNum)
+                print("Shank Len: ", shankLength / 20)
+                print("Chest Len: ", chestLength)
+                print(shankPeaks)
+                print(chestPeaks)
+                print("********")
+                # print(chestData.values)
+                plt.plot(pocketData / max(pocketData))
+                # plt.plot(chestData)
+                # plt.plot(leftData)
+                # plt.plot(rightData)
+                # plt.plot(np.linspace(0, len(shankData) * 20, len(shankData)), calculate_acc_zero(shankData[["AccX", "AccY", "AccZ"]].values))
+                plt.plot(shankData/ max(shankData))
+                # plt.plot(wristData)
+                # plt.plot(chestPeaks, chestData.iloc[chestPeaks, 2], 'bo')
+                # plt.plot(shankPeaks, shankData[shankPeaks], 'go')
+                plt.legend(["Pocket", "Shank"])
+                # plt.plot(shankData)
+                plt.show()
+                # except:
+                #     print("No data for trial: ", trialNum)
 
 
 def load_shank(subject, trial):
@@ -118,7 +121,7 @@ def load_earable(subject, trial, activity, side):
 
 
 def main():
-    plot_systems_together(range(6, 10), "Walk", "Acc")
+    plot_systems_together(range(49, 50), "Turf2Floor", "Acc")
     # for subject in range(57, 60):
     #     print("Subject: ", subject)
     #     trialNumDir = "../TiltCorrectedData/TF_{}/Walk/Pocket/".format(subject)

@@ -63,7 +63,7 @@ def plot_data(subject, trial, activity):
 
 
 def main():
-    activityList = ["WalkSlow"]
+    activityList = ["Walk"]
     sidesList = ["Left"]#, "Right"]
     dataPath = "../../TiltCorrectedData/"
     for subjectDir in os.listdir(dataPath):
