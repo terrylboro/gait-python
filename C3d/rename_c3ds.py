@@ -9,7 +9,7 @@ c3dDir = "C:/Users/teri-/Documents/GaitC3Ds/"
 for path, subdirs, files in os.walk(c3dDir):
     for name in files:
         if "gait" not in name:
-            if "A096391" in name and "_66_" in name:
+            if "A096391" in name and "_67_" in name:
                 print(name)
                 # os.remove(os.path.join(path, name))
                 old_name = os.path.join(path, name)

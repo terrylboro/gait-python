@@ -108,9 +108,10 @@ def sanity_check_temporal_parameters(tmp: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    subjectNum, trialNum = 27, 4
+    subjectNum, trialNum = 30, 13
     eventsDict = load_events_json(subjectNum, trialNum)
     print(eventsDict["left"])
     tsps = get_single_temporal_params_single_lateral(eventsDict["left"], 100)
+    tsps.to_csv("tsps.csv")
     print(tsps)
 

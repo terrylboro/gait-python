@@ -247,33 +247,32 @@ def main():
         goodSubjects = open("../Utils/goodTrials",
                             "r").read()
         print(subject)
-        if ","+str(subject.split("_")[1]).zfill(2)+"," in goodSubjects and int(subject.split("_")[1]) in range(67, 68)\
-                and int(subject.split("_")[1]) != 61:
-        # if int(subject.split("_")[1]) in range(34, 60):
-        # if int(subject.split("_")[1]) in [10]:
+        if ","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
+        and int(subject.split("_")[1]) in [x for x in range(66, 68) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
-            print("Hi")
-            turf2floorTrialFiles = os.listdir(
-                "../TiltCorrectedData/{}/Turf2Floor/Right/".format(str(subject).zfill(2)))
-            floor2turfTrialFiles = os.listdir(
-                "../TiltCorrectedData/{}/Floor2Turf/Right/".format(str(subject).zfill(2)))
-            walkTrialFiles = os.listdir(
-                "../TiltCorrectedData/{}/Walk/Right/".format(str(subject).zfill(2)))
-            walkSlowTrialFiles = os.listdir(
-                "../TiltCorrectedData/{}/WalkSlow/Right/".format(str(subject).zfill(2)))
+            # turf2floorTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/Turf2Floor/Right/".format(str(subject).zfill(2)))
+            # floor2turfTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/Floor2Turf/Right/".format(str(subject).zfill(2)))
+            # walkTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/Walk/Right/".format(str(subject).zfill(2)))
+            # walkSlowTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/WalkSlow/Right/".format(str(subject).zfill(2)))
             # walkShakeTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/WalkShake/Right/".format(str(subject).zfill(2)))
             # walkNodTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/WalkNod/Right/".format(str(subject).zfill(2)))
-            turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
-            floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
-            walkTrialNums = find_trial_nums(walkTrialFiles)
-            walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
+            shoeBoxTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/ShoeBox/Right/".format(str(subject).zfill(2)))
+            # turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
+            # floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
+            # walkTrialNums = find_trial_nums(walkTrialFiles)
+            # walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
             # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
             # walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
-            validTrials = (turf2floorTrialNums + floor2turfTrialNums + walkTrialNums + walkSlowTrialNums)
-                           # + walkShakeTrialNums + walkNodTrialNums)
+            shoeBoxTrialNums = find_trial_nums(shoeBoxTrialFiles)
+            validTrials = shoeBoxTrialNums
             print(validTrials)
             # print(turf2floorTrialNums)
             # print(floor2turfTrialNums)

@@ -94,8 +94,8 @@ for subjectNum in range(61, 65):
                 acc_ssa_ml = ssa.fit_transform(acc_ml)
 
                 # find gait events
-                ic, ic_sides = detect_ic(acc_ssa_si[0, 1], acc_ssa_ml[0, 1] + acc_ssa_ml[0, 2], window_length)
-                tc, tc_sides = detect_tc(acc_ssa_ml[0, 1] + acc_ssa_ml[0, 2], ic, ic_sides)
+                ic, ic_sides = detect_ic(acc_ssa_si[1], acc_ssa_ml[1] + acc_ssa_ml[2], window_length)
+                tc, tc_sides = detect_tc(acc_ssa_ml[1] + acc_ssa_ml[2], ic, ic_sides)
                 # add these to df
                 LICs_l, RICs_l, LTCs_l, RTCs_l = [], [], [], []
                 # LICs, RICs, LTCs, RTCs = pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
@@ -141,28 +141,29 @@ for subjectNum in range(61, 65):
                 # eventsDF.to_csv(file, index=False)
                 # ##################
                 #
-                # # Show the results for the first time series and its subseries
-                # plt.figure(figsize=(16, 6))
-                #
-                # ax1 = plt.subplot(121)
-                # ax1.plot(data["AccZ"+side], 'o-', label='Original')
+                # Show the results for the first time series and its subseries
+                plt.figure(figsize=(16, 6))
+
+                ax1 = plt.subplot(121)
+                ax1.plot(data["AccZ"+side], 'o-', label='Original')
                 # ax1.vlines(ic, 6, 15, color='r', linestyle='--')
                 # ax1.vlines(tc, 6, 15, color='g', linestyle='--')
-                # ax1.legend(loc='best', fontsize=14)
-                #
-                # ax2 = plt.subplot(122)
-                # # for i in range(len(groups)):
-                # for i in range(3):
-                #     ax2.plot(acc_ssa_si[0, i], '--', label='SSA {0}'.format(i + 1))
+                ax1.legend(loc='best', fontsize=14)
+
+                ax2 = plt.subplot(122)
+                # for i in range(len(groups)):
+                for i in range(3):
+                    print(acc_ssa_si[i])
+                    ax2.plot(acc_ssa_si[i], '--', label='SSA {0}'.format(i + 1))
                 # ax2.vlines(ic, -2, 4, color='r', linestyle='--')
                 # ax2.vlines(tc, -2, 4, color='g', linestyle='--')
-                # ax2.legend(loc='best', fontsize=14)
-                #
-                # plt.suptitle('Singular Spectrum Analysis', fontsize=20)
-                #
-                # plt.tight_layout()
-                # plt.subplots_adjust(top=0.88)
-                # # plt.show()
+                ax2.legend(loc='best', fontsize=14)
+
+                plt.suptitle('Singular Spectrum Analysis', fontsize=20)
+
+                plt.tight_layout()
+                plt.subplots_adjust(top=0.88)
+                plt.show()
             # dump to subject-specific json file
             out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
             json.dump(subjectDict, out_file, indent=4)

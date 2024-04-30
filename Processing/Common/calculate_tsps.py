@@ -26,7 +26,7 @@ def load_events_json(subject, trial, usingEarables):
             except:
                 print("No events for subject {} side {}".format(subject, side))
     else:
-        filepath = "../../C3d/OwnGroundTruth/RawEvents/TF_" + str(subject).zfill(2) + ".json"
+        filepath = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_" + str(subject).zfill(2) + ".json"
         # read json file
         with open(filepath, 'r') as jsonfile:
             data = json.load(jsonfile)
@@ -177,29 +177,32 @@ def find_trial_nums(dir):
 def main():
     usingEarables = False
     # Try this in a loop
-    for subjectNum in [x for x in range(62, 68) if x != 67]:
+    for subjectNum in [x for x in range(34, 68) if x not in [40, 41, 46, 47, 48, 61]]:
         colNames = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
                                "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
         tspSummarydf = pd.DataFrame(columns=colNames)
 
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
-        if "," + str(subjectNum) + "," in goodSubjects or subjectNum == 65:
+        if "," + str(subjectNum) in goodSubjects:
             # find the trial numbers which correspond to various walking events
             walkTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Walk/Right/".format(str(subjectNum).zfill(2)))
             walkSlowTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkSlow/Right/".format(str(subjectNum).zfill(2)))
-            walkNodTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkNod/Right/".format(str(subjectNum).zfill(2)))
-            walkShakeTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkShake/Right/".format(str(subjectNum).zfill(2)))
+            # walkNodTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkNod/Right/".format(str(subjectNum).zfill(2)))
+            # walkShakeTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkShake/Right/".format(str(subjectNum).zfill(2)))
             if subjectNum > 33 and str(subjectNum) not in ["41", "61"]:
                 turf2floorTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Turf2Floor/Right/".format(str(subjectNum).zfill(2)))
                 floor2turfTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Floor2Turf/Right/".format(str(subjectNum).zfill(2)))
+                shoeBoxTrialFiles = os.listdir(
+                    "../../TiltCorrectedData/TF_{}/ShoeBox/Right/".format(str(subjectNum).zfill(2)))
                 turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
                 floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
+                shoeBoxTrialNums = find_trial_nums(shoeBoxTrialFiles)
             # getting numbers from string
             walkTrialNums = find_trial_nums(walkTrialFiles)
             walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
-            walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
-            walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
+            # walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
+            # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
             print(walkTrialNums)
             print(subjectNum)
             if usingEarables:
@@ -217,12 +220,12 @@ def main():
                         trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
                         tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
             else:
-                subjectDir = "../../C3d/OwnGroundTruth/RawEvents/TF_{}.json".format(str(subjectNum).zfill(2))
+                subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
                 # for file in os.listdir(subjectDir):
                 #     if file.endswith(".json"):
                 # trialNum = int(file.split(".")[0].split("_")[-1])
                 # print(trialNum)
-                for trialNum in walkTrialNums:
+                for trialNum in shoeBoxTrialNums:
                     eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
                     if eventsDict is not None:
                         print(eventsDict)

@@ -6,6 +6,7 @@ subject = 22
 subjectPath = "OwnGroundTruth/RawEvents/" #TF_" + str(subject).zfill(2) + ".json"
 offsetDF = pd.read_csv("offsets.csv")
 
+
 def load_json(filepath, offsetDF):
     # read json file
     with open(filepath, 'r') as jsonfile:

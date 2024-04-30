@@ -186,7 +186,7 @@ def main():
     # "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"]
     # parse_multiple_subjects(range(30, 31), activityTypes=["Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
     #                                                "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp"])
-    parse_tf_subjects(range(67, 68), activityTypes=[
+    parse_tf_subjects(range(66, 67), activityTypes=[
         "Static", "Walk", "WalkShake", "WalkNod", "WalkSlow",
                                                   "Sit2Stand", "Stand2Sit", "TUG", "Reach", "PickUp",
                                                   "ShoeBox", "Turf2Floor", "Floor2Turf"
