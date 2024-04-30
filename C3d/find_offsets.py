@@ -18,8 +18,7 @@ def main():
     goodSubjects = open("../Utils/goodTrials",
                         "r").read()
     offsets = []
-    for subject in os.listdir(subjectPath):  # [1:]:
-        # for subject in ["TF_52", "TF_53", "TF_54"]:
+    for subject in os.listdir(subjectPath):
         print(subject)
         if "," + str(subject.split("_")[1]).zfill(2) + "," in goodSubjects:
             subjectNum = int(str(subject.split("_")[1]))

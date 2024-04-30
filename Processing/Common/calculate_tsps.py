@@ -26,7 +26,8 @@ def load_events_json(subject, trial, usingEarables):
             except:
                 print("No events for subject {} side {}".format(subject, side))
     else:
-        filepath = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_" + str(subject).zfill(2) + ".json"
+        # filepath = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_" + str(subject).zfill(2) + ".json"
+        filepath = "../../C3d/CombinedData/TF_" + str(subject).zfill(2) + ".json"
         # read json file
         with open(filepath, 'r') as jsonfile:
             data = json.load(jsonfile)
@@ -220,7 +221,8 @@ def main():
                         trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
                         tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
             else:
-                subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
+                # subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
+                subjectDir = "../../C3d/CombinedData/TF_{}.json".format(str(subjectNum).zfill(2))
                 # for file in os.listdir(subjectDir):
                 #     if file.endswith(".json"):
                 # trialNum = int(file.split(".")[0].split("_")[-1])

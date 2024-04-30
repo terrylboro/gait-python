@@ -248,7 +248,7 @@ def main():
                             "r").read()
         print(subject)
         if ","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
-        and int(subject.split("_")[1]) in [x for x in range(66, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+        and int(subject.split("_")[1]) in [x for x in range(34, 35) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
             # turf2floorTrialFiles = os.listdir(
@@ -312,6 +312,9 @@ def main():
                         # find FOs using ank angles
                         l_FOs = FO_from_angles(ank_angle_l, r_ICs)
                         r_FOs = FO_from_angles(ank_angle_r, l_ICs)
+                        # # plotting
+                        # plt.plot(heel_data_l_z)
+                        # plt.plot(heel_data_r_z)
                         # plt.vlines(r_ICs, 0, 2, 'g', linestyles='solid')
                         # plt.vlines(l_ICs, 0, 2, 'r', linestyles='solid')
                         # plt.vlines(r_FOs, 0, 2, 'g', linestyles='dotted')
