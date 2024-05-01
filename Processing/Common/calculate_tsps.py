@@ -12,7 +12,7 @@ import re
 def load_events_json(subject, trial, usingEarables):
     eventsDict = {}
     if usingEarables:
-        filepath = "../Ear/Events/AdaptedDiao/TF_" + str(subject).zfill(2) + ".json"
+        filepath = "../Ear/Events/AdaptedDiao/RawEvents/TF_" + str(subject).zfill(2) + ".json"
         # read json file
         with open(filepath, 'r') as jsonfile:
             data = json.load(jsonfile)
@@ -176,9 +176,9 @@ def find_trial_nums(dir):
 
 
 def main():
-    usingEarables = False
+    usingEarables = True
     # Try this in a loop
-    for subjectNum in [x for x in range(34, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+    for subjectNum in [x for x in range(21, 34) if x not in [40, 41, 46, 47, 48, 61]]:
         colNames = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
                                "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
         tspSummarydf = pd.DataFrame(columns=colNames)
@@ -210,16 +210,17 @@ def main():
                 subjectDir = "../../AlignedData/TF_{}".format(str(subjectNum).zfill(2))
                 for file in os.listdir(subjectDir):
                     trialNum = int(file.split(".")[0].split("-")[-1])
-                    eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
-                    if eventsDict is not None:
-                        print(eventsDict["left"])
-                        savedir_TSP = "tsps-{}.csv".format(subjectNum)
-                        LHC = eventsDict["left"]['LHC'].values
-                        RHC = eventsDict["left"]['RHC'].values
-                        LTO = eventsDict["left"]['LFO'].values
-                        RTO = eventsDict["left"]['RFO'].values
-                        trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
-                        tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
+                    if trialNum in walkTrialNums:
+                        eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
+                        if eventsDict is not None:
+                            print(eventsDict["left"])
+                            savedir_TSP = "tsps-{}.csv".format(subjectNum)
+                            LHC = eventsDict["left"]['LHC'].values
+                            RHC = eventsDict["left"]['RHC'].values
+                            LTO = eventsDict["left"]['LFO'].values
+                            RTO = eventsDict["left"]['RFO'].values
+                            trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, trialNum)
+                            tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
             else:
                 # subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
                 subjectDir = "../../C3d/CombinedData/TF_{}.json".format(str(subjectNum).zfill(2))

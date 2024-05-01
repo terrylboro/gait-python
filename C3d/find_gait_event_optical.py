@@ -170,7 +170,8 @@ def FO_from_angles(data, ICs):
 
 
 def IC_from_heel(data):
-    """ Accepts heel_data[offset:, 2] i.e. z co-ordinate allowing for cropping """
+    """ Accepts heel_data[offset:, 2] i.e. z co-ordinate allowing for cropping
+     and also the fpData[offset:, 2] i.e. z co-ordinate """
     data[data > 60] = 60  # apply hard threshold to focus on where ground is
     data = np.square(data - 60)
     dataFiltered = gaussian_filter1d(data, sigma=2)
@@ -188,6 +189,32 @@ def IC_from_heel(data):
     # plt.vlines(tMax, 0, 50, 'r')
     return tMax
 
+
+def find_direction(yData):
+    if yData[10] > yData[len(yData) - 10]:
+        return "fp2first"
+    elif yData[10] < yData[len(yData) - 10]:
+        return "fp1first"
+    else:
+        raise "No direction detected"
+
+
+def correct_shoebox_fp(l_ICs, r_ICs, fpData, direction):
+    """ Correct initial contact events with toe, common on shoebox trials
+    Do this using z component of force plate data (fpData) and knowledge of ICs """
+    # find the estimated ICs reported by the fpData
+    fpIC = np.where(fpData[0] > 0)[0][0] if direction == "fp2first" else np.where(fpData[1] > 0)[0][0]
+    print("fpIC:", fpIC)
+    # Find the closest IC to the forceplate and sub this out
+    lDiffs = np.absolute(l_ICs - fpIC)
+    print(lDiffs)
+    rDiffs = np.absolute(r_ICs - fpIC)
+    print(rDiffs)
+    if min(lDiffs) < min(rDiffs):
+        l_ICs[int(lDiffs.argmin())] = fpIC
+    else:
+        r_ICs[int(rDiffs.argmin())] = fpIC
+    return l_ICs, r_ICs
 
 def find_min_z(heel_data):
     heel_data = heel_data[~np.all(heel_data == 0)]
@@ -248,7 +275,7 @@ def main():
                             "r").read()
         print(subject)
         if ","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
-        and int(subject.split("_")[1]) in [x for x in range(34, 35) if x not in [40, 41, 46, 47, 48, 61]]:
+        and int(subject.split("_")[1]) in [x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
             # turf2floorTrialFiles = os.listdir(
@@ -281,7 +308,7 @@ def main():
                 if file.endswith(".c3d"):
                     trial = file.split('_')[-1].split(".")[0]
                     print(trial)
-                    if int(trial) in validTrials:
+                    if int(trial) in shoeBoxTrialNums:
                         # if int(trial) in turf2floorTrialNums:
                         heel_data_l, heel_data_r, fp_1, fp_2, offset, ank_angle_l, ank_angle_r = get_heel_trajectory(filepath + file)
                         # plot
@@ -291,10 +318,9 @@ def main():
                         # plt.plot(heel_data_l_z)
                         l_ICs = IC_from_heel(heel_data_l_z)
                         r_ICs = IC_from_heel(heel_data_r_z)
-                        # find HCs using heel minima
-                        # l_ICs, _ = find_peaks(heel_data_l_z, distance=70)
-                        # r_ICs, _ = find_peaks(-heel_data_r[offset:, 2], distance=70)
-
+                        # for shoebox, correct for toe-first contact when clearing box
+                        # direction = find_direction(heel_data_l[offset:, 1])
+                        # l_ICs, r_ICs = correct_shoebox_fp(l_ICs, r_ICs, [fp_1[offset:], fp_2[offset:]], direction)
                         # l_ICs += offset
                         # r_ICs += offset
                         if abs(l_ICs[0] - r_ICs[0]) < 40:
@@ -312,6 +338,11 @@ def main():
                         # find FOs using ank angles
                         l_FOs = FO_from_angles(ank_angle_l, r_ICs)
                         r_FOs = FO_from_angles(ank_angle_r, l_ICs)
+                        # add the offsets
+                        l_ICs += offset
+                        r_ICs += offset
+                        l_FOs += offset
+                        r_FOs += offset
                         # # plotting
                         # plt.plot(heel_data_l_z)
                         # plt.plot(heel_data_r_z)
