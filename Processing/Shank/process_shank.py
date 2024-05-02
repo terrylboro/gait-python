@@ -11,12 +11,14 @@
 # IC identified as instant of minimum ML angular velocity in T_IC before instant of max AP acceleration
 # FC identified as instant of minimum AP acceleration in the T_FC (since t is expected to occur at the
 # time of a sudden motion of the shank preceding the instant of the last maximum AP acceleration value in T_FC)
+import json
 
 import matplotlib.pyplot as plt
 import os
 import numpy as np
 import pandas as pd
-from scipy.signal import filtfilt, butter, find_peaks, argrelextrema, decimate
+from scipy.signal import filtfilt, butter, find_peaks, argrelextrema, decimate, argrelmin
+
 
 def process_shank_accel(ap_accel):
     AP_peaks, _ = find_peaks(ap_accel, prominence=30)
@@ -87,6 +89,76 @@ def process_shank_gyro(w_z):
     return ICs, FCs
 
 
+def simple_process_shank_gyro(w_z):
+    """ Find toe-offs and initial contact events from the z gyro signal """
+    # firstly, identify all valid zero crossing points
+    zeroCrossings = np.where(np.diff(np.signbit(w_z).flatten()))[0]
+    plt.plot(zeroCrossings, w_z[zeroCrossings], 'rx')
+    crossingGaps = np.diff(zeroCrossings).flatten()
+    print(crossingGaps)
+    validIndices = crossingGaps > 20
+    print(validIndices)
+    # using just diffs didn't work !!
+    # find the correct DZ
+    # then find distance to next peak
+    # if this is < 85 then we want to blacklist this
+    # iterate to the next peak and again blacklist if the gap is too small
+    blacklist = []
+    for ZCidx in range(0, len(zeroCrossings)-1):
+        # determine if an AZ or DZ
+        if w_z[zeroCrossings[ZCidx] + 5] < 0:
+            # DZ detected
+            print("DZ at: ", ZCidx)
+            if zeroCrossings[ZCidx+1] - zeroCrossings[ZCidx] < 40:
+                blacklist.append(ZCidx+1)
+                if ZCidx + 2 < len(zeroCrossings):
+                    print(zeroCrossings[ZCidx+2] - zeroCrossings[ZCidx])
+                    if zeroCrossings[ZCidx + 2] - zeroCrossings[ZCidx] < 40:
+                        blacklist.append(ZCidx+2)
+    print(blacklist)
+        # if w_z[zeroCrossings[ZCidx] + evalSpace] > 0:
+        #     # this is an AZ
+        #     if not (30 < zeroCrossings[ZCidx + 1] - zeroCrossings[ZCidx] < 80):
+
+
+    # validIndices = np.insert(validIndices, np.where(validIndices)[0][-1], True)
+    mask = np.ones(len(zeroCrossings), dtype=bool)
+    if len(blacklist):
+        mask[np.unique(blacklist)] = False
+    # mask = np.insert(validIndices, len(mask), True)
+    # print(mask)
+    # validIndices = validIndices[mask]
+    # print(validIndices)
+    # validIndices = np.insert(validIndices, 0, False)
+    zeroCrossings = zeroCrossings[mask]
+    plt.plot(zeroCrossings, w_z[zeroCrossings], 'x')
+    # then find ICs / FOs using these ZCs
+    ICs, FOs = [], []
+    for ZC in zeroCrossings:
+        # determine if an AZ or DZ
+        evalSpace = 5 if len(w_z) > ZC + 5 else len(w_z) - (ZC + 1)
+        if w_z[ZC+evalSpace] < 0:
+            # plt.plot(ZC, w_z[ZC], 'x')
+            # this is a DZ
+            if len(w_z) - ZC > 10:
+                tMin = argrelmin(w_z[ZC:ZC+10])[0] #find_peaks(-w_z[ZC:ZC+10].flatten())[0] #argrelmin(w_z[ZC:ZC+10])[0]
+                print(tMin)
+                if tMin.size:
+                    ICs.append(int(ZC + tMin[0]))
+        elif w_z[ZC+evalSpace] > 0:
+            # this is an AZ
+            if ZC > 20:
+                tMin = argrelmin(w_z[ZC-20:ZC])
+                if tMin[0].size:
+                    FOs.append(int(ZC - (20-tMin[0][0])))
+        else:
+            # some strange plateau which we should probably discard
+            raise "Strange plateau - no gait event detected here"
+    return ICs, FOs
+    # # firstly, cut out values greater than zero
+    # w_z[w_z>0] = 0
+
+
 def filter_shank(data):
     b, a = butter(2, 25, btype="lp", fs=100, output='ba')
     filtered_data = filtfilt(b, a, data, axis=0)
@@ -94,39 +166,47 @@ def filter_shank(data):
     return data
 
 
-def main():
-    subject = str(25).zfill(2)
-    activity = "Walk"
-    for trial in range(5, 6):
-        data = pd.read_csv("../../AlignedData/TF_{}/{}-{}.csv".format(subject, subject, str(trial).zfill(2)),
-                           usecols=["GyroZShank"])
-        # get rid of leading zeros
-        first_real_val = np.nonzero(data.values)[0][0]
-        print(first_real_val)
-        data = data[first_real_val:]
-        # low pass filter to chosen frequency
-        data = filter_shank(data.values)
-        # apply decimation
-        # data = pd.DataFrame(decimate(data, 20, axis=0, zero_phase=True))
+def send_to_json(LHC, LFO, trial, subjectDict):
+    subjectDict[trial] = {
+        "LHC": list(map(int, LHC)),
+        "LFO": list(map(int, LFO))
+    }
 
-        # gyro_data = data.iloc[:, range(3,6)]
-        # the sagittal plane angular velocity signal, w_z
-        w_z = data#["AccZShank"]#-gyro_data.iloc[:, 2]#[:, 2]
-        plt.plot(w_z)
-        plt.title("Shank Forward Rotation from Gyroscope During Walking")
-        plt.xlabel("Time / Samples")
-        plt.ylabel("Angular Velocity / rad/s")
-        plt.show()
-        # ap_accel = -data.iloc[:, 1]
-        # swing_phase = find_w_z_peaks(w_z)
-        ICs, FCs = process_shank_gyro(w_z)
-        # swing_phase.to_csv("swingphase.csv")
-        plt.plot(w_z)
-        # plt.plot(ap_accel)
-        # plt.legend(['X', 'Y', 'Z'])
-        plt.plot(ICs, w_z[ICs], 'o')
-        plt.plot(FCs, w_z[FCs], 'o')
-        plt.show()
+
+def main():
+    # import the data
+    for subjectNum in range(40, 41):
+        goodSubjects = open("../../Utils/goodTrials",
+                            "r").read()
+        if "," + str(subjectNum) + "," in goodSubjects:
+            subjectDir = "../../AlignedData/TF_{}/".format(str(subjectNum).zfill(2))
+            subjectDict = {}
+            print(subjectNum)
+            for file in os.listdir(subjectDir):
+                # load ear data
+                trialNum = int(file.split(".")[0].split("-")[-1])
+                data = pd.read_csv(subjectDir+file, usecols=["GyroZShank"])
+                # get rid of leading zeros
+                try:
+                    first_real_val, last_real_val = np.nonzero(data.values)[0][0], np.nonzero(data.values)[0][-1]
+                    data = data[first_real_val:last_real_val]
+                    # low pass filter to chosen frequency
+                    data = filter_shank(data.values)
+                    ICs, FOs = simple_process_shank_gyro(data)
+                    plt.vlines(ICs, -1, 1, 'r')
+                    plt.vlines(FOs, -4, 0, 'g')
+                    # gyro_data = data.iloc[:, range(3,6)]
+                    # the sagittal plane angular velocity signal, w_z
+                    plt.plot(data)
+                    plt.title("Shank Forward Rotation from Gyroscope During Walking")
+                    plt.xlabel("Time / Samples")
+                    plt.ylabel("Angular Velocity / rad/s")
+                    plt.show()
+                    send_to_json(ICs, FOs, str(trialNum).zfill(4), subjectDict)
+                except:
+                    raise "No non-zero data!"
+            out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
+            json.dump(subjectDict, out_file, indent=4)
 
 
 if __name__ == "__main__":

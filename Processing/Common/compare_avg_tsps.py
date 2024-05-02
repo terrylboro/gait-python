@@ -8,13 +8,13 @@ gtDir = "../../C3d/OwnGroundTruth/TSPsWalksAndTurf/" + activity + "/"
 diaoDir = "../Ear/Events/AdaptedDiao/TSPs/"
 
 
-for subjectNum in range(52, 68):
+for subjectNum in range(30, 40):
     validTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/{}/Right/".format(str(subjectNum).zfill(2), activity))
     validTrialNums = find_trial_nums(validTrialFiles)
     gtdf = pd.read_csv(gtDir + "{}.csv".format(str(subjectNum).zfill(2)))
     diaodf = pd.read_csv(diaoDir + "{}.csv".format(str(subjectNum).zfill(2)))
     if not gtdf.empty:
-        for column in ["Left Stride Time", "Right Stride Time"]:
+        for column in ["Left Swing Time", "Right Swing Time"]:
             if not gtdf.empty:
                 gtdata = gtdf[column]#.values
                 diaodata = diaodf[column]#.values
