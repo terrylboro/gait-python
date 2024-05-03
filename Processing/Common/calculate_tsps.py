@@ -9,34 +9,51 @@ import os
 import re
 
 
-def load_events_json(subject, trial, usingEarables):
+def load_events_shank(subject, trial):
     eventsDict = {}
-    if usingEarables:
-        filepath = "../Ear/Events/AdaptedDiao/TF_" + str(subject).zfill(2) + ".json"
-        # read json file
+    filepath = "../Shank/Events/Gyro/RawEvents/TF_" + str(subject).zfill(2) + ".json"
+    # read json file
+    try:
         with open(filepath, 'r') as jsonfile:
             data = json.load(jsonfile)
-        sides = ["left", "right", "chest"]
-        for side in sides:
-            try:
-                json_str = json.dumps(data[str(trial).zfill(4)][side])
-                pd_df = pd.read_json(json_str, orient='index')
-                eventsDict[side] = pd_df.T
-                return eventsDict
-            except:
-                print("No events for subject {} side {}".format(subject, side))
-    else:
-        filepath = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_" + str(subject).zfill(2) + ".json"
-        # read json file
-        with open(filepath, 'r') as jsonfile:
-            data = json.load(jsonfile)
-        try:
             json_str = json.dumps(data[str(trial).zfill(4)])
             pd_df = pd.read_json(json_str, orient='index')
             eventsDict = pd_df.T
             return eventsDict
+    except:
+        print("No events for subject {}".format(subject))
+
+
+def load_events_earables(subject, trial):
+    eventsDict = {}
+    filepath = "../Ear/Events/AdaptedDiao/RawEvents/TF_" + str(subject).zfill(2) + ".json"
+    # read json file
+    with open(filepath, 'r') as jsonfile:
+        data = json.load(jsonfile)
+    sides = ["left", "right", "chest"]
+    for side in sides:
+        try:
+            json_str = json.dumps(data[str(trial).zfill(4)][side])
+            pd_df = pd.read_json(json_str, orient='index')
+            eventsDict[side] = pd_df.T
+            return eventsDict
         except:
-            print("No events for subject {}".format(subject))
+            print("No events for subject {} side {}".format(subject, side))
+
+def load_events_optical(subject, trial):
+    eventsDict = {}
+    # filepath = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_" + str(subject).zfill(2) + ".json"
+    filepath = "../../C3d/CombinedData/TF_" + str(subject).zfill(2) + ".json"
+    # read json file
+    with open(filepath, 'r') as jsonfile:
+        data = json.load(jsonfile)
+    try:
+        json_str = json.dumps(data[str(trial).zfill(4)])
+        pd_df = pd.read_json(json_str, orient='index')
+        eventsDict = pd_df.T
+        return eventsDict
+    except:
+        print("No events for subject {}".format(subject))
 
 
 def calculate_TSPs(RHC, LHC, RTO, LTO, trialNum):
@@ -82,6 +99,27 @@ def calculate_TSPs(RHC, LHC, RTO, LTO, trialNum):
     # df.to_csv(save_dir, index_label="Index")
     return df
     # print(df)
+
+def calculate_TSPs_one_side(LHC, LTO, trialNum):
+    """
+        Calculate all the TSPs from the initial contact and foot off locations on shank or wrist
+        """
+    col_names = ["Trial", "Left Stride Time", "Left Stance Time", "Left Swing Time", "Left Swing/Stance Ratio", "Step Asymmetry"]
+    # Create a Dataframe to store all the info
+    df = pd.DataFrame(columns=col_names)
+    left_stride_time = stride_time(LHC)
+    # Line-up and trim the data so calculations work
+    LHC = np.trim_zeros(LHC)
+    LTO = np.trim_zeros(LTO)
+    left_stance_time = stance_time(LHC, LTO)
+    left_swing_time = swing_time(LHC, LTO)
+    ssr_left = calculate_SSR(left_swing_time, left_stance_time)
+    # Populate the dataframe
+    df["Left Stride Time"] = pd.Series(left_stride_time)
+    df["Left Swing Time"] = pd.Series(left_swing_time)
+    df["Left Swing/Stance Ratio"] = pd.Series(ssr_left)
+    df["Trial"] = pd.Series([trialNum] * len(df))
+    return df
 
 
 def stride_time(HC):
@@ -176,8 +214,9 @@ def find_trial_nums(dir):
 
 def main():
     usingEarables = False
+    usingShank = True
     # Try this in a loop
-    for subjectNum in [x for x in range(34, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+    for subjectNum in [x for x in range(66, 68) if x not in [40, 41, 46, 47, 48, 61]]:
         colNames = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
                                "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
         tspSummarydf = pd.DataFrame(columns=colNames)
@@ -205,31 +244,39 @@ def main():
             # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
             print(walkTrialNums)
             print(subjectNum)
-            if usingEarables:
+            if usingEarables or usingShank:
                 subjectDir = "../../AlignedData/TF_{}".format(str(subjectNum).zfill(2))
                 for file in os.listdir(subjectDir):
                     trialNum = int(file.split(".")[0].split("-")[-1])
-                    eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
-                    if eventsDict is not None:
-                        print(eventsDict["left"])
-                        savedir_TSP = "tsps-{}.csv".format(subjectNum)
-                        LHC = eventsDict["left"]['LHC'].values
-                        RHC = eventsDict["left"]['RHC'].values
-                        LTO = eventsDict["left"]['LFO'].values
-                        RTO = eventsDict["left"]['RFO'].values
-                        trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, savedir_TSP)
-                        tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
+                    if trialNum in walkTrialNums:
+                        if usingEarables:
+                            eventsDict = load_events_earables(subjectNum, trialNum)
+                            if eventsDict is not None:
+                                print(eventsDict["left"])
+                                LHC = eventsDict["left"]['LHC'].values
+                                RHC = eventsDict["left"]['RHC'].values
+                                LTO = eventsDict["left"]['LFO'].values
+                                RTO = eventsDict["left"]['RFO'].values
+                                trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, trialNum)
+                                tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
+                        else:
+                            eventsDict = load_events_shank(subjectNum, trialNum)
+                            if eventsDict is not None:
+                                LHC = eventsDict["LHC"].values
+                                LTO = eventsDict["LFO"].values
+                                trialTSPs = calculate_TSPs_one_side(LHC, LTO, trialNum)
+                                tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
             else:
-                subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
+                # subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
+                subjectDir = "../../C3d/CombinedData/TF_{}.json".format(str(subjectNum).zfill(2))
                 # for file in os.listdir(subjectDir):
                 #     if file.endswith(".json"):
                 # trialNum = int(file.split(".")[0].split("_")[-1])
                 # print(trialNum)
                 for trialNum in shoeBoxTrialNums:
-                    eventsDict = load_events_json(subjectNum, trialNum, usingEarables)
+                    eventsDict = load_events_optical(subjectNum, trialNum)
                     if eventsDict is not None:
                         print(eventsDict)
-                        savedir_TSP = "tsps-{}.csv".format(subjectNum)
                         LHC = eventsDict['LHC'].values
                         RHC = eventsDict['RHC'].values
                         LTO = eventsDict['LFO'].values
