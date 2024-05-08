@@ -75,7 +75,7 @@ window_length = 100  # sampling freq in Hz
 ssa = SingularSpectrumAnalysis(window_size=int(window_length), groups=[[0], [1], [2], np.arange(3, window_length, 1)])
 
 # import the data
-for subjectNum in range(59, 68):
+for subjectNum in range(0, 68):
     goodSubjects = open("../../Utils/goodTrials",
                         "r").read()
     if "," + str(subjectNum) + "," in goodSubjects:
@@ -89,9 +89,9 @@ for subjectNum in range(59, 68):
             for side in ["lear", "rear", "chest"]:
                 data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZ"+side, "AccY"+side])
                 acc_si = -1 * filter_acc(data["AccZ"+side].to_numpy(), 5).reshape(1, -1)
-                acc_ssa_si = ssa.fit_transform(acc_si)[0]
+                acc_ssa_si = ssa.fit_transform(acc_si)#[0]
                 acc_ml = filter_acc(data["AccY"+side].to_numpy(), 5).reshape(1, -1) * -1  # changed
-                acc_ssa_ml = ssa.fit_transform(acc_ml)[0]
+                acc_ssa_ml = ssa.fit_transform(acc_ml)#[0]
 
                 # find gait events
                 ic, ic_sides = detect_ic(acc_ssa_si[1], acc_ssa_ml[1], window_length)

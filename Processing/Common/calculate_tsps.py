@@ -116,6 +116,7 @@ def calculate_TSPs_one_side(LHC, LTO, trialNum):
     ssr_left = calculate_SSR(left_swing_time, left_stance_time)
     # Populate the dataframe
     df["Left Stride Time"] = pd.Series(left_stride_time)
+    df["Left Stance Time"] = pd.Series(left_stance_time)
     df["Left Swing Time"] = pd.Series(left_swing_time)
     df["Left Swing/Stance Ratio"] = pd.Series(ssr_left)
     df["Trial"] = pd.Series([trialNum] * len(df))
@@ -213,17 +214,21 @@ def find_trial_nums(dir):
 
 
 def main():
-    usingEarables = False
-    usingShank = True
+    usingEarables = True
+    usingShank = False
     # Try this in a loop
-    for subjectNum in [x for x in range(66, 68) if x not in [40, 41, 46, 47, 48, 61]]:
-        colNames = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
-                               "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
+    # for subjectNum in [x for x in range(0, 65) if x not in [20, 22]]:#, 40, 41, 46, 47, 48, 61]]:
+    for subjectNum in [x for x in range(10, 55) if x not in [40, 41, 46, 47, 48, 61]]:
+        if usingShank:
+            colNames = ["Trial", "Left Stride Time", "Left Stance Time", "Left Swing Time", "Left Swing/Stance Ratio", "Step Asymmetry"]
+        else:
+            colNames = ["Trial", "Left Stride Time", "Right Stride Time", "Left Stance Time", "Right Stance Time",
+                                   "Left Swing Time", "Right Swing Time", "Left Swing/Stance Ratio", "Right Swing/Stance Ratio", "Step Asymmetry"]
         tspSummarydf = pd.DataFrame(columns=colNames)
 
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
-        if "," + str(subjectNum) in goodSubjects:
+        if "," + str(subjectNum).zfill(2) in goodSubjects:
             # find the trial numbers which correspond to various walking events
             walkTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/Walk/Right/".format(str(subjectNum).zfill(2)))
             walkSlowTrialFiles = os.listdir("../../TiltCorrectedData/TF_{}/WalkSlow/Right/".format(str(subjectNum).zfill(2)))
