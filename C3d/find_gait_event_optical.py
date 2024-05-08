@@ -275,31 +275,31 @@ def main():
                             "r").read()
         print(subject)
         if ","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
-        and int(subject.split("_")[1]) in [x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+        and int(subject.split("_")[1]) in [40, 41]:#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
             # turf2floorTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/Turf2Floor/Right/".format(str(subject).zfill(2)))
             # floor2turfTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/Floor2Turf/Right/".format(str(subject).zfill(2)))
-            # walkTrialFiles = os.listdir(
-            #     "../TiltCorrectedData/{}/Walk/Right/".format(str(subject).zfill(2)))
+            walkTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/Walk/Right/".format(str(subject).zfill(2)))
             # walkSlowTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/WalkSlow/Right/".format(str(subject).zfill(2)))
             # walkShakeTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/WalkShake/Right/".format(str(subject).zfill(2)))
             # walkNodTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/WalkNod/Right/".format(str(subject).zfill(2)))
-            shoeBoxTrialFiles = os.listdir(
-                "../TiltCorrectedData/{}/ShoeBox/Right/".format(str(subject).zfill(2)))
+            # shoeBoxTrialFiles = os.listdir(
+            #     "../TiltCorrectedData/{}/ShoeBox/Right/".format(str(subject).zfill(2)))
             # turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
             # floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
-            # walkTrialNums = find_trial_nums(walkTrialFiles)
+            walkTrialNums = find_trial_nums(walkTrialFiles)
             # walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
             # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
             # walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
-            shoeBoxTrialNums = find_trial_nums(shoeBoxTrialFiles)
-            validTrials = shoeBoxTrialNums
+            # shoeBoxTrialNums = find_trial_nums(shoeBoxTrialFiles)
+            validTrials = walkTrialNums
             print(validTrials)
             # print(turf2floorTrialNums)
             # print(floor2turfTrialNums)
@@ -308,7 +308,7 @@ def main():
                 if file.endswith(".c3d"):
                     trial = file.split('_')[-1].split(".")[0]
                     print(trial)
-                    if int(trial) in shoeBoxTrialNums:
+                    if int(trial) in validTrials:
                         # if int(trial) in turf2floorTrialNums:
                         heel_data_l, heel_data_r, fp_1, fp_2, offset, ank_angle_l, ank_angle_r = get_heel_trajectory(filepath + file)
                         # plot

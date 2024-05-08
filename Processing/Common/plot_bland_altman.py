@@ -12,13 +12,17 @@ def bland_altman_plot(data1, data2, *args, **kwargs):
     md        = np.nanmean(diff)                   # Mean of the difference
     sd        = np.nanstd(diff, axis=0)            # Standard deviation of the difference
 
+
+    # print(diff[np.where(abs(diff[:] > 20))])
+    # print(np.where(abs(diff > 20)))
     plt.scatter(mean, diff, *args, **kwargs)
     plt.axhline(md,           color='gray', linestyle='--')
     plt.axhline(md + 1.96*sd, color='gray', linestyle='--')
     plt.axhline(md - 1.96*sd, color='gray', linestyle='--')
 
 
-data = pd.read_csv('EarablesAdaptedDiaoComparison.csv')
+# data = pd.read_csv('../Ear/Events/AdaptedDiao/Comparison/EarablesAdaptedDiaoComparison.csv')
+data = pd.read_csv('../Shank/Events/Gyro/Comparison/ShankGyroComparison.csv')
 print(data.head())
 for metric in ["Stride Time", "Stance Time", "Swing Time"]:
     bland_altman_plot(data["Left {} Shank".format(metric)].to_numpy(), data["Left {} GT".format(metric)].to_numpy())

@@ -5,12 +5,12 @@ from calculate_tsps import find_trial_nums
 
 activity = "Walk"
 gtDir = "../../C3d/OwnGroundTruth/TSPsWalksAndTurf/" + activity + "/"
-imuDir = "../Ear/Events/AdaptedDiao/TSPs/"
-# imuDir = "../Shank/Events/Gyro/TSPs/"
+# imuDir = "../Ear/Events/AdaptedDiao/TSPs/"
+imuDir = "../Shank/Events/Gyro/TSPs/"
 
 
 # for subjectNum in [x for x in range(10, 65) if x not in [20, 22]]:
-for subjectNum in [x for x in range(10, 65) if x not in [40, 41, 46, 47, 48, 61]]:
+for subjectNum in [x for x in range(66, 68) if x not in [20, 22, 40, 41, 46, 47, 48, 61]]:
     goodSubjects = open("../../Utils/goodTrials",
                         "r").read()
     if "," + str(subjectNum).zfill(2) in goodSubjects:

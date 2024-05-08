@@ -42,8 +42,8 @@ def load_events_earables(subject, trial):
 
 def load_events_optical(subject, trial):
     eventsDict = {}
-    # filepath = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_" + str(subject).zfill(2) + ".json"
-    filepath = "../../C3d/CombinedData/TF_" + str(subject).zfill(2) + ".json"
+    filepath = "../../C3d/OwnGroundTruth/RawEventsWalksAndTurf/TF_" + str(subject).zfill(2) + ".json"
+    # filepath = "../../C3d/CombinedData/TF_" + str(subject).zfill(2) + ".json"
     # read json file
     with open(filepath, 'r') as jsonfile:
         data = json.load(jsonfile)
@@ -214,11 +214,11 @@ def find_trial_nums(dir):
 
 
 def main():
-    usingEarables = True
+    usingEarables = False
     usingShank = False
     # Try this in a loop
-    # for subjectNum in [x for x in range(0, 65) if x not in [20, 22]]:#, 40, 41, 46, 47, 48, 61]]:
-    for subjectNum in [x for x in range(10, 55) if x not in [40, 41, 46, 47, 48, 61]]:
+    # for subjectNum in [x for x in range(0, 61) if x not in [20, 22]]:#, 40, 41, 46, 47, 48, 61]]:
+    for subjectNum in [x for x in range(56, 68) if x not in [40, 41, 46, 47, 48, 61]]:
         if usingShank:
             colNames = ["Trial", "Left Stride Time", "Left Stance Time", "Left Swing Time", "Left Swing/Stance Ratio", "Step Asymmetry"]
         else:
@@ -272,13 +272,13 @@ def main():
                                 trialTSPs = calculate_TSPs_one_side(LHC, LTO, trialNum)
                                 tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
             else:
-                # subjectDir = "../../C3d/OwnGroundTruth/RawEventsWithOffsets/TF_{}.json".format(str(subjectNum).zfill(2))
-                subjectDir = "../../C3d/CombinedData/TF_{}.json".format(str(subjectNum).zfill(2))
+                subjectDir = "../../C3d/OwnGroundTruth/RawEventsWalksAndTurf/TF_{}.json".format(str(subjectNum).zfill(2))
+                # subjectDir = "../../C3d/CombinedData/TF_{}.json".format(str(subjectNum).zfill(2))
                 # for file in os.listdir(subjectDir):
                 #     if file.endswith(".json"):
                 # trialNum = int(file.split(".")[0].split("_")[-1])
                 # print(trialNum)
-                for trialNum in shoeBoxTrialNums:
+                for trialNum in walkTrialNums:
                     eventsDict = load_events_optical(subjectNum, trialNum)
                     if eventsDict is not None:
                         print(eventsDict)
