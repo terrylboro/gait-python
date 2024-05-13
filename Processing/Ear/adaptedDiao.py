@@ -11,6 +11,9 @@ from scipy.signal import find_peaks, argrelextrema, butter, filtfilt
 def detect_ic(acc_si_dominant: np.ndarray, acc_ml_wo_trend: np.ndarray, sample_rate_hz: float) -> (np.ndarray, np.ndarray):
     # find minimum on SI axis with removed trend. Peaks corresponds to IC
     peaks_ic, _ = find_peaks(acc_si_dominant * -1, height=0.2, distance=sample_rate_hz * 0.2)
+    plt.figure()
+    plt.plot(acc_ml_wo_trend)
+    plt.show()
     # determine ipsilateral and contralateral IC
     sides = np.array(["contralateral" for i in range(peaks_ic.shape[0])])
 
@@ -75,7 +78,7 @@ window_length = 100  # sampling freq in Hz
 ssa = SingularSpectrumAnalysis(window_size=int(window_length), groups=[[0], [1], [2], np.arange(3, window_length, 1)])
 
 # import the data
-for subjectNum in range(0, 68):
+for subjectNum in range(29, 30):
     goodSubjects = open("../../Utils/goodTrials",
                         "r").read()
     if "," + str(subjectNum) + "," in goodSubjects:
@@ -89,9 +92,12 @@ for subjectNum in range(0, 68):
             for side in ["lear", "rear", "chest"]:
                 data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZ"+side, "AccY"+side])
                 acc_si = -1 * filter_acc(data["AccZ"+side].to_numpy(), 5).reshape(1, -1)
-                acc_ssa_si = ssa.fit_transform(acc_si)#[0]
+                acc_ssa_si = ssa.fit_transform(acc_si)[0]
                 acc_ml = filter_acc(data["AccY"+side].to_numpy(), 5).reshape(1, -1) * -1  # changed
-                acc_ssa_ml = ssa.fit_transform(acc_ml)#[0]
+                acc_ssa_ml = ssa.fit_transform(acc_ml)[0]
+                plt.figure()
+                plt.plot(acc_ssa_ml[0])
+                plt.show()
 
                 # find gait events
                 ic, ic_sides = detect_ic(acc_ssa_si[1], acc_ssa_ml[1], window_length)
@@ -142,27 +148,31 @@ for subjectNum in range(0, 68):
                 ##################
 
                 # # Show the results for the first time series and its subseries
-                # plt.figure(figsize=(16, 6))
-                #
-                # ax1 = plt.subplot(121)
-                # ax1.plot(data["AccZ"+side], 'o-', label='Original')
+                plt.figure(figsize=(16, 6))
+
+                ax1 = plt.subplot(121)
+                ax1.plot(data["AccZ"+side], 'o-', label='Original')
                 # ax1.vlines(ic, 6, 15, color='r', linestyle='--')
                 # ax1.vlines(tc, 6, 15, color='g', linestyle='--')
-                # ax1.legend(loc='best', fontsize=14)
-                #
-                # ax2 = plt.subplot(122)
-                # # for i in range(len(groups)):
-                # for i in range(3):
-                #     ax2.plot(acc_ssa_si[i], '--', label='SSA {0}'.format(i + 1))
-                # ax2.vlines(ic, -2, 4, color='r', linestyle='--')
-                # ax2.vlines(tc, -2, 4, color='g', linestyle='--')
-                # ax2.legend(loc='best', fontsize=14)
-                #
-                # plt.suptitle('Singular Spectrum Analysis', fontsize=20)
-                #
-                # plt.tight_layout()
-                # plt.subplots_adjust(top=0.88)
-                # plt.show()
+                ax1.vlines(LICs_l, 6, 15, color='r', linestyle='solid')
+                ax1.vlines(RICs_l, 6, 15, color='g', linestyle='solid')
+                ax1.vlines(LTCs_l, 6, 15, color='r', linestyle='--')
+                ax1.vlines(RTCs_l, 6, 15, color='g', linestyle='--')
+                ax1.legend(loc='best', fontsize=14)
+
+                ax2 = plt.subplot(122)
+                # for i in range(len(groups)):
+                for i in range(3):
+                    ax2.plot(acc_ssa_si[i], '--', label='SSA {0}'.format(i + 1))
+                ax2.vlines(ic, -2, 4, color='r', linestyle='--')
+                ax2.vlines(tc, -2, 4, color='g', linestyle='--')
+                ax2.legend(loc='best', fontsize=14)
+
+                plt.suptitle('Singular Spectrum Analysis', fontsize=20)
+
+                plt.tight_layout()
+                plt.subplots_adjust(top=0.88)
+                plt.show()
             # dump to subject-specific json file
             out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
             json.dump(subjectDict, out_file, indent=4)

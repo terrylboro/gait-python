@@ -21,12 +21,14 @@ def bland_altman_plot(data1, data2, *args, **kwargs):
     plt.axhline(md - 1.96*sd, color='gray', linestyle='--')
 
 
-# data = pd.read_csv('../Ear/Events/AdaptedDiao/Comparison/EarablesAdaptedDiaoComparison.csv')
-data = pd.read_csv('../Shank/Events/Gyro/Comparison/ShankGyroComparison.csv')
+data = pd.read_csv('../Ear/Events/AdaptedDiao/Comparison/EarAdaptedDiaoComparison.csv')
+# data = pd.read_csv('../Shank/Events/Gyro/Comparison/ShankGyroComparison.csv')
 print(data.head())
 for metric in ["Stride Time", "Stance Time", "Swing Time"]:
     bland_altman_plot(data["Left {} Shank".format(metric)].to_numpy(), data["Left {} GT".format(metric)].to_numpy())
-    plt.xlabel("Average of Earables and Optical Measurements")
-    plt.ylabel("Difference between Earables and Optical Measurements")
-    plt.title("{} Comparison of Earables and Optical Systems".format(metric))
-    plt.show()
+    plt.xlabel("Average of Ear IMU and Optical Measurements")
+    plt.ylabel("Difference between Ear IMU and Optical Measurements")
+    plt.title("{} Comparison of Ear IMU and Optical Systems".format(metric))
+    # plt.show()
+    plt.savefig(metric + " Comparison of Ear IMU and Optical Measurements.png", dpi=100)
+    plt.clf()

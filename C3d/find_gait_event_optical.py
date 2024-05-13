@@ -157,8 +157,8 @@ def FO_from_angles(data, ICs):
         tMax = argrelmax(dataFiltered[0:FOs[0]])[0]
         if tMax.size:
             FOs.append(int(tMax[0] - 2))
-        FOs = FOs.sort()
-    return FOs
+        FOs.sort()
+    return np.array(FOs)
 
 
 
@@ -275,7 +275,7 @@ def main():
                             "r").read()
         print(subject)
         if ","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
-        and int(subject.split("_")[1]) in [40, 41]:#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+        and int(subject.split("_")[1]) in [61]:#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
             # turf2floorTrialFiles = os.listdir(
@@ -284,22 +284,24 @@ def main():
             #     "../TiltCorrectedData/{}/Floor2Turf/Right/".format(str(subject).zfill(2)))
             walkTrialFiles = os.listdir(
                 "../TiltCorrectedData/{}/Walk/Right/".format(str(subject).zfill(2)))
-            # walkSlowTrialFiles = os.listdir(
-            #     "../TiltCorrectedData/{}/WalkSlow/Right/".format(str(subject).zfill(2)))
-            # walkShakeTrialFiles = os.listdir(
-            #     "../TiltCorrectedData/{}/WalkShake/Right/".format(str(subject).zfill(2)))
-            # walkNodTrialFiles = os.listdir(
-            #     "../TiltCorrectedData/{}/WalkNod/Right/".format(str(subject).zfill(2)))
+            walkSlowTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/WalkSlow/Right/".format(str(subject).zfill(2)))
+            walkShakeTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/WalkShake/Right/".format(str(subject).zfill(2)))
+            walkNodTrialFiles = os.listdir(
+                "../TiltCorrectedData/{}/WalkNod/Right/".format(str(subject).zfill(2)))
             # shoeBoxTrialFiles = os.listdir(
             #     "../TiltCorrectedData/{}/ShoeBox/Right/".format(str(subject).zfill(2)))
             # turf2floorTrialNums = find_trial_nums(turf2floorTrialFiles)
             # floor2turfTrialNums = find_trial_nums(floor2turfTrialFiles)
             walkTrialNums = find_trial_nums(walkTrialFiles)
-            # walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
-            # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
-            # walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
+            walkSlowTrialNums = find_trial_nums(walkSlowTrialFiles)
+            walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
+            walkNodTrialNums = find_trial_nums(walkNodTrialFiles)
             # shoeBoxTrialNums = find_trial_nums(shoeBoxTrialFiles)
-            validTrials = walkTrialNums
+            validTrials = walkTrialNums + walkSlowTrialNums + walkShakeTrialNums + walkNodTrialNums\
+                          # + shoeBoxTrialNums\
+                          # + turf2floorTrialNums + floor2turfTrialNums
             print(validTrials)
             # print(turf2floorTrialNums)
             # print(floor2turfTrialNums)
@@ -352,7 +354,7 @@ def main():
                         # plt.vlines(l_FOs, 0, 2, 'r', linestyles='dotted')
                         # plt.title(file)
                         # plt.show()
-                        send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs, r_FOs, trial, subjectDict)
+                        send_to_json(l_ICs.tolist(), r_ICs.tolist(), l_FOs.tolist(), r_FOs.tolist(), trial, subjectDict)
             out_file = open(subject + ".json", "w")
             json.dump(subjectDict, out_file, indent=4)
             # plt.show()

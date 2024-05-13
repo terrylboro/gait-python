@@ -111,8 +111,9 @@ def simple_process_shank_gyro(w_z):
                 DZs.append(zeroCrossings[ZCidx+1])
     # correct for missing DZ as first ZC
     if zeroCrossings[0] not in AZs and zeroCrossings[0] not in DZs:
-        # check if there are 2 local minima next door
-        if len(argrelmin(w_z[zeroCrossings[0]:zeroCrossings[0]+25])[0]) > 1:
+        # check if there are 2 local minima next door and it follows just a down
+        if len(argrelmin(w_z[zeroCrossings[0]:zeroCrossings[0]+25])[0]) > 1\
+                and all(w_z[0:zeroCrossings[0]] > 0):
             DZs.append(zeroCrossings[0])
         # if DZs[0] - zeroCrossings[0] > np.mean(np.concatenate([np.diff(DZs), np.diff(AZs)])):
         #     DZs.append(zeroCrossings[0])
@@ -123,7 +124,7 @@ def simple_process_shank_gyro(w_z):
     ICs, FOs = [], []
     for DZ in DZs:
         if DZ < len(w_z) - 11:
-            tMin = argrelmin(w_z[DZ:DZ+10])[0] #find_peaks(-w_z[ZC:ZC+10].flatten())[0] #argrelmin(w_z[ZC:ZC+10])[0]
+            tMin = argrelmin(w_z[DZ:DZ+15])[0] #find_peaks(-w_z[ZC:ZC+10].flatten())[0] #argrelmin(w_z[ZC:ZC+10])[0]
             if tMin.size:
                 ICs.append(int(DZ + tMin[0]))
         else:
@@ -162,7 +163,7 @@ def send_to_json(LHC, LFO, trial, subjectDict):
 
 def main():
     # import the data
-    for subjectNum in [x for x in range(0, 65) if x not in [20, 22]]:
+    for subjectNum in [x for x in range(10, 67) if x not in [20, 22]]:
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
         if "," + str(subjectNum).zfill(2) in goodSubjects:
@@ -188,14 +189,17 @@ def main():
                     # the sagittal plane angular velocity signal, w_z
                     # plt.plot(data)
                     # plt.title("Shank Forward Rotation from Gyroscope During Walking")
+                    # plt.title("{}-{}".format(subjectNum, trialNum))
                     # plt.xlabel("Time / Samples")
                     # plt.ylabel("Angular Velocity / rad/s")
                     # plt.show()
+                    ICs += first_real_val
+                    FOs += first_real_val
                     send_to_json(ICs, FOs, str(trialNum).zfill(4), subjectDict)
                 except:
                     raise "No non-zero data!"
-            out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
-            json.dump(subjectDict, out_file, indent=4)
+        out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
+        json.dump(subjectDict, out_file, indent=4)
 
 
 if __name__ == "__main__":

@@ -214,11 +214,11 @@ def find_trial_nums(dir):
 
 
 def main():
-    usingEarables = False
+    usingEarables = True
     usingShank = False
     # Try this in a loop
-    # for subjectNum in [x for x in range(0, 61) if x not in [20, 22]]:#, 40, 41, 46, 47, 48, 61]]:
-    for subjectNum in [x for x in range(56, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+    # for subjectNum in [x for x in range(0, 65) if x not in [20, 22]]:#, 40, 41, 46, 47, 48, 61]]:
+    for subjectNum in [x for x in range(41, 42) if x not in [46, 47, 48]]:
         if usingShank:
             colNames = ["Trial", "Left Stride Time", "Left Stance Time", "Left Swing Time", "Left Swing/Stance Ratio", "Step Asymmetry"]
         else:
