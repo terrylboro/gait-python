@@ -5,8 +5,9 @@ from calculate_tsps import find_trial_nums
 
 activity = "Walk"
 gtDir = "../../C3d/OwnGroundTruth/TSPsWalksAndTurf/" + activity + "/"
-imuDir = "../Ear/Events/AdaptedDiao/TSPs/"
+# imuDir = "../Ear/Events/AdaptedDiao/TSPs/"
 # imuDir = "../Shank/Events/Gyro/TSPs/"
+imuDir = "../Chest/Events/McCamley/TSPs/"
 
 
 # for subjectNum in [x for x in range(10, 65) if x not in [20, 22]]:

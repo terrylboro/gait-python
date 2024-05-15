@@ -6,7 +6,8 @@ overallDF = pd.DataFrame(columns=["Subject", "Trial", "Left Stride Time Shank", 
                                     "Left Swing Time Shank", "Left Swing Time GT", "Left Swing Time Diff"])
 
 # tspDir = "../Shank/Events/Gyro/Comparison/"
-tspDir = "../Ear/Events/AdaptedDiao/Comparison/"
+# tspDir = "../Ear/Events/AdaptedDiao/Comparison/"
+tspDir = "../Chest/Events/McCamley/Comparison/"
 for file in os.listdir(tspDir):
     if file.endswith(".csv"):
         subjectNum = file.split(".")[0]
@@ -17,4 +18,5 @@ for file in os.listdir(tspDir):
         overallDF = overallDF.append(data, ignore_index=True)
 
 # overallDF.to_csv(tspDir+"ShankGyroComparison.csv", index=False)
-overallDF.to_csv(tspDir+"EarAdaptedDiaoComparison.csv", index=False)
+# overallDF.to_csv(tspDir+"EarAdaptedDiaoComparison.csv", index=False)
+overallDF.to_csv(tspDir+"ChestMcCamleyComparison.csv", index=False)

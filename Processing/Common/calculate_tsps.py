@@ -40,6 +40,23 @@ def load_events_earables(subject, trial):
         except:
             print("No events for subject {} side {}".format(subject, side))
 
+def load_events_chest(subject, trial):
+    eventsDict = {}
+    filepath = "../Chest/Events/McCamley/RawEvents/TF_" + str(subject).zfill(2) + ".json"
+    # read json file
+    with open(filepath, 'r') as jsonfile:
+        data = json.load(jsonfile)
+    sides = ["chest"]
+    for side in sides:
+        try:
+            json_str = json.dumps(data[str(trial).zfill(4)][side])
+            pd_df = pd.read_json(json_str, orient='index')
+            eventsDict[side] = pd_df.T
+            return eventsDict
+        except:
+            print("No events for subject {} side {}".format(subject, side))
+
+
 def load_events_optical(subject, trial):
     eventsDict = {}
     filepath = "../../C3d/OwnGroundTruth/RawEventsWalksAndTurf/TF_" + str(subject).zfill(2) + ".json"
@@ -214,11 +231,12 @@ def find_trial_nums(dir):
 
 
 def main():
-    usingEarables = True
+    usingEarables = False
     usingShank = False
+    usingChest = True
     # Try this in a loop
     # for subjectNum in [x for x in range(0, 65) if x not in [20, 22]]:#, 40, 41, 46, 47, 48, 61]]:
-    for subjectNum in [x for x in range(41, 42) if x not in [46, 47, 48]]:
+    for subjectNum in [x for x in range(10, 56) if x not in [46, 47, 48]]:
         if usingShank:
             colNames = ["Trial", "Left Stride Time", "Left Stance Time", "Left Swing Time", "Left Swing/Stance Ratio", "Step Asymmetry"]
         else:
@@ -249,19 +267,20 @@ def main():
             # walkShakeTrialNums = find_trial_nums(walkShakeTrialFiles)
             print(walkTrialNums)
             print(subjectNum)
-            if usingEarables or usingShank:
+            if usingEarables or usingShank or usingChest:
                 subjectDir = "../../AlignedData/TF_{}".format(str(subjectNum).zfill(2))
                 for file in os.listdir(subjectDir):
                     trialNum = int(file.split(".")[0].split("-")[-1])
                     if trialNum in walkTrialNums:
-                        if usingEarables:
-                            eventsDict = load_events_earables(subjectNum, trialNum)
+                        if usingEarables or usingChest:
+                            eventsDict = load_events_earables(subjectNum, trialNum) if usingEarables\
+                                else load_events_chest(subjectNum, trialNum)
                             if eventsDict is not None:
-                                print(eventsDict["left"])
-                                LHC = eventsDict["left"]['LHC'].values
-                                RHC = eventsDict["left"]['RHC'].values
-                                LTO = eventsDict["left"]['LFO'].values
-                                RTO = eventsDict["left"]['RFO'].values
+                                # print(eventsDict["left"])
+                                LHC = eventsDict["chest"]['LHC'].values
+                                RHC = eventsDict["chest"]['RHC'].values
+                                LTO = eventsDict["chest"]['LFO'].values
+                                RTO = eventsDict["chest"]['RFO'].values
                                 trialTSPs = calculate_TSPs(RHC, LHC, RTO, LTO, trialNum)
                                 tspSummarydf = pd.concat([tspSummarydf, trialTSPs], axis=0)
                         else:
