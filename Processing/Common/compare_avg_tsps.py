@@ -11,7 +11,7 @@ imuDir = "../Chest/Events/McCamley/TSPs/"
 
 
 # for subjectNum in [x for x in range(10, 65) if x not in [20, 22]]:
-for subjectNum in [x for x in range(10, 56) if x not in [46, 47, 48]]:
+for subjectNum in [x for x in range(10, 56) if x not in [20, 22, 46, 47, 48]]:
     goodSubjects = open("../../Utils/goodTrials",
                         "r").read()
     if "," + str(subjectNum).zfill(2) in goodSubjects:

@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+from Processing.Common.sanity_check import sanity_check
 
 
 def lp_filter_chest(data, freq):
@@ -40,6 +41,17 @@ def remove_outliers(events_l):
     events_l = np.delete(events_l, blacklist, None)
     return events_l
 
+def stance_time_check(HC, TO):
+    # Lineup HC and TO by iteratively shifting to left
+    offset = 0
+    for i in range(0, len(TO)):
+        if TO[i] > HC[0]:
+            offset = i
+            break
+    realigned_TO = TO[offset:]
+    return np.subtract(realigned_TO[:len(HC)], HC[:len(realigned_TO)])
+
+
 def determine_sides(HC, TO, side, gyroData):
     LHC = []
     RHC = []
@@ -47,18 +59,29 @@ def determine_sides(HC, TO, side, gyroData):
     RTO = []
     left_first = False
     plt.plot(gyroData, 'r')
-    gyroData = bp_filter_chest(gyroData, [0.5, 5])
+    gyroData = bp_filter_chest(gyroData, [0.5, 25])
     # plt.figure()
     plt.plot(gyroData)
+    # attempt sides method using just positions of TO
+    # for TO_event in TO:
+    #     diffR = np.absolute(HC - TO_event).argmin()
+    #     if diffR
     # plt.show()
     # right or left depends on polarity of gyro
-    for i in range(0, len(gyroData[HC])):
-        if gyroData[HC][i] < 0:
-            LHC.append(HC[i])
-            if i == 0:
-                left_first = True
-        else:
-            RHC.append(HC[i])
+    # for i in range(0, len(gyroData[HC])):
+    #     if gyroData[HC][i] < 0:
+    #         LHC.append(HC[i])
+    #         if i == 0:
+    #             left_first = True
+    #     else:
+    #         RHC.append(HC[i])
+    if gyroData[HC][0] < 0:
+        LHC.extend(HC[0::2])
+        RHC.extend(HC[1::2])
+        left_first = True
+    else:
+        LHC.extend(HC[1::2])
+        RHC.extend(HC[2::2])
     # Determine RTO/LTO from RHC/LHC
     if left_first:
         if TO[0] < LHC[0]:
@@ -74,11 +97,12 @@ def determine_sides(HC, TO, side, gyroData):
         else:
             LTO.extend(TO[0::2])
             RTO.extend(TO[1::2])
-    # if side == "right":
-    #     # Swap R and L to allow for the different sensor co-ordinates systems
-    #     return RHC, LHC, RTO, LTO
-    # else:
-    return LHC, RHC, LTO, RTO
+    print(np.mean(stance_time_check(LHC, LTO)))
+    if np.mean(stance_time_check(LHC, LTO) < 50):
+        print("Stance time too small - flipping LHC and RHC")
+        return RHC, LHC, LTO, RTO
+    else:
+        return LHC, RHC, LTO, RTO
 
 
 def apply_mccamley(y_accel, sample_rate, ic_prom, fc_prom):
@@ -130,35 +154,52 @@ def apply_mccamley(y_accel, sample_rate, ic_prom, fc_prom):
     fc_peaks = remove_outliers(fc_peaks)
     plt.plot(ic_peaks, re_differentiated_data[ic_peaks], 'bx')
     plt.plot(fc_peaks, re_re_differentiated_data[fc_peaks], 'yx')
-    plt.show()
+    # plt.show()
     return ic_peaks, fc_peaks
 
 
 def main():
     # import the data
-    for subjectNum in [x for x in range(22, 23) if x not in [46, 47, 48]]:
+    for subjectNum in [x for x in range(31, 32) if x not in [20, 22, 46, 47, 48]]:
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
         if "," + str(subjectNum) + "," in goodSubjects:
-            subjectDir = "../../AlignedData/TF_{}".format(str(subjectNum).zfill(2))
+            subjectDir = "../../AlignedZeroedData/TF_{}".format(str(subjectNum).zfill(2))
             subjectDict = {}
             for file in os.listdir(subjectDir):
+                print(file)
                 # load ear data
                 trialNum = int(file.split(".")[0].split("-")[-1])
                 subjectDict[str(trialNum).zfill(4)] = {"left": {}, "right": {}, "chest": {}}
                 print("{}: {}".format(subjectNum, trialNum))
-                # if trialNum == 8:
                 for side in ["chest"]:
-                    data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZ" + side, "GyroX" + side])
+                    data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZ" + side, "GyroZ" + side])
+                    firstNonZeroIdx = data.ne(0).idxmax()[0]
+                    data = data.iloc[firstNonZeroIdx:, :]
                     plt.plot(data["AccZ" + side], 'y')
                     # plt.title("{}-{}".format(side, trialNum))
                     # plt.show()
                     ICs, FOs = apply_mccamley(data["AccZ"+side].values, 100, 5, 10)
+                    eventsDF = sanity_check(ICs, FOs)
+                    print(eventsDF)
                     # ICs = remove_outliers(ICs)
                     # FOs = remove_outliers(FOs)
-                    LICs_l, RICs_l, LTCs_l, RTCs_l = determine_sides(ICs, FOs, side, data["GyroX"+side].values)
+                    LICs_l, RICs_l, LTCs_l, RTCs_l = determine_sides(ICs, FOs, side, data["GyroZ"+side].values)
                     print("LICs:\n", LICs_l)
                     print("RICs:\n", RICs_l)
+                    plt.vlines(LICs_l, -3, 3, 'r')
+                    plt.vlines(RICs_l, -3, 3, 'g')
+                    plt.vlines(LTCs_l, -3, 3, 'r', linestyle='--')
+                    plt.vlines(RTCs_l, -3, 3, 'g', linestyle='--')
+                    # add the non-zero offset back on
+                    LICs_l += firstNonZeroIdx
+                    RICs_l += firstNonZeroIdx
+                    LTCs_l += firstNonZeroIdx
+                    RTCs_l += firstNonZeroIdx
+                    # plt.vlines(LICs_l, -3, 3, 'r')
+                    # plt.vlines(RICs_l, -3, 3, 'g')
+                    plt.title("{}-{}".format(subjectNum, trialNum))
+                    plt.show()
                     send_to_json(LICs_l, RICs_l, LTCs_l, RTCs_l, str(trialNum).zfill(4), side, subjectDict)
             # # dump to subject-specific json file
             # out_file = open("../Chest/Events/McCamley/RawEvents/TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
