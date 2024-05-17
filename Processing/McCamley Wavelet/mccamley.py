@@ -58,10 +58,10 @@ def determine_sides(HC, TO, side, gyroData):
     LTO = []
     RTO = []
     left_first = False
-    plt.plot(gyroData, 'r')
+    # plt.plot(gyroData, 'r')
     gyroData = bp_filter_chest(gyroData, [0.5, 25])
     # plt.figure()
-    plt.plot(gyroData)
+    # plt.plot(gyroData)
     # attempt sides method using just positions of TO
     # for TO_event in TO:
     #     diffR = np.absolute(HC - TO_event).argmin()
@@ -139,68 +139,75 @@ def apply_mccamley(y_accel, sample_rate, ic_prom, fc_prom):
     # Gaussian continuous wavelet transform
     cwt_2, freqs = pywt.cwt(-differentiated_data, scale_cwt2, 'gaus1')
     re_differentiated_data = cwt_2[0]
-    plt.plot(re_differentiated_data, color="g")
+    # plt.plot(re_differentiated_data, color="g")
     ic_peaks = signal.argrelmax(re_differentiated_data)[0]
     ic_peaks = ic_peaks[re_differentiated_data[ic_peaks] > 0]
 
     cwt_3, freqs = pywt.cwt(-re_differentiated_data, scale_cwt2, 'gaus1')
     re_re_differentiated_data = cwt_3[0]
-    plt.plot(re_re_differentiated_data, color="k")
+    # plt.plot(re_re_differentiated_data, color="k")
 
     # final contact (toe off) peak detection
     # fc_peaks = signal.find_peaks(pd.Series(re_differentiated_data), fc_prom)
     fc_peaks = signal.argrelmin(re_re_differentiated_data)[0]
     ic_peaks = remove_outliers(ic_peaks)
     fc_peaks = remove_outliers(fc_peaks)
-    plt.plot(ic_peaks, re_differentiated_data[ic_peaks], 'bx')
-    plt.plot(fc_peaks, re_re_differentiated_data[fc_peaks], 'yx')
+    # plt.plot(ic_peaks, re_differentiated_data[ic_peaks], 'bx')
+    # plt.plot(fc_peaks, re_re_differentiated_data[fc_peaks], 'yx')
     # plt.show()
     return ic_peaks, fc_peaks
 
 
 def main():
     # import the data
-    for subjectNum in [x for x in range(31, 32) if x not in [20, 22, 46, 47, 48]]:
+    for subjectNum in [x for x in range(30, 56) if x not in [13, 20, 22, 46, 47, 48]]:
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
         if "," + str(subjectNum) + "," in goodSubjects:
             subjectDir = "../../AlignedZeroedData/TF_{}".format(str(subjectNum).zfill(2))
             subjectDict = {}
-            for file in os.listdir(subjectDir):
+            for file in os.listdir(subjectDir)[2:3]:
                 print(file)
                 # load ear data
                 trialNum = int(file.split(".")[0].split("-")[-1])
                 subjectDict[str(trialNum).zfill(4)] = {"left": {}, "right": {}, "chest": {}}
                 print("{}: {}".format(subjectNum, trialNum))
                 for side in ["chest"]:
-                    data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZ" + side, "GyroZ" + side])
+                    data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZ" + side, "GyroX" + side])
                     firstNonZeroIdx = data.ne(0).idxmax()[0]
                     data = data.iloc[firstNonZeroIdx:, :]
-                    plt.plot(data["AccZ" + side], 'y')
+                    # plt.plot(data["AccY" + side], 'y')
+                    plt.plot(data["AccZ" + side], 'r')
+                    plt.hlines(np.mean(data["GyroX" + side]), 0, len(data))
+                    plt.plot(range(firstNonZeroIdx, len(data)+firstNonZeroIdx), bp_filter_chest(data["GyroX" + side], [0.5, 15]), 'b')
                     # plt.title("{}-{}".format(side, trialNum))
                     # plt.show()
+                    # # plt.title("{}-{}".format(side, trialNum))
+                    # # plt.show()
                     ICs, FOs = apply_mccamley(data["AccZ"+side].values, 100, 5, 10)
                     eventsDF = sanity_check(ICs, FOs)
                     print(eventsDF)
                     # ICs = remove_outliers(ICs)
                     # FOs = remove_outliers(FOs)
-                    LICs_l, RICs_l, LTCs_l, RTCs_l = determine_sides(ICs, FOs, side, data["GyroZ"+side].values)
+                    LICs_l, RICs_l, LTCs_l, RTCs_l = determine_sides(ICs, FOs, side, data["GyroX"+side].values)
                     print("LICs:\n", LICs_l)
                     print("RICs:\n", RICs_l)
-                    plt.vlines(LICs_l, -3, 3, 'r')
-                    plt.vlines(RICs_l, -3, 3, 'g')
-                    plt.vlines(LTCs_l, -3, 3, 'r', linestyle='--')
-                    plt.vlines(RTCs_l, -3, 3, 'g', linestyle='--')
+                    # plt.vlines(LICs_l, -3, 3, 'r')
+                    # plt.vlines(RICs_l, -3, 3, 'g')
+                    # plt.vlines(LTCs_l, -3, 3, 'r', linestyle='--')
+                    # plt.vlines(RTCs_l, -3, 3, 'g', linestyle='--')
                     # add the non-zero offset back on
                     LICs_l += firstNonZeroIdx
                     RICs_l += firstNonZeroIdx
                     LTCs_l += firstNonZeroIdx
                     RTCs_l += firstNonZeroIdx
-                    # plt.vlines(LICs_l, -3, 3, 'r')
-                    # plt.vlines(RICs_l, -3, 3, 'g')
+                    plt.vlines(LICs_l, -3, 3, 'r')
+                    plt.vlines(RICs_l, -3, 3, 'g')
+                    plt.vlines(LTCs_l, -3, 3, 'r', linestyle='dashed')
+                    plt.vlines(RTCs_l, -3, 3, 'g', linestyle='dashed')
                     plt.title("{}-{}".format(subjectNum, trialNum))
                     plt.show()
-                    send_to_json(LICs_l, RICs_l, LTCs_l, RTCs_l, str(trialNum).zfill(4), side, subjectDict)
+                    # send_to_json(LICs_l, RICs_l, LTCs_l, RTCs_l, str(trialNum).zfill(4), side, subjectDict)
             # # dump to subject-specific json file
             # out_file = open("../Chest/Events/McCamley/RawEvents/TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
             # json.dump(subjectDict, out_file, indent=4)
