@@ -3,11 +3,19 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from scipy.signal import butter, filtfilt, welch, argrelextrema, windows
+import json
 
 
 def bwfilt(data, btype, freq):
-    b, a = butter(2, freq, btype=btype, fs=100, output='ba')
+    b, a = butter(4, freq, btype=btype, fs=100, output='ba')
     return filtfilt(b, a, data, axis=0)
+
+
+def send_to_json(LHC, LFO, trial, subjectDict):
+    subjectDict[trial] = {
+        "LHC": list(map(int, LHC)),
+        "LFO": list(map(int, LFO))
+    }
 
 
 def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, nMinimumStrides):
@@ -21,6 +29,7 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
     strideStart, swingStart = [], []
     # get the signal frequency characteristics
     a10 = bwfilt(data, "high", 10)
+    data = bwfilt(data, "low", 15)
     plt.plot(data - np.mean(data))
     plt.show()
     freq, fPow = welch(data - np.mean(data), fs=100, window=windows.boxcar(200), nfft=4096)#, window=np.ones(200), nfft=4096)
@@ -30,7 +39,7 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
     # find extrema of the power spectrum
     iPow = argrelextrema(fPow, np.greater)
     # remove start/end values which are extrema by default
-    fPow[iPow == 1] = 0
+    fPow[iPow == 0] = 0
     fPow[iPow == len(fPow)] = 0
     freq = freq[iPow]
     fPow = fPow[iPow]
@@ -43,7 +52,7 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
     plt.show()
     fPow[freq >= stpf] = 0
     freq[freq >= stpf] = 0
-    iMax = np.argmax(fPow)
+    iMax = np.argmax(fPow[freq > (1/(maxStrideTime/100))])
     strf = freq[iMax]
     print("strf: ", strf)
     # check that both strf and stpf are available, if not delete this bout
@@ -54,6 +63,12 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
         astp = bwfilt(data, 'low', stpf)
         astr = bwfilt(data, 'low', strf)
         astrx = bwfilt(data, 'low', 5 * stpf / 2)
+        plt.plot(data)
+        plt.plot(astp)
+        plt.plot(astr)
+        plt.plot(astrx)
+        # plt.plot(iMinStr, astr[iMinStr], '^')
+        plt.show()
         # get minima/maxima of stride/step filtered signals
         iMaxStr = argrelextrema(astr, np.greater)[0]
         iMinStr = argrelextrema(astr, np.less)[0]
@@ -73,7 +88,6 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
         i = 0
         while i <= len(iMinStr) - 2:
             intLength = iMinStr[i+1] - iMinStr[i]
-            print("intLength: ", intLength)
             if intLength < np.floor(minStrideTime):
                 var1 = np.var(a10[iMinStr[i]:iMinStr[i]+intLength])
                 if iMinStr[i+1] + intLength > len(data):
@@ -104,12 +118,6 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
             else:
                 i += 1
 
-        # do some plotting to check
-        plt.plot(data)
-        plt.plot(astp)
-        plt.plot(astr)
-        plt.plot(astrx)
-        plt.plot(iMinStr, data[iMinStr], '^')
         # need at least 2 more minima than nMinimumStrides
         if len(iMinStr) < nMinimumStrides + 2:
             deleteBout = 1
@@ -118,36 +126,48 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
             # last step peak between stride minima = swing start
             # following valley for each stride peak ~ FC
             # next 1g crossing in astrx is best est of FC
-            print("\n\n GAIT PHASE DETECTION \n\n")
-            print("iMinStr: ", iMinStr)
             swingStart = np.zeros(len(iMinStr))
             strideStart = np.zeros(len(iMinStr))
             i = 0
             while i < len(iMinStr) - 1:
-                print(i)
                 deleteStride = False
                 # get astp peaks between current and next astr minima
-                print("iMinStr[i]", iMinStr[i])
-                print("iMaxStp", iMaxStp)
-                print("iMinStr[i+1]", iMinStr[i+1])
+                print("iMinStr: ", iMinStr)
                 swingStart0 = iMaxStp[np.logical_and(iMaxStp > iMinStr[i], iMaxStp < iMinStr[i+1])]
                 print("swingStart0: ", swingStart0)
+                # do some plotting to check
+                if i == 0:
+                    plt.plot(data)
+                    # plt.plot(astp)
+                    # plt.plot(astr)
+                    # plt.plot(astrx)
+                    # plt.plot(iMinStr, astr[iMinStr], '^')
+                    # plt.show()
                 if not len(swingStart0):
                     deleteStride = True
                 else:
                     # if 1 peak then this is our estimate
                     # if 2 peaks then take the latest
                     if len(swingStart0) == 2:
+                        firstMax = min(swingStart0)
                         swingStart0 = max(swingStart0)
                     elif len(swingStart0) > 2:
+                        firstMax = min(swingStart0)
                         swingStart00 = np.argmax(astp[swingStart0])
                         swingStart0 = swingStart0[swingStart00]
                     # get swing start
                     swingStart[i] = swingStart0
-                    print(swingStart[i])
+                    # first the first instance, get first valley
+                    if i == 0:
+                        crossG = iCrossG[iCrossG < firstMax]
+                        if not len(crossG):
+                            deleteStride = True
+                        else:
+                            crossG = crossG[-1]
+                            strideStart[i] = crossG
+
                     # get next valley
                     strideStart0 = iMinStp[swingStart0 < iMinStp]
-                    print(strideStart0)
                     if not len(strideStart0):
                         deleteStride = True
                     # require valley to be less than 1g
@@ -156,8 +176,7 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
                     else:
                         # get next instant where astrx crossed 1g
                         crossG = iCrossG[iCrossG > strideStart0[0]]
-                        print("crossG: ", crossG)
-                        plt.plot(crossG, data[crossG], 'x')
+                        # plt.plot(crossG, data[crossG], 'x')
                         if not len(crossG):
                             deleteStride = True
                         else:
@@ -168,8 +187,7 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
                             else:
                                 # interpolate between current crossg
                                 # (immediately after) and previous to estimate
-                                strideStart[i] = crossG
-                                print(strideStart)
+                                strideStart[i+1] = crossG
                 if deleteStride:
                     swingStart = np.delete(swingStart, i)
                     strideStart = np.delete(strideStart, i)
@@ -179,41 +197,42 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
         if not len(strideStart):
             deleteBout = True
         if not deleteBout:
-            # stride ends are stride starts without first
-            print("strideStart: ", strideStart)
-            plt.plot(strideStart, data[[int(x) for x in strideStart]], 'o')
-            plt.show()
+            # # do some plotting to check
+            # plt.plot(data)
+            # plt.plot(astp)
+            # plt.plot(astr)
+            # plt.plot(astrx)
+            # plt.plot(iMinStr, data[iMinStr], '^')
+            # # stride ends are stride starts without first
+            # plt.plot(strideStart, data[[int(x) for x in strideStart]], 'o')
+            # plt.plot(swingStart, data[[int(x) for x in swingStart]], '*')
+            # plt.legend(["data", "astp", "astr", "astrx", "iMinStr", "strideStart", "strideEnd"])
+            # plt.show()
             strideEnd = strideStart
             strideStart = np.delete(strideStart, len(strideStart)-1)#strideStart[len(strideStart)] = 0
             strideEnd = np.delete(strideEnd, 0)
             # FC before first swing start not identified, delete
-            swingStart = np.delete(swingStart, 0)
+            swingStart = np.delete(swingStart, len(swingStart)-1)
             # get stride endpoints and check times
             nStrides = len(strideStart)
-            print(nStrides)
             eventsStrideStart = np.zeros(nStrides)
             eventsStrideEnd = np.zeros(nStrides)
             eventsSwingStart = np.zeros(nStrides)
             eventsStrideTime = np.zeros(nStrides)
             eventsDutyFactor = np.zeros(nStrides)
             i = 0
-            while i <= nStrides:
+            while i < nStrides:
                 deleteStride = False
                 # get stride time
-                print("strideEnd: ", strideEnd)
-                print("strideStart: ", strideStart)
                 strideTime0 = strideEnd[i] - strideStart[i]
-                print("strideTime0: ", strideTime0)
                 # duty factor
                 dutyFactor0 = (swingStart[i] - strideStart[i]) / strideTime0
-                print("dutyFactor0: ", dutyFactor0)
                 # verify stride time / duty factor within constraints
                 if strideTime0 > maxStrideTime or strideTime0 < minStrideTime:
                     deleteStride = True
                 elif dutyFactor0 > maxDutyFactor or dutyFactor0 < minDutyFactor:
                     deleteStride = True
                 if deleteStride:
-                    print("DELETING STRIDE")
                     # delete the stride
                     strideEnd = np.delete(strideEnd, i, None)
                     strideStart = np.delete(strideStart, i, None)
@@ -237,21 +256,29 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
 
 
 if __name__ == "__main__":
-    for subjectNum in [x for x in range(25, 26) if x not in [13, 20, 22, 46, 47, 48]]:
+    for subjectNum in [x for x in range(45, 55) if x not in [13, 20, 22, 46, 47, 48]]:
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
         if "," + str(subjectNum) + "," in goodSubjects:
             subjectDir = "../../AlignedZeroedData/TF_{}".format(str(subjectNum).zfill(2))
             subjectDict = {}
-            for file in os.listdir(subjectDir)[3:4]:
+            for file in os.listdir(subjectDir)[2:3]:
                 print(file)
                 # load data
                 trialNum = int(file.split(".")[0].split("-")[-1])
                 subjectDict[str(trialNum).zfill(4)] = {"left": {}, "right": {}, "chest": {}}
                 print("{}: {}".format(subjectNum, trialNum))
-                data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZpocket"])
+                data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZpocket", "AccZlear"])
                 firstNonZeroIdx = data.ne(0).idxmax()[0]
-                data = data.iloc[firstNonZeroIdx:, :].to_numpy().flatten()
-                _, IC, TO, strideTime, dutyFactor = gurchiek(data, 70, 225, 0.2, 0.4, 1)
-                print(IC)
+                # data = data.iloc[firstNonZeroIdx:, :].to_numpy().flatten()
+                plt.plot(data["AccZpocket"], label="Pocket")
+                plt.plot(data["AccZlear"], label="Ear")
+                plt.title("{}: {}".format(subjectNum, trialNum))
+                plt.show()
+            #     _, ICs, TOs, strideTime, dutyFactor = gurchiek(data, 70, 225, 0.44, 0.73, 1)
+            #     print(ICs)
+            #     print(TOs)
+            #     send_to_json(ICs, TOs, str(trialNum).zfill(4), subjectDict)
+            # out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
+            # json.dump(subjectDict, out_file, indent=4)
 
