@@ -31,7 +31,6 @@ def process_wrist(data, filter_freq=1.5):
 
 
 def process_wrist_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], saveFig=False):
-    # all the subfolders in the "/WristShankData/" folder in a list
     for subject_num in range(subjectStart, subjectEnd):
         subject = "TF_" + str(subject_num).zfill(2)
         for activity in activityTypes:
@@ -66,9 +65,48 @@ def process_wrist_multiple(subjectStart, subjectEnd, activityTypes=["Walk"], sav
                 #     else:
                 #         plt.show()
 
+# all the subfolders in the "/WristShankData/" folder in a list
+def wrist_from_aligned_data(subjectStart, subjectEnd, activityTypes=["Walk"]):
+    for subjectNum in [x for x in range(subjectStart, subjectEnd) if x not in [20, 22, 46, 47, 48]]:
+        goodSubjects = open("../../Utils/goodTrials",
+                            "r").read()
+        if "," + str(subjectNum).zfill(2) in goodSubjects:
+            subjectDir = "../../AlignedData/TF_{}/".format(str(subjectNum).zfill(2))
+            subjectDict = {}
+            print(subjectNum)
+            for file in os.listdir(subjectDir)[2:3]:
+                # load ear data
+                trialNum = int(file.split(".")[0].split("-")[-1])
+                dataAcc = pd.read_csv(subjectDir+file, usecols=["AccXWrist", "AccYWrist", "AccZWrist"])
+                dataGyro = pd.read_csv(subjectDir+file, usecols=["GyroXWrist", "GyroYWrist", "GyroZWrist"])
+                dataLear = pd.read_csv(subjectDir+file, usecols=["AccZlear"])
+                # get rid of leading zeros
+                try:
+                    # Acc
+                    # plt.plot(dataAcc)
+                    # plt.title("{}-{} Acc".format(subjectNum, trialNum))
+                    # plt.xlabel("Time / samples")
+                    # plt.ylabel("Acceleration / m/s^2")
+                    # plt.show()
+                    # Gyro
+                    plt.plot(filter_wrist(dataGyro["GyroZWrist"].to_numpy(), 36))
+                    plt.plot(dataLear - dataLear.mean())
+                    accZeroWrist = -dataAcc["AccYWrist"].to_numpy()#calculate_acc_zero(dataAcc.to_numpy())
+                    plt.plot(accZeroWrist - np.mean(accZeroWrist))
+                    accZeroWrist = filter_wrist(accZeroWrist, 16)
+                    plt.plot(accZeroWrist - np.mean(accZeroWrist))
+                    plt.title("{}-{} Gyro".format(subjectNum, trialNum))
+                    plt.xlabel("Time / samples")
+                    plt.ylabel("Acceleration / m/s^2")
+                    plt.legend(["Wrist", "Ear", "WristAcc"])
+                    plt.show()
+                except:
+                    print("Unable to plot data for {}-{}".format(subjectNum, trialNum))
+
 
 def main():
-    process_wrist_multiple(9, 12)
+    # process_wrist_multiple(9, 12)
+    wrist_from_aligned_data(22, 31)
 
 
 if __name__ == "__main__":
