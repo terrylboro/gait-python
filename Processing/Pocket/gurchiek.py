@@ -18,6 +18,13 @@ def send_to_json(LHC, LFO, trial, subjectDict):
     }
 
 
+def calculate_acc_zero(data):
+    acc_zero_data = np.zeros((len(data), 1))
+    for row in range(0, len(data)):
+        acc_zero_data[row] = np.sqrt(np.sum(np.square(data[row, :])))
+    return acc_zero_data.squeeze()
+
+
 def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, nMinimumStrides):
     """
     Adapted from Matlab code by Reed Gurchiek, 2020
@@ -253,10 +260,8 @@ def gurchiek(data, minStrideTime, maxStrideTime, minDutyFactor, maxDutyFactor, n
     return deleteBout, eventsStrideStart, eventsSwingStart, eventsStrideTime, eventsDutyFactor
 
 
-
-
 if __name__ == "__main__":
-    for subjectNum in [x for x in range(45, 55) if x not in [13, 20, 22, 46, 47, 48]]:
+    for subjectNum in [x for x in range(30, 36) if x not in [13, 20, 22, 26, 46, 47, 48]]:
         goodSubjects = open("../../Utils/goodTrials",
                             "r").read()
         if "," + str(subjectNum) + "," in goodSubjects:
@@ -268,17 +273,34 @@ if __name__ == "__main__":
                 trialNum = int(file.split(".")[0].split("-")[-1])
                 subjectDict[str(trialNum).zfill(4)] = {"left": {}, "right": {}, "chest": {}}
                 print("{}: {}".format(subjectNum, trialNum))
-                data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZpocket", "AccZlear"])
+                data = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccZpocket"])#, "AccZlear"])
                 firstNonZeroIdx = data.ne(0).idxmax()[0]
-                # data = data.iloc[firstNonZeroIdx:, :].to_numpy().flatten()
-                plt.plot(data["AccZpocket"], label="Pocket")
-                plt.plot(data["AccZlear"], label="Ear")
+                print(data.ne(0).idxmax()[-1])
+                # lastNonZeroIdx = data.ne(0)
+                if np.mean(data["AccZpocket"].to_numpy().flatten()) < 0:
+                    data["AccZpocket"] = -data["AccZpocket"]
+                data = data.iloc[firstNonZeroIdx:, :].to_numpy().flatten()
+                plt.plot(data, label="Pocket")
+                # plt.plot(data["AccZlear"], label="Ear")
+
+                #######
+                # dataPocket = pd.read_csv(os.path.join(subjectDir, file),
+                #                          usecols=["AccXpocket", "AccYpocket", "AccZpocket"])
+                # dataLear = pd.read_csv(os.path.join(subjectDir, file), usecols=["AccXlear", "AccYlear", "AccZlear"])
+                # firstNonZeroIdx = dataPocket.ne(0).idxmax()[0]
+                # dataPocket = dataPocket.iloc[firstNonZeroIdx:, :].to_numpy()#.flatten()
+                # dataPocket = calculate_acc_zero(dataPocket)
+                # plt.plot(dataPocket, label="Pocket")
+                # plt.plot(dataLear, label="Ear")
+                # dataLear = calculate_acc_zero(dataLear.to_numpy().squeeze())
+                #####
+
                 plt.title("{}: {}".format(subjectNum, trialNum))
                 plt.show()
-            #     _, ICs, TOs, strideTime, dutyFactor = gurchiek(data, 70, 225, 0.44, 0.73, 1)
-            #     print(ICs)
-            #     print(TOs)
-            #     send_to_json(ICs, TOs, str(trialNum).zfill(4), subjectDict)
-            # out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
-            # json.dump(subjectDict, out_file, indent=4)
+                _, ICs, TOs, strideTime, dutyFactor = gurchiek(data, 70, 225, 0.44, 0.73, 1)
+                print(ICs)
+                print(TOs)
+                send_to_json(ICs, TOs, str(trialNum).zfill(4), subjectDict)
+            out_file = open("TF_{}".format(str(subjectNum).zfill(2)) + ".json", "w")
+            json.dump(subjectDict, out_file, indent=4)
 
