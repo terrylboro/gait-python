@@ -53,11 +53,20 @@ def get_heel_trajectory(filepath):
     mkr_LANK = c3d.get_marker_index(itf, "LANK")
     mkr_LTOE = c3d.get_marker_index(itf, "LTOE")
 
-    fp_1 = np.zeros((end_fr * 20), dtype=np.float32)
-    fp_2 = np.zeros((end_fr * 20), dtype=np.float32)
+    try:
+        fp_1 = np.zeros((end_fr * 20), dtype=np.float32)
+        fp_2 = np.zeros((end_fr * 20), dtype=np.float32)
 
-    fp_1[(start_fr-1) * 20:] = np.asarray(itf.GetAnalogDataEx(2, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
-    fp_2[(start_fr-1) * 20:] = np.asarray(itf.GetAnalogDataEx(8, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+        fp_1[(start_fr-1) * 20:] = np.asarray(itf.GetAnalogDataEx(2, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+        fp_2[(start_fr-1) * 20:] = np.asarray(itf.GetAnalogDataEx(8, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+    except ValueError:
+        fp_1 = np.zeros((end_fr * 10), dtype=np.float32)
+        fp_2 = np.zeros((end_fr * 10), dtype=np.float32)
+
+        fp_1[(start_fr - 1) * 10:] = np.asarray(itf.GetAnalogDataEx(2, start_fr, end_fr, '1', 0, 0, '0'),
+                                                dtype=np.float32)
+        fp_2[(start_fr - 1) * 10:] = np.asarray(itf.GetAnalogDataEx(8, start_fr, end_fr, '1', 0, 0, '0'),
+                                                dtype=np.float32)
     heel_data_l = np.zeros((end_fr, 3), dtype=np.float32)
     heel_data_r = np.zeros((end_fr, 3), dtype=np.float32)
     tib_data_l = np.zeros((end_fr, 3), dtype=np.float32)
@@ -271,11 +280,13 @@ def main():
     subjectPath = "C:/Users/teri-/Documents/GaitC3Ds/"
     for subject in os.listdir(subjectPath): #[1:]:
     # for subject in ["TF_52", "TF_53", "TF_54"]:
-        goodSubjects = open("../Utils/goodTrials",
-                            "r").read()
+    #     goodSubjects = open("../Utils/goodTrials",
+    #                         "r").read()
         print(subject)
-        if ","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
-        and int(subject.split("_")[1]) in [61]:#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+        # if (","+str(subject.split("_")[1]).zfill(2) in goodSubjects\
+        # and
+        print(int(subject.split("_")[1]))
+        if int(subject.split("_")[1]) in [61] :#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             subjectDict = {}
             # turf2floorTrialFiles = os.listdir(
@@ -311,7 +322,6 @@ def main():
                     trial = file.split('_')[-1].split(".")[0]
                     print(trial)
                     if int(trial) in validTrials:
-                        # if int(trial) in turf2floorTrialNums:
                         heel_data_l, heel_data_r, fp_1, fp_2, offset, ank_angle_l, ank_angle_r = get_heel_trajectory(filepath + file)
                         # plot
                         # plt.plot(-heel_data_l[offset:, 2])
