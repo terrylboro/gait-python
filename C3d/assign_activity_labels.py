@@ -24,5 +24,15 @@ for subjectNum in [x for x in range(1, 68) if x not in [46, 47, 48]]:
                 # print(len(cyclesDF[np.logical_and(cyclesDF["TrialNum"].isin(trialList), cyclesDF["Subject"] == subjectNum)]))
                 activityIdxList = cyclesDF[np.logical_and(cyclesDF["TrialNum"].isin(trialList), cyclesDF["Subject"] == subjectNum)].index.tolist()
                 cyclesDF.loc[activityIdxList, "Activity"] = column
-    print(cyclesDF)
-    cyclesDF.to_csv('fullCyclesOptical.csv', index=False)
+                # if subjectNum in [30, 31, 36, 42, 43, 44, 45, 55, 56, 66, 67]:
+                #     cyclesDF.loc[:, "NonTypical"] = 1
+                # else:
+                #     cyclesDF.loc[:, "NonTypical"] = 0
+# print(cyclesDF)
+cyclesDF["Condition"] = "Typical"
+# print(cyclesDF[cyclesDF["Subject"].isin([30, 31, 36, 42, 43, 44, 45, 55, 56, 66, 67])])
+cyclesDF.loc[cyclesDF[cyclesDF["Subject"].isin([30, 31, 36, 42, 43, 44, 45, 55, 56])].index, "Condition"] = "Parkinsons"
+cyclesDF.loc[cyclesDF[cyclesDF["Subject"] == 66].index, "Condition"] = "Comorbities"
+cyclesDF.loc[cyclesDF[cyclesDF["Subject"] == 67].index, "Condition"] = "Balance"
+cyclesDF.drop_duplicates(inplace=True)
+cyclesDF.to_csv('fullCyclesOptical.csv', index=False)
