@@ -6,10 +6,10 @@ import json
 import seaborn as sns
 
 # load the df
-activityName = "Walk"
+activityName = "WalkShake"
 metric = "StanceTime"
 data = pd.read_csv('fullCyclesOptical.csv')
-data = data[data.Activity == activityName]
+# data = data[data.Activity == activityName]
 # print(data.head())
 
 # set our limits
@@ -22,6 +22,7 @@ maxStrideDutyCycle = 0.73
 data["StrideTime"] = data["IC3"] - data["IC1"]
 data["StanceTime"] = data["FO2"] - data["IC1"]
 data["SwingTime"] = data["IC3"] - data["FO2"]
+data.to_csv('fullCyclesOptical.csv', index=False)
 print("Swing Time Violations\n************\n")
 print(data[data["StrideTime"] < 0])
 print(data[data["StrideTime"] > 150])
@@ -30,24 +31,10 @@ print(data[data["StanceTime"] < 38])
 # data[data["StanceTime"] > 82].to_csv('StanceTimeViolations.csv')
 print(data[data["StanceTime"] < 38])
 
-# plot the data for all participants
-ax1 = data[data["Subject"].isin(range(1, 10))].plot.scatter(x="Subject",y=metric,
-                                                             c="TrialNum", colormap="viridis")
-# g = sns.relplot(data=data[data["Subject"].isin(range(1, 68))], x='Subject', y=metric, hue='Condition',
-#             hue_order=["Typical", "Parkinsons", "Comorbities", "Balance"])
-# leg = g._legend
-# leg.set_bbox_to_anchor([0.4, 0.75])  # coordinates of lower left of bounding box
-plt.title("{} {} data for all participants".format(activityName, metric))
-# plt.legend(loc='upper right')
-plt.tight_layout()
-plt.show()
-
-# # Violin Plotting
-# fig, axes = plt.subplots()
-# # sns.violinplot(x=data["Subject"], y=data[metric], ax = axes)
-# sns.violinplot(data=data[data["Subject"].isin(range(5, 7))], x="Subject", y=metric, hue="TrialNum")
-# axes.set_title('Violin Plot for {}'.format(activityName))
-# axes.yaxis.grid(True)
-# axes.set_xlabel('Participant')
-# axes.set_ylabel(metric)
-# plt.show()
+# check for no missed gait cycles
+# data = data.groupby(["Subject", "TrialNum", "IC1"])
+data["match"] = data.IC1.ne(data.IC3.shift(1)) & data.CycleSide.eq(data.CycleSide.shift(1))
+print(data[data["match"] == True])
+# data["match"] = data[data.IC1.eq(data.IC3.shift(1)) & data.CycleSide.eq(data.IC3.shift(1))]
+# print(data.match)
+# print(data.head(10))

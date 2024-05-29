@@ -4,8 +4,6 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import json
 
-
-
 if __name__ == '__main__':
     # define min/max allowable gait phases for sanity
     minStrideTime = 70
