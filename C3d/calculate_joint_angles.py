@@ -180,13 +180,14 @@ if __name__ == '__main__':
     for subject in os.listdir(subjectPath):
         print(subject)
         print(int(subject.split("_")[1]))
-        if int(subject.split("_")[1]) in [61] :#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+        subjectNum = int(subject.split("_")[1])
+        if subjectNum in [61] :#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
             filepath = subjectPath + subject + "/"
             for file in os.listdir(filepath):
                 if file.endswith(".c3d"):
-                    trial = file.split('_')[-1].split(".")[0]
-                    print(trial)
-                    if int(trial) == 2:
+                    trialNum = int(file.split('_')[-1].split(".")[0])
+                    print(trialNum)
+                    if trialNum in [x for x in range(2, 10)]:
                         opticalDF = get_fp_and_marker_data(filepath+file)
                         ankleAngleL = calculate_joint_angle(
                             opticalDF[["tibDataLX", "tibDataLY", "tibDataLZ",\
@@ -211,20 +212,20 @@ if __name__ == '__main__':
                         print(kneeAngleL.shape)
                         print(len(opticalDF))
                         opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]] = np.concatenate((ankleAngleL, ankleAngleR, kneeAngleL, kneeAngleR), axis=1)
-                        opticalDF.to_csv("opticalDF.csv", index=False)
-                        opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]].plot()
-                        opticalDF[["FP1Z", "FP2Z"]] -= opticalDF[["FP1Z", "FP2Z"]].min()
-                        opticalDF[["FP1Z", "FP2Z"]] /= opticalDF[["FP1Z", "FP2Z"]].max()
-                        plt.plot((opticalDF[["FP1Z", "FP2Z"]] * -200) + 200)
-                        plt.title(trial)
+                        opticalDF.to_csv("{}-{}-opticalDF.csv".format(subjectNum, str(trialNum).zfill(2)), index=False)
+                        # opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]].plot()
+                        # opticalDF[["FP1Z", "FP2Z"]] -= opticalDF[["FP1Z", "FP2Z"]].min()
+                        # opticalDF[["FP1Z", "FP2Z"]] /= opticalDF[["FP1Z", "FP2Z"]].max()
+                        # plt.plot((opticalDF[["FP1Z", "FP2Z"]] * -200) + 200)
+                        # plt.title(trialNum)
                         # plt.show()
 
-    imuDF = pd.read_csv("../AlignedData/TF_61/61-02.csv")
-    imuDF = imuDF.iloc[1:339, :]
-    print(imuDF.shape)
-    opticalDF = pd.read_csv("opticalDF.csv")
-    print(opticalDF.shape)
-    # plt.plot(opticalDF[["FP1Z", "FP2Z"]])
-    plt.plot(imuDF["AccZlear"] * 10)
-    plt.show()
+    # imuDF = pd.read_csv("../AlignedData/TF_61/61-02.csv")
+    # imuDF = imuDF.iloc[1:339, :]
+    # print(imuDF.shape)
+    # opticalDF = pd.read_csv("opticalDF.csv")
+    # print(opticalDF.shape)
+    # # plt.plot(opticalDF[["FP1Z", "FP2Z"]])
+    # plt.plot(imuDF[["AccZlear", "AccZpocket"]] * 10)
+    # plt.show()
 
