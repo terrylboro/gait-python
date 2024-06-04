@@ -5,7 +5,7 @@ import numpy as np
 
 
 # import the data
-for subjectNum in [x for x in range(61, 62) if x not in [20, 22]]:
+for subjectNum in [x for x in range(60, 61) if x not in [20, 22]]:
     goodSubjects = open("../Utils/goodTrials",
                         "r").read()
     if "," + str(subjectNum).zfill(2) + "," in goodSubjects:

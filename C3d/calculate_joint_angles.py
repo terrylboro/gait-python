@@ -7,6 +7,7 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal import find_peaks, butter, filtfilt, argrelmax
 import json
 import re
+from Processing.Common.generic_imu_tilt_correct import generic_imu_tilt_correct
 
 
 def hp_filter(data, freq):
@@ -39,20 +40,50 @@ def find_nearest(array, value):
 
 def get_fp_data(itf, start_fr, end_fr):
     # load the forceplate data
+    relSampleFreq = 20  # this is fp sampling freq / 100Hz. Usually 20 though sometimes 10
     try:
-        fpArr = np.zeros((end_fr * 20, 6), dtype=np.float32)
+        fpArr = np.zeros((end_fr * relSampleFreq, 6), dtype=np.float32)
         for i, idx in zip(range(6), [0, 1, 2, 6, 7, 8]):
-            fpArr[(start_fr - 1) * 20:, i] = np.asarray(itf.GetAnalogDataEx(idx, start_fr, end_fr, '0', 0, 0, '0'),
+            fpArr[(start_fr - 1) * relSampleFreq:, i] = np.asarray(itf.GetAnalogDataEx(idx, start_fr, end_fr, '0', 0, 0, '0'),
                                                         dtype=np.float32)
     except ValueError:
-        fpArr = np.zeros((end_fr * 10, 6), dtype=np.float32)
+        relSampleFreq = 10
+        fpArr = np.zeros((end_fr * relSampleFreq, 6), dtype=np.float32)
         for i, idx in zip(range(6), [0, 1, 2, 6, 7, 8]):
-            fpArr[(start_fr - 1) * 10:, i] = np.asarray(itf.GetAnalogDataEx(idx, start_fr, end_fr, '1', 0, 0, '0'),
+            fpArr[(start_fr - 1) * relSampleFreq:, i] = np.asarray(itf.GetAnalogDataEx(idx, start_fr, end_fr, '1', 0, 0, '0'),
                                                         dtype=np.float32)
     # fpData = pd.DataFrame(data=fpArr, columns=['FP1X', 'FP1Y', 'FP1Z', 'FP2X', 'FP2Y', 'FP2Z'])
     # fpData[["FP1X", "FP2X"]].plot()
     # plt.show()
-    return fpArr
+    return fpArr, relSampleFreq
+
+
+def get_wrist_shank_data(itf, start_fr, end_fr):
+    # find the IMU data indices from labels
+    wristFirstIdx = c3d.get_analog_index(itf, "Sensor {} Acc.ACCX{}".format(1, 1))
+    shankFirstIdx = c3d.get_analog_index(itf, "Sensor {} Acc.ACCX{}".format(2, 2))
+    wristRange = range(wristFirstIdx, wristFirstIdx+6)
+    shankRange = range(shankFirstIdx, shankFirstIdx+6)
+    # use these indices to find the data
+    relSampleFreq = 20  # this is Delsys sampling freq / 100Hz. Usually 20 though sometimes 10
+    try:
+        wristShankArr = np.zeros((end_fr * relSampleFreq, 12), dtype=np.float32)
+        for sig_idx in wristRange:
+            data = np.asarray(itf.GetAnalogDataEx(sig_idx, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+            wristShankArr[(start_fr-1)*relSampleFreq:, sig_idx - wristRange[0]] = data
+        for sig_idx in shankRange:
+            data = np.asarray(itf.GetAnalogDataEx(sig_idx, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+            wristShankArr[(start_fr-1)*relSampleFreq:, sig_idx - shankRange[0] + 6] = data
+    except ValueError:
+        relSampleFreq = 10
+        wristShankArr = np.zeros((end_fr * relSampleFreq, 12), dtype=np.float32)
+        for sig_idx in wristRange:
+            data = np.asarray(itf.GetAnalogDataEx(sig_idx, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+            wristShankArr[(start_fr - 1) * relSampleFreq:, sig_idx - wristRange[0]] = data
+        for sig_idx in shankRange:
+            data = np.asarray(itf.GetAnalogDataEx(sig_idx, start_fr, end_fr, '1', 0, 0, '0'), dtype=np.float32)
+            wristShankArr[(start_fr - 1) * relSampleFreq:, sig_idx - shankRange[0] + 6] = data
+    return wristShankArr, relSampleFreq
 
 
 def get_fp_and_marker_data(filepath):
@@ -67,16 +98,31 @@ def get_fp_and_marker_data(filepath):
     n_frs = end_fr - start_fr + 1
 
     # get fp data
-    fpArr = get_fp_data(itf, start_fr, end_fr)
+    fpArr, fpRelFreq = get_fp_data(itf, start_fr, end_fr)
 
     # get marker data
-    mkrTrajArr = get_marker_trajectories(itf, start_fr, end_fr)
+    try:
+        mkrTrajArr = get_marker_trajectories(itf, start_fr, end_fr)
+    except:
+        print("Markers not labelled")
+        return False
+    # get IMU data
+    try:
+        wristShankArr, wristShankRelFreq = get_wrist_shank_data(itf, start_fr, end_fr)
+    except:
+        print("No IMU data here")
+        wristShankArr = np.zeros((len(fpArr), 12))
+        wristShankRelFreq = fpRelFreq
+    # wristShankArr[:, 0:6] = generic_imu_tilt_correct(wristShankArr[:, 0:6], "Wrist")
+    # wristShankArr[:, 6:12] = generic_imu_tilt_correct(wristShankArr[:, 6:12], "Shank")
 
     # concatenate these into 1 array (need to downsample force plate)
-    opticalArr = np.concatenate((mkrTrajArr, fpArr[::20, :]), axis=1)
+    opticalArr = np.concatenate((wristShankArr[::wristShankRelFreq, :], mkrTrajArr, fpArr[::fpRelFreq, :]), axis=1)
 
     # make this into a pandas df
-    colNames = ["asisDataLX", "asisDataLY", "asisDataLZ", "asisDataRX", "asisDataRY", "asisDataRZ", \
+    colNames = ["AccXWrist", "AccYWrist", "AccZWrist", "GyroXWrist", "GyroYWrist", "GyroZWrist", \
+                "AccXShank", "AccYShank", "AccZShank", "GyroXShank", "GyroYShank", "GyroZShank", \
+                "asisDataLX", "asisDataLY", "asisDataLZ", "asisDataRX", "asisDataRY", "asisDataRZ", \
                 "psisDataLX", "psisDataLY", "psisDataLZ", "psisDataRX", "psisDataRY", "psisDataRZ", \
                 "thighDataLX", "thighDataLY", "thighDataLZ", "thighDataRX", "thighDataRY", "thighDataRZ", \
                 "kneeDataLX", "kneeDataLY", "kneeDataLZ", "kneeDataRX", "kneeDataRY", "kneeDataRZ", \
@@ -88,7 +134,7 @@ def get_fp_and_marker_data(filepath):
 
     # concatenate the two DFs
     opticalDF = pd.DataFrame(opticalArr, columns=colNames)
-    opticalDF.to_csv("opticalDF.csv", index=False)
+    # opticalDF.to_csv("opticalDF.csv", index=False)
 
     # Close the C3D file from C3Dserver
     ret = c3d.close_c3d(itf)
@@ -149,6 +195,18 @@ def get_marker_trajectories(itf, start_fr, end_fr):
     return mkrTrajArr
 
 
+def get_walking_trial_nums(subjectNum):
+    # load the activity info
+    activityDF = pd.read_csv('../C3d/ActivitiesIndex.csv')
+    subjectDF = activityDF[activityDF["SubjectNum"] == subjectNum]
+    walkingTrialNums = []
+    for col in subjectDF.columns:
+        if not subjectDF[col].isnull().values.any() and col in ['Walk', 'WalkNod', 'WalkShake']:
+            trialNumsForThisActivity = [int(x) for x in subjectDF[col].values[0][1:-1].split(",")]
+            walkingTrialNums.extend(trialNumsForThisActivity)
+    return walkingTrialNums
+
+
 def angle_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2'::
 
@@ -162,6 +220,7 @@ def angle_between(v1, v2):
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 
 def calculate_joint_angle(data):
     # 0 = TIB, 1 = ANK, 2 = TOE
@@ -179,46 +238,46 @@ if __name__ == '__main__':
     subjectPath = "C:/Users/teri-/Documents/GaitC3Ds/"
     for subject in os.listdir(subjectPath):
         print(subject)
-        print(int(subject.split("_")[1]))
         subjectNum = int(subject.split("_")[1])
-        if subjectNum in [61] :#[x for x in range(58, 68) if x not in [40, 41, 46, 47, 48, 61]]:
+        if subjectNum in [x for x in range(51, 68) if x not in [11, 46, 47, 48]]:
             filepath = subjectPath + subject + "/"
+            walkingTrialNums = get_walking_trial_nums(subjectNum)
             for file in os.listdir(filepath):
                 if file.endswith(".c3d"):
                     trialNum = int(file.split('_')[-1].split(".")[0])
                     print(trialNum)
-                    if trialNum in [x for x in range(2, 10)]:
-                        opticalDF = get_fp_and_marker_data(filepath+file)
-                        ankleAngleL = calculate_joint_angle(
-                            opticalDF[["tibDataLX", "tibDataLY", "tibDataLZ",\
-                                       "heelDataLX", "heelDataLY", "heelDataLZ",\
-                                       "toeDataLX", "toeDataLY", "toeDataLZ"]].to_numpy()
-                        )
-                        ankleAngleR = calculate_joint_angle(
-                            opticalDF[["tibDataRX", "tibDataRY", "tibDataRZ", \
-                                       "heelDataRX", "heelDataRY", "heelDataRZ", \
-                                       "toeDataRX", "toeDataRY", "toeDataRZ"]].to_numpy()
-                        )
-                        kneeAngleL = calculate_joint_angle(
-                            opticalDF[["thighDataLX", "thighDataLY", "thighDataLZ",\
-                                       "kneeDataLX", "kneeDataLY", "kneeDataLZ",\
-                                       "tibDataLX", "tibDataLY", "tibDataLZ"]].to_numpy()
-                        )
-                        kneeAngleR = calculate_joint_angle(
-                            opticalDF[["thighDataRX", "thighDataRY", "thighDataRZ", \
-                                       "kneeDataRX", "kneeDataRY", "kneeDataRZ", \
-                                       "tibDataRX", "tibDataRY", "tibDataRZ"]].to_numpy()
-                        )
-                        print(kneeAngleL.shape)
-                        print(len(opticalDF))
-                        opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]] = np.concatenate((ankleAngleL, ankleAngleR, kneeAngleL, kneeAngleR), axis=1)
-                        opticalDF.to_csv("{}-{}-opticalDF.csv".format(subjectNum, str(trialNum).zfill(2)), index=False)
-                        # opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]].plot()
-                        # opticalDF[["FP1Z", "FP2Z"]] -= opticalDF[["FP1Z", "FP2Z"]].min()
-                        # opticalDF[["FP1Z", "FP2Z"]] /= opticalDF[["FP1Z", "FP2Z"]].max()
-                        # plt.plot((opticalDF[["FP1Z", "FP2Z"]] * -200) + 200)
-                        # plt.title(trialNum)
-                        # plt.show()
+                    if trialNum in walkingTrialNums:
+                        opticalDF = get_fp_and_marker_data(filepath + file)
+                        if type(opticalDF) == pd.DataFrame:
+                            ankleAngleL = calculate_joint_angle(
+                                opticalDF[["tibDataLX", "tibDataLY", "tibDataLZ",\
+                                           "heelDataLX", "heelDataLY", "heelDataLZ",\
+                                           "toeDataLX", "toeDataLY", "toeDataLZ"]].to_numpy()
+                            )
+                            ankleAngleR = calculate_joint_angle(
+                                opticalDF[["tibDataRX", "tibDataRY", "tibDataRZ", \
+                                           "heelDataRX", "heelDataRY", "heelDataRZ", \
+                                           "toeDataRX", "toeDataRY", "toeDataRZ"]].to_numpy()
+                            )
+                            kneeAngleL = calculate_joint_angle(
+                                opticalDF[["thighDataLX", "thighDataLY", "thighDataLZ",\
+                                           "kneeDataLX", "kneeDataLY", "kneeDataLZ",\
+                                           "tibDataLX", "tibDataLY", "tibDataLZ"]].to_numpy()
+                            )
+                            kneeAngleR = calculate_joint_angle(
+                                opticalDF[["thighDataRX", "thighDataRY", "thighDataRZ", \
+                                           "kneeDataRX", "kneeDataRY", "kneeDataRZ", \
+                                           "tibDataRX", "tibDataRY", "tibDataRZ"]].to_numpy()
+                            )
+                            opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]] = np.concatenate((ankleAngleL, ankleAngleR, kneeAngleL, kneeAngleR), axis=1)
+                            opticalDF.to_csv("../OpticalDFs/TF_{}/{}-{}.csv".format(
+                                str(subjectNum).zfill(2), str(subjectNum).zfill(2), str(trialNum).zfill(2)), index=False)
+                            # opticalDF[["ankleAngleL", "ankleAngleR", "kneeAngleL", "kneeAngleR"]].plot()
+                            # opticalDF[["FP1Z", "FP2Z"]] -= opticalDF[["FP1Z", "FP2Z"]].min()
+                            # opticalDF[["FP1Z", "FP2Z"]] /= opticalDF[["FP1Z", "FP2Z"]].max()
+                            # plt.plot((opticalDF[["FP1Z", "FP2Z"]] * -200) + 200)
+                            # plt.title(trialNum)
+                            # plt.show()
 
     # imuDF = pd.read_csv("../AlignedData/TF_61/61-02.csv")
     # imuDF = imuDF.iloc[1:339, :]
