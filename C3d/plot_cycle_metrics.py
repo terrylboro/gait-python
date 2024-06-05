@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 
 # load the df
-activityName = "Walk"
+activityName = "WalkShake"
 metric = "StanceTime"
 data = pd.read_csv('fullCyclesOptical.csv')
 data = data[data.Activity == activityName]
@@ -39,8 +39,8 @@ plt.title("{} data for all participants during {} task".format(metric, activityN
 plt.xlabel("Subject", size='xx-large')
 plt.ylabel(metric + "* 10/ms", size='xx-large')
 plt.tight_layout()
-plt.show()
-plt.savefig("{}{}All.png".format(activityName, metric))
+# plt.show()
+plt.savefig("Plots/{}{}All.png".format(activityName, metric))
 # # heatmap plotting
 # subjects = range(1, 68)
 # cross = pd.crosstab(data[metric], data["Subject"]).reindex(columns=subjects, fill_value=0)

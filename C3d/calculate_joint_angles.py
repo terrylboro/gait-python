@@ -239,7 +239,7 @@ if __name__ == '__main__':
     for subject in os.listdir(subjectPath):
         print(subject)
         subjectNum = int(subject.split("_")[1])
-        if subjectNum in [x for x in range(51, 68) if x not in [11, 46, 47, 48]]:
+        if subjectNum in [x for x in range(1, 11) if x not in [11, 46, 47, 48]]:
             filepath = subjectPath + subject + "/"
             walkingTrialNums = get_walking_trial_nums(subjectNum)
             for file in os.listdir(filepath):
