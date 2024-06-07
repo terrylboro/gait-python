@@ -4,10 +4,11 @@ import pandas as pd
 import pyc3dserver as c3d
 import seaborn as sns
 import matplotlib.pyplot as plt
+from C3d.find_gait_event_optical import lp_filter
 
 for subjectNum in range(61, 62):
     subjectNum2 = str(subjectNum).zfill(2)
-    for trialNum in range(5, 6):
+    for trialNum in range(6, 7):
         trialNum2 = str(trialNum).zfill(2)
         trialNum4 = str(trialNum).zfill(4)
         filepath = "C:/Users/teri-/Documents/GaitC3Ds/TF_{}/TF_{}_{}.c3d".format(subjectNum2, subjectNum2, trialNum4)
@@ -21,17 +22,12 @@ for subjectNum in range(61, 62):
         n_frs = end_fr - start_fr + 1
 
         # find markers by label
-        mkr_LEAR = c3d.get_marker_index(itf, "*17")
+        mkr_LEAR = c3d.get_marker_index(itf, "*18")
         learTraj = np.zeros((end_fr, 3), dtype=np.float32)
         d2ydx2 = np.zeros((end_fr), dtype=np.float32)
         for j in range(3):
             learTraj[(start_fr - 1):, j] = np.asarray(itf.GetPointDataEx(mkr_LEAR, j, start_fr, end_fr, '1'), dtype=np.float32)
 
-        # mask = learTraj[:, 2] != 0  # ignore the start zeros as this ruins differentiation
-        # # finding first True value
-        # # using next() and enumerate()
-        # firstNonZeroVal = next((i for i, j in enumerate(mask) if j), None)
-        # learTraj = learTraj[mask]
         # find derivatives and plot the acceleration
         y = learTraj[(start_fr - 1):, 2]
         x = np.arange(y.size)
@@ -40,14 +36,15 @@ for subjectNum in range(61, 62):
         d2ydx2 = (d2ydx2 - min(d2ydx2)) / max(d2ydx2 - min(d2ydx2))
         # d2ydx2 = np.insert(d2ydx2, 0, np.zeros(firstNonZeroVal))
         print("d2ydx2: ", len(d2ydx2))
-        sns.lineplot(data=d2ydx2)
+        g = sns.lineplot(data=lp_filter(d2ydx2, 40), label="Marker Acc")
         # plt.show()
 
         # compare this to the ear signal
         imuDF = pd.read_csv("../IMUSystemData/TF_{}/TF_{}-{}.csv".format(subjectNum2, subjectNum2, trialNum2))
-        imuDF = imuDF.AccZLeft[imuDF.AccZLeft != 0].shift(-3)
-        sns.lineplot(data=imuDF / imuDF.max())
-        # # plt.show()
+        imuDF = imuDF.AccZLeft[imuDF.AccZLeft != 0].shift(-6)
+        # imuDF = imuDF.AccZRight[imuDF.AccZRight != 0].shift(-10)
+        sns.lineplot(data=imuDF / imuDF.max(), label="IMU Acc")
+        # plt.show()
 
         # # also compare to the forceplate
         # fpData = pd.read_csv("../OpticalDFs/TF_57/57-03.csv")
@@ -70,9 +67,11 @@ for subjectNum in range(61, 62):
         print("fp1: ", len(fp1[::relSamplingFreq]))
         print("fp2: ", len(fp2[::relSamplingFreq]))
         fp1 = -fp1[::relSamplingFreq]/ max(-fp1[::relSamplingFreq])
+        fp1[fp1 < 0] = 0
         fp2 = -fp2[::relSamplingFreq]/ max(-fp2[::relSamplingFreq])
-        sns.lineplot(data=fp1)
-        sns.lineplot(data=fp2)
+        fp2[fp2 < 0] = 0
+        sns.lineplot(data=fp1, label="FP 1")
+        sns.lineplot(data=fp2, label="FP 2")
         fp1Impact = next((i for i, j in enumerate(fp1 > 0.1) if j), None)
         fp2Impact = next((i for i, j in enumerate(fp2 > 0.1) if j), None)
         fp1FOArr = fp1[fp1Impact:]
@@ -82,4 +81,10 @@ for subjectNum in range(61, 62):
         # print((fp1 > 0.1))
         plt.vlines([fp1Impact, fp2Impact], 0, 1, linestyles='dotted')
         plt.vlines([fp1Off + fp1Impact, fp2Off + fp2Impact], 0, 1, linestyles='dotted', color='purple')
+        g.set_xlabel("Time * 10 / ms")
+        g.set_ylabel("Normalised Acceleration or Force")
+        g.set_title("Ear IMU and Marker Accelerations with FP Data: {}-{}".format(subjectNum2, trialNum2))
+        sns.move_legend(g, "lower center", bbox_to_anchor=(0.5, -0.25), ncol=4)
+        plt.tight_layout()
+        plt.savefig("../IMU vs Ear Marker Plots/{}-{}.png".format(subjectNum2, trialNum2))
         plt.show()
