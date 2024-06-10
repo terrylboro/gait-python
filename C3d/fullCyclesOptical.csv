@@ -5893,8 +5893,8 @@ Subject,TrialNum,CycleSide,CycleNum,IC1,FO1,IC2,FO2,IC3,Activity,Condition,Strid
 57,4,Right,3,246,254,293,303,340,Walk,Typical,94,57,37
 57,5,Left,1,92,100,136,145,182,Walk,Typical,90,53,37
 57,5,Left,2,182,192,228,237,274,Walk,Typical,92,55,37
-57,5,Right,1,46,55,92,100,136,Walk,Typical,90,54,36
-57,5,Right,2,136,145,182,192,228,Walk,Typical,92,56,36
+57,5,Right,1,46,55,92,98,136,Walk,Typical,90,52,40
+57,5,Right,2,135,145,182,188,228,Walk,Typical,92,53,41
 57,5,Right,3,228,237,274,283,320,Walk,Typical,92,55,37
 57,6,Left,1,80,89,124,134,171,Walk,Typical,91,54,37
 57,6,Left,2,171,180,216,226,264,Walk,Typical,93,55,38
