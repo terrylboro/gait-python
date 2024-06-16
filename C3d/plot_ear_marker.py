@@ -22,7 +22,7 @@ for subjectNum in range(61, 62):
         n_frs = end_fr - start_fr + 1
 
         # find markers by label
-        mkr_LEAR = c3d.get_marker_index(itf, "*18")
+        mkr_LEAR = c3d.get_marker_index(itf, "LHEE")
         learTraj = np.zeros((end_fr, 3), dtype=np.float32)
         d2ydx2 = np.zeros((end_fr), dtype=np.float32)
         for j in range(3):
@@ -86,5 +86,5 @@ for subjectNum in range(61, 62):
         g.set_title("Ear IMU and Marker Accelerations with FP Data: {}-{}".format(subjectNum2, trialNum2))
         sns.move_legend(g, "lower center", bbox_to_anchor=(0.5, -0.25), ncol=4)
         plt.tight_layout()
-        plt.savefig("../IMU vs Ear Marker Plots/{}-{}.png".format(subjectNum2, trialNum2))
+        # plt.savefig("../IMU vs Ear Marker Plots/{}-{}.png".format(subjectNum2, trialNum2))
         plt.show()
