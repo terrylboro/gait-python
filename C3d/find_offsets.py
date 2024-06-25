@@ -18,16 +18,16 @@ def main():
     goodSubjects = open("../Utils/goodTrials",
                         "r").read()
     offsets = []
-    for subject in os.listdir(subjectPath):
+    for subject in os.listdir(subjectPath)[-3:]:
         print(subject)
-        if "," + str(subject.split("_")[1]).zfill(2) + "," in goodSubjects:
-            subjectNum = int(str(subject.split("_")[1]))
-            filepath = subjectPath + subject + "/"
-            for file in os.listdir(filepath):
-                if file.endswith(".c3d"):
-                    trialNum = int(file.split('_')[-1].split(".")[0])
-                    offset = get_offset(filepath + file)
-                    offsets.append([subjectNum, trialNum, offset])
+        # if "," + str(subject.split("_")[1]).zfill(2) + "," in goodSubjects:
+        subjectNum = int(str(subject.split("_")[1]))
+        filepath = subjectPath + subject + "/"
+        for file in os.listdir(filepath):
+            if file.endswith(".c3d"):
+                trialNum = int(file.split('_')[-1].split(".")[0])
+                offset = get_offset(filepath + file)
+                offsets.append([subjectNum, trialNum, offset])
 
     df = pd.DataFrame(offsets, columns=['Subject', 'Trial', 'Offset'])
     df.to_csv("offsets.csv", index=False)

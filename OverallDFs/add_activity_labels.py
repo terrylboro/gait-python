@@ -21,6 +21,7 @@ def get_activity_trial_nums(subjectNum):
 for subjectNum in [x for x in range(67, 68) if x not in [11, 47, 48, 49]]:
     dataDir = "TF_{}/".format(str(subjectNum).zfill(2))
     walkTrialNums, walkShakeTrialNums, walkNodTrialNums = get_activity_trial_nums(subjectNum)
+    # walkTrialNums = get_activity_trial_nums(subjectNum)
     print(dataDir)
     for file in os.listdir(dataDir):
         df = pd.read_csv(os.path.join(dataDir, file))
@@ -35,7 +36,11 @@ for subjectNum in [x for x in range(67, 68) if x not in [11, 47, 48, 49]]:
             # print("{} is a WalkShake trial".format(file))
             df["Activity"] = "WalkShake"
         cols = df.columns.tolist()
-        cols = cols[:2] + [cols[-1]] + cols[2:-1]
-        df = df[cols]
-        df.to_csv(os.path.join(dataDir, file), index=False)
+        print(cols)
+        # print(cols[:2], cols[3:], [cols[2]])
+        # cols = cols[:2] + cols[3:] + [cols[2]]
+        # cols = cols[:2] + [cols[-1]] + cols[2:-1]
+        # # cols = cols[:2] + cols[4:] + [cols[2]]
+        # df = df[cols]
+        # df.to_csv(os.path.join(dataDir, file), index=False)
 

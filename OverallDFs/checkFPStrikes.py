@@ -10,13 +10,9 @@ fp2Coords = [(69.5797, 502.6288), (62.6288, 1000.4203), (560.4203, 1007.3712), (
 heelOffsetVal = 20  # to correct for distance between heel and heel marker
 toeOffsetVal = 30  # to correct for distance between toe and toe marker
 
-# Example of location not working well is in TF_35_0021 where force plate appears
-# to register a reading on an initial contact before its y co-ordinate
-# Also look at TF_35_11 as the force plate appears to stop registering before the foot leaves
-# TF_35_14 - forceplates appear to be in reverse?
-
 gaitEventsDF = pd.read_csv('../C3d/fullCyclesOptical.csv')
-gaitEventsDF["IsFullFPStrike"] = False
+gaitEventsDF["IsFullFP1Strike"] = False
+gaitEventsDF["IsFullFP2Strike"] = False
 
 
 def correct_fp_noise(data):
@@ -48,18 +44,21 @@ for subjectNum in [x for x in range(1, 68) if x not in [11, 47, 48, 49]]:
     dataDir = "TF_{}/".format(subjectNum2)
     for file in os.listdir(dataDir):
         trialNum = int(file.split('-')[1].split(".")[0])
-        # if trialNum == 2:
+        # if trialNum == 3:
         # find the corresponding gait cycles
         cyclesDF = gaitEventsDF[np.logical_and(gaitEventsDF.Subject == subjectNum, gaitEventsDF.TrialNum == trialNum)]
         print(os.path.join(dataDir, file))
         df = pd.read_csv(os.path.join(dataDir, file))
-        df[["FP1Z", "FP2Z"]] = -df[["FP1Z", "FP2Z"]]
+        if subjectNum not in [65, 66, 67]:
+            df[["FP1Z", "FP2Z"]] = -df[["FP1Z", "FP2Z"]]
 
         # Checking data quality #####
         # plt.plot(df[["FP1Z", "FP2Z"]] )
+        # plt.plot(df[["heelDataLY", "heelDataRY"]])
+        # plt.title(file)
         # plt.show()
-        # print(df.FP2Z[df.FP2Z > 0])
-        ##############
+        # # print(df.FP2Z[df.FP2Z > 0])
+        #############
 
         # Find the indices of the fp positive signal
         footStrike1Idx = df.FP1Z[df.FP1Z > 0].index.tolist()
@@ -81,8 +80,9 @@ for subjectNum in [x for x in range(1, 68) if x not in [11, 47, 48, 49]]:
                                                                                        501.0828 - toeOffsetVal).all():
                 # mark that this cycle is a full strike on the fp
                 try:
+                    print("FP1 Strike left!")
                     cycleIdx = cyclesDF[cyclesDF.IC1.between(footStrike1Idx[0] - validFSRange, footStrike1Idx[0] + validFSRange)].index.to_list()[0]
-                    gaitEventsDF.loc[cycleIdx, "IsFullFPStrike"] = True
+                    gaitEventsDF.loc[cycleIdx, "IsFullFP1Strike"] = True
                     # find the difference between our IC and the fp IC, then correct using this difference
                     icDiff = int(gaitEventsDF.at[cycleIdx, "IC1"]) - int(footStrike1Idx[0])
                     gaitEventsDF.loc[cycleIdx, "IC1"] -= icDiff
@@ -98,8 +98,9 @@ for subjectNum in [x for x in range(1, 68) if x not in [11, 47, 48, 49]]:
                                                                                        501.0828 - toeOffsetVal).all():
                 # mark that this cycle is a full strike on the fp
                 try:
+                    print("FP1 Strike right!")
                     cycleIdx = cyclesDF[cyclesDF.IC1.between(footStrike1Idx[0] - validFSRange, footStrike1Idx[0] + validFSRange)].index.to_list()[0]
-                    gaitEventsDF.loc[cycleIdx, "IsFullFPStrike"] = True
+                    gaitEventsDF.loc[cycleIdx, "IsFullFP1Strike"] = True
                     # find the difference between our IC and the fp IC, then correct using this difference
                     icDiff = int(gaitEventsDF.at[cycleIdx, "IC1"]) - int(footStrike1Idx[0])
                     gaitEventsDF.loc[cycleIdx, "IC1"] -= icDiff
@@ -117,8 +118,9 @@ for subjectNum in [x for x in range(1, 68) if x not in [11, 47, 48, 49]]:
                                                                                        1000.4203 - toeOffsetVal).all():
                 # mark that this cycle is a full strike on the fp
                 try:
+                    print("FP2 Strike left!")
                     cycleIdx = cyclesDF[cyclesDF.IC1.between(footStrike2Idx[0] - validFSRange, footStrike2Idx[0] + validFSRange)].index.to_list()[0]
-                    gaitEventsDF.loc[cycleIdx, "IsFullFPStrike"] = True
+                    gaitEventsDF.loc[cycleIdx, "IsFullFP2Strike"] = True
                     # find the difference between our IC and the fp IC, then correct using this difference
                     icDiff = int(gaitEventsDF.at[cycleIdx, "IC1"]) - int(footStrike2Idx[0])
                     gaitEventsDF.loc[cycleIdx, "IC1"] -= icDiff
@@ -134,8 +136,9 @@ for subjectNum in [x for x in range(1, 68) if x not in [11, 47, 48, 49]]:
                                                                                        1000.4203 - toeOffsetVal).all():
                 # mark that this cycle is a full strike on the fp
                 try:
+                    print("FP2 Strike right!")
                     cycleIdx = cyclesDF[cyclesDF.IC1.between(footStrike2Idx[0] - validFSRange, footStrike2Idx[0] + validFSRange)].index.to_list()[0]
-                    gaitEventsDF.loc[cycleIdx, "IsFullFPStrike"] = True
+                    gaitEventsDF.loc[cycleIdx, "IsFullFP2Strike"] = True
                     # find the difference between our IC and the fp IC, then correct using this difference
                     icDiff = int(gaitEventsDF.at[cycleIdx, "IC1"]) - int(footStrike2Idx[0])
                     gaitEventsDF.loc[cycleIdx, "IC1"] -= icDiff
@@ -148,7 +151,8 @@ for subjectNum in [x for x in range(1, 68) if x not in [11, 47, 48, 49]]:
 
 
 
-# log this information to the corresponding df
+# # log this information to the corresponding df
 gaitEventsDF.to_csv("gaitCycleDetails.csv", index=False)
+# gaitEventsDF.to_csv("gaitCycleDetailsLaterSubjects.csv", index=False)
 
 

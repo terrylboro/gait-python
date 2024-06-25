@@ -9,7 +9,7 @@ opticalDataDir = "../OpticalDFs/"
 
 
 def combine_alignZero_and_optical(imuDataDir, opticalDataDir):
-    for subjectNum in [x for x in range(1, 68) if x not in [11, 46, 47, 48]]:
+    for subjectNum in [x for x in range(61, 63) if x not in [11, 46, 47, 48]]:
         # loop through the csv for each trial
         filepath = os.path.join(opticalDataDir, "TF_{}".format(str(subjectNum).zfill(2)))
         for file in os.listdir(filepath):
