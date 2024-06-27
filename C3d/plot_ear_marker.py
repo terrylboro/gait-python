@@ -6,9 +6,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from C3d.find_gait_event_optical import lp_filter
 
-for subjectNum in range(62, 63):
+for subjectNum in range(57, 58):
     subjectNum2 = str(subjectNum).zfill(2)
-    for trialNum in range(3, 12):
+    for trialNum in range(3, 4):
         trialNum2 = str(trialNum).zfill(2)
         trialNum4 = str(trialNum).zfill(4)
         filepath = "C:/Users/teri-/Documents/GaitC3Ds/TF_{}/TF_{}_{}.c3d".format(subjectNum2, subjectNum2, trialNum4)
@@ -58,7 +58,7 @@ for subjectNum in range(62, 63):
         d2ydx2 = (d2ydx2 - min(d2ydx2)) / max(d2ydx2 - min(d2ydx2))
         print("d2ydx2: ", len(d2ydx2))
         x = np.linspace(0, int(len(d2ydx2) / 100), len(d2ydx2))
-        g = sns.lineplot(data=lp_filter(d2ydx2, 30), label="Marker Acc")
+        g = sns.lineplot(x=x, y=lp_filter(d2ydx2, 30), label="Marker Acc")
         # plt.show()
 
         # compare this to the ear signal
@@ -67,15 +67,15 @@ for subjectNum in range(62, 63):
         # imuDF = pd.read_csv("../IMUSystemData/TF_{}/TF_{}-{}.csv".format(subjectNum2, subjectNum2, trialNum2))
         imuDF = overallDF.AccZLeft[overallDF.AccZLeft != 0]#.shift(-6)
         # imuDF = imuDF.AccZRight[imuDF.AccZRight != 0].shift(-10)
-        sns.lineplot(data=(imuDF / imuDF.max()), label="IMU Acc")
+        sns.lineplot(x=x, y=(imuDF / imuDF.max()), label="IMU Acc")
         # plt.show()
 
         # # also compare to the forceplate
-        # fpData = pd.read_csv("../OpticalDFs/TF_57/57-03.csv")
-        # fp1Data = fpData.FP1Z * -1 #[fpData.FP1Z < 0] * -1
-        # fp1Data = fp1Data.div(fp1Data.max())#.shift(-firstNonZeroVal)
-        # fp2Data = fpData.FP2Z * -1  # [fpData.FP1Z < 0] * -1
-        # fp2Data = fp2Data.div(fp2Data.max())  # .shift(-firstNonZeroVal)
+        fpData = pd.read_csv("../OpticalDFs/TF_57/57-03.csv")
+        fp1Data = fpData.FP1Z * -1 #[fpData.FP1Z < 0] * -1
+        fp1Data = fp1Data.div(fp1Data.max())#.shift(-firstNonZeroVal)
+        fp2Data = fpData.FP2Z * -1  # [fpData.FP1Z < 0] * -1
+        fp2Data = fp2Data.div(fp2Data.max())  # .shift(-firstNonZeroVal)
 
         # from the c3d
         relSamplingFreq = 20
@@ -92,8 +92,8 @@ for subjectNum in range(62, 63):
         fp1[fp1 < 0] = 0
         fp2 = -fp2[::relSamplingFreq]/ max(-fp2[::relSamplingFreq])
         fp2[fp2 < 0] = 0
-        # sns.lineplot(x=x, y=fp1, label="Force Plate 1")
-        # sns.lineplot(x=x, y=fp2, label="Force Plate 2")
+        sns.lineplot(x=x, y=fp1, label="Force Plate 1", color='r')
+        sns.lineplot(x=x, y=fp2, label="Force Plate 2", color='g')
         fp1Impact = next((i for i, j in enumerate(fp1 > 0.1) if j), None)
         fp2Impact = next((i for i, j in enumerate(fp2 > 0.1) if j), None)
         fp1FOArr = fp1[fp1Impact:]
@@ -102,8 +102,8 @@ for subjectNum in range(62, 63):
         fp2Off = next((i for i, j in enumerate(fp2FOArr > 0.1) if not j), None)
 
         # plot the impact points on the graph too
-        plt.vlines([fp1Impact, fp2Impact], 0.5, 1, linestyles='dotted')
-        plt.vlines([fp1Off + fp1Impact, fp2Off + fp2Impact], 0.5, 1, linestyles='dotted', color='purple')
+        # plt.vlines([fp1Impact, fp2Impact], 0.5, 1, linestyles='dotted')
+        # plt.vlines([fp1Off + fp1Impact, fp2Off + fp2Impact], 0.5, 1, linestyles='dotted', color='purple')
         g.set_xlabel("Time / s", fontsize="large")
         g.set_ylabel("Normalised Acceleration or Force", fontsize="large")
         g.set_title("Ear IMU and Marker Accelerations with Vertical Force".format(subjectNum2, trialNum2)
@@ -114,28 +114,28 @@ for subjectNum in range(62, 63):
         plt.show()
 
 
-        # now attempt to shift the imu data
-        colList = ["AccXLeft", "AccYLeft", "AccZLeft", "GyroXLeft", "GyroYLeft", "GyroZLeft", "MagXLeft", "MagYLeft",
-                   "MagZLeft", "AccXRight", "AccYRight", "AccZRight", "GyroXRight", "GyroYRight", "GyroZRight",
-                   "MagXRight", "MagYRight", "MagZRight", "AccXChest", "AccYChest", "AccZChest", "GyroXChest",
-                   "GyroYChest", "GyroZChest", "MagXChest", "MagYChest", "MagZChest", "AccXPocket", "AccYPocket",
-                   "AccZPocket", "GyroXPocket", "GyroYPocket", "GyroZPocket", "MagXPocket", "MagYPocket", "MagZPocket"]
-        alignmentIsGood = False
-        while not alignmentIsGood:
-            shiftVal = int(input("Enter difference between marker and IMU in order to shift: "))
-            overallDF[colList] = overallDF[colList].shift(-shiftVal)
-            # plt.plot(overallDF[["AccZLeft", "AccZRight"]])
-            g = sns.lineplot(data=lp_filter(d2ydx2, 30), label="Marker Acc", c="purple")
-            sns.lineplot(data=overallDF[["AccZLeft", "AccZRight"]] / overallDF[["AccZLeft", "AccZRight"]].max(), label="IMU Acc")
-            plt.vlines([fp1Impact, fp2Impact], 0.5, 1, linestyles='dotted')
-            plt.vlines([fp1Off + fp1Impact, fp2Off + fp2Impact], 0.5, 1, linestyles='dotted', color='purple')
-            plt.title(filepath)
-            plt.show()
-            if input("Press y if alignment good else another letter ") == "y":
-                alignmentIsGood = True
-
-        # save if desired
-        toSave = input("Press y (lower case) to save else any other letter ")
-        if toSave == "y":
-            overallDF.to_csv("../OverallDFs/TF_{}/{}-{}.csv".format(subjectNum2, subjectNum2, trialNum2), index=False)
+        # # now attempt to shift the imu data
+        # colList = ["AccXLeft", "AccYLeft", "AccZLeft", "GyroXLeft", "GyroYLeft", "GyroZLeft", "MagXLeft", "MagYLeft",
+        #            "MagZLeft", "AccXRight", "AccYRight", "AccZRight", "GyroXRight", "GyroYRight", "GyroZRight",
+        #            "MagXRight", "MagYRight", "MagZRight", "AccXChest", "AccYChest", "AccZChest", "GyroXChest",
+        #            "GyroYChest", "GyroZChest", "MagXChest", "MagYChest", "MagZChest", "AccXPocket", "AccYPocket",
+        #            "AccZPocket", "GyroXPocket", "GyroYPocket", "GyroZPocket", "MagXPocket", "MagYPocket", "MagZPocket"]
+        # alignmentIsGood = False
+        # while not alignmentIsGood:
+        #     shiftVal = int(input("Enter difference between marker and IMU in order to shift: "))
+        #     overallDF[colList] = overallDF[colList].shift(-shiftVal)
+        #     # plt.plot(overallDF[["AccZLeft", "AccZRight"]])
+        #     g = sns.lineplot(data=lp_filter(d2ydx2, 30), label="Marker Acc", c="purple")
+        #     sns.lineplot(data=overallDF[["AccZLeft", "AccZRight"]] / overallDF[["AccZLeft", "AccZRight"]].max(), label="IMU Acc")
+        #     plt.vlines([fp1Impact, fp2Impact], 0.5, 1, linestyles='dotted')
+        #     plt.vlines([fp1Off + fp1Impact, fp2Off + fp2Impact], 0.5, 1, linestyles='dotted', color='purple')
+        #     plt.title(filepath)
+        #     plt.show()
+        #     if input("Press y if alignment good else another letter ") == "y":
+        #         alignmentIsGood = True
+        #
+        # # save if desired
+        # toSave = input("Press y (lower case) to save else any other letter ")
+        # if toSave == "y":
+        #     overallDF.to_csv("../OverallDFs/TF_{}/{}-{}.csv".format(subjectNum2, subjectNum2, trialNum2), index=False)
 
